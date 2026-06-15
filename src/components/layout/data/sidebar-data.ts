@@ -1,6 +1,7 @@
 import {
   Construction,
   LayoutDashboard,
+  Mail,
   Monitor,
   Bug,
   ListTodo,
@@ -61,6 +62,12 @@ export const sidebarData: SidebarData = {
           title: 'Tasks',
           url: '/tasks',
           icon: ListTodo,
+        },
+        {
+          title: 'Inbox',
+          url: '/inbox',
+          badge: '4',
+          icon: Mail,
         },
         {
           title: 'Apps',

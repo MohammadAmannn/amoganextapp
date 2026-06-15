@@ -42,7 +42,7 @@ describe('ConfigDrawer (integration)', () => {
 
     clearCookies()
 
-    document.documentElement.classList.remove('light', 'dark')
+    document.documentElement.classList.remove('dark')
     document.documentElement.removeAttribute('dir')
   })
 
@@ -78,7 +78,7 @@ describe('ConfigDrawer (integration)', () => {
         screen.getByRole('radio', { name: /select light/i })
       )
       await vi.waitFor(() =>
-        expect(document.documentElement.classList.contains('light')).toBe(true)
+        expect(document.documentElement.classList.contains('dark')).toBe(false)
       )
       expect(getCookie('vite-ui-theme')).toBe('light')
     })
@@ -106,9 +106,9 @@ describe('ConfigDrawer (integration)', () => {
       await vi.waitFor(() => expect(getCookie('vite-ui-theme')).toBe('system'))
       await vi.waitFor(() => {
         const root = document.documentElement
-        const hasLight = root.classList.contains('light')
-        const hasDark = root.classList.contains('dark')
-        expect(hasLight !== hasDark).toBe(true)
+        expect(root.classList.contains('dark')).toBe(
+          window.matchMedia('(prefers-color-scheme: dark)').matches
+        )
       })
     })
   })

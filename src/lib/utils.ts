@@ -9,6 +9,22 @@ export function sleep(ms: number = 1000) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+/** Normalize post-login redirect to an in-app path for TanStack Router. */
+export function getRedirectPath(redirectTo?: string): string {
+  if (!redirectTo) return '/'
+
+  try {
+    if (redirectTo.startsWith('http://') || redirectTo.startsWith('https://')) {
+      const url = new URL(redirectTo)
+      return `${url.pathname}${url.search}${url.hash}` || '/'
+    }
+  } catch {
+    // Fall through to treat redirectTo as a relative path.
+  }
+
+  return redirectTo.startsWith('/') ? redirectTo : `/${redirectTo}`
+}
+
 /**
  * Generates page numbers for pagination with ellipsis
  * @param currentPage - Current page number (1-based)

@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react'
 import { getCookie, setCookie, removeCookie } from '@/lib/cookies'
+import { useTheme } from '@/context/theme-provider'
 
 // Each color theme defines light and dark mode CSS variable overrides
 export interface ColorThemeTokens {
@@ -1618,6 +1619,7 @@ function applyColorTokens(themeName: string, isDark: boolean) {
 }
 
 export function ColorThemeProvider({ children }: { children: React.ReactNode }) {
+  const { resolvedTheme } = useTheme()
   const [colorTheme, _setColorTheme] = useState<string>(
     () => getCookie(COLOR_THEME_COOKIE) || DEFAULT_COLOR_THEME
   )
@@ -1627,23 +1629,9 @@ export function ColorThemeProvider({ children }: { children: React.ReactNode }) 
     [colorTheme]
   )
 
-  // Apply tokens whenever color theme or light/dark mode changes
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains('dark')
-    applyColorTokens(colorTheme, isDark)
-
-    // Watch for light/dark class changes
-    const observer = new MutationObserver(() => {
-      const nowDark = document.documentElement.classList.contains('dark')
-      applyColorTokens(colorTheme, nowDark)
-    })
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    })
-
-    return () => observer.disconnect()
-  }, [colorTheme])
+    applyColorTokens(colorTheme, resolvedTheme === 'dark')
+  }, [colorTheme, resolvedTheme])
 
   const setColorTheme = useCallback(
     (name: string) => {

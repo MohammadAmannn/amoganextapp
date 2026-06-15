@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import { FcGoogle } from 'react-icons/fc'
 import { useGoogleLogin } from '@react-oauth/google'
 import { useAuthStore } from '@/stores/auth-store'
-import { sleep, cn } from '@/lib/utils'
+import { sleep, cn, getRedirectPath } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -77,7 +77,7 @@ export function UserAuthForm({
 
         toast.success(`Welcome back, ${user.name}!`)
 
-        const targetPath = redirectTo || '/'
+        const targetPath = getRedirectPath(redirectTo)
         navigate({ to: targetPath, replace: true })
       } catch {
         toast.error('Google sign in failed. Please try again.')
@@ -121,7 +121,7 @@ export function UserAuthForm({
         auth.setAccessToken('mock-access-token')
 
         // Redirect to the stored location or default to dashboard
-        const targetPath = redirectTo || '/'
+        const targetPath = getRedirectPath(redirectTo)
         navigate({ to: targetPath, replace: true })
 
         return `Welcome back, ${data.email}!`

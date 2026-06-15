@@ -26,7 +26,14 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()((set) => {
   const cookieState = getCookie(ACCESS_TOKEN)
-  const initToken = cookieState ? JSON.parse(cookieState) : ''
+  let initToken = ''
+  if (cookieState) {
+    try {
+      initToken = JSON.parse(cookieState)
+    } catch {
+      removeCookie(ACCESS_TOKEN)
+    }
+  }
 
   // Restore user from cookie on load
   const userCookie = getCookie(USER_DATA)
@@ -44,6 +51,7 @@ export const useAuthStore = create<AuthState>()((set) => {
       }
     } catch {
       initUser = null
+      removeCookie(USER_DATA)
     }
   }
 

@@ -14,6 +14,7 @@ import { TopNav } from '@/components/layout/top-nav'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
+import { ThemeSelector } from '@/components/theme-selector'
 import { Analytics } from './components/analytics'
 import { Overview } from './components/overview'
 import { RecentSales } from './components/recent-sales'
@@ -25,6 +26,7 @@ export function Dashboard() {
       <Header>
         <TopNav links={topNav} className='me-auto' />
         <Search />
+        <ThemeSelector />
         <ThemeSwitch />
         <ConfigDrawer />
         <ProfileDropdown />

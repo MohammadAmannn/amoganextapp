@@ -1,20 +1,16 @@
-import { type SVGProps } from 'react'
+import { type SVGProps, useState } from 'react'
 import { Root as Radio, Item } from '@radix-ui/react-radio-group'
-import { CircleCheck, RotateCcw, Settings } from 'lucide-react'
-import { IconDir } from '@/assets/custom/icon-dir'
-import { IconLayoutCompact } from '@/assets/custom/icon-layout-compact'
-import { IconLayoutDefault } from '@/assets/custom/icon-layout-default'
-import { IconLayoutFull } from '@/assets/custom/icon-layout-full'
-import { IconSidebarFloating } from '@/assets/custom/icon-sidebar-floating'
-import { IconSidebarInset } from '@/assets/custom/icon-sidebar-inset'
-import { IconSidebarSidebar } from '@/assets/custom/icon-sidebar-sidebar'
+import { Check, CircleCheck, RotateCcw, Search, Settings } from 'lucide-react'
 import { IconThemeDark } from '@/assets/custom/icon-theme-dark'
 import { IconThemeLight } from '@/assets/custom/icon-theme-light'
 import { IconThemeSystem } from '@/assets/custom/icon-theme-system'
 import { cn } from '@/lib/utils'
-import { useDirection } from '@/context/direction-provider'
-import { type Collapsible, useLayout } from '@/context/layout-provider'
 import { useTheme } from '@/context/theme-provider'
+import {
+  colorThemes,
+  DEFAULT_COLOR_THEME,
+  useColorTheme,
+} from '@/context/color-theme-provider'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -25,19 +21,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { useSidebar } from './ui/sidebar'
 
 export function ConfigDrawer() {
-  const { setOpen } = useSidebar()
-  const { resetDir } = useDirection()
   const { resetTheme } = useTheme()
-  const { resetLayout } = useLayout()
+  const { resetColorTheme } = useColorTheme()
 
   const handleReset = () => {
-    setOpen(true)
-    resetDir()
     resetTheme()
-    resetLayout()
+    resetColorTheme()
   }
 
   return (
@@ -56,14 +47,12 @@ export function ConfigDrawer() {
         <SheetHeader className='pb-0 text-start'>
           <SheetTitle>Theme Settings</SheetTitle>
           <SheetDescription>
-            Adjust the appearance and layout to suit your preferences.
+            Customize the look and feel of your dashboard.
           </SheetDescription>
         </SheetHeader>
-        <div className='space-y-6 overflow-y-auto px-4'>
+        <div className='flex flex-1 flex-col gap-6 overflow-hidden px-4'>
           <ThemeConfig />
-          <SidebarConfig />
-          <LayoutConfig />
-          <DirConfig />
+          <ThemeListSelector />
         </div>
         <SheetFooter className='gap-2'>
           <Button
@@ -216,146 +205,95 @@ function ThemeConfig() {
   )
 }
 
-function SidebarConfig() {
-  const { defaultVariant, variant, setVariant } = useLayout()
-  return (
-    <div className='max-md:hidden'>
-      <SectionTitle
-        title='Sidebar'
-        showReset={defaultVariant !== variant}
-        onReset={() => setVariant(defaultVariant)}
-        resetAriaLabel='Reset sidebar style to default'
-      />
-      <Radio
-        value={variant}
-        onValueChange={setVariant}
-        className='grid w-full max-w-md grid-cols-3 gap-4'
-        aria-label='Select sidebar style'
-        aria-describedby='sidebar-description'
-      >
-        {[
-          {
-            value: 'inset',
-            label: 'Inset',
-            icon: IconSidebarInset,
-          },
-          {
-            value: 'floating',
-            label: 'Floating',
-            icon: IconSidebarFloating,
-          },
-          {
-            value: 'sidebar',
-            label: 'Sidebar',
-            icon: IconSidebarSidebar,
-          },
-        ].map((item) => (
-          <RadioGroupItem key={item.value} item={item} />
-        ))}
-      </Radio>
-      <div id='sidebar-description' className='sr-only'>
-        Choose between inset, floating, or standard sidebar layout
-      </div>
-    </div>
+function ThemeListSelector() {
+  const [search, setSearch] = useState('')
+  const { colorTheme, setColorTheme } = useColorTheme()
+
+  const filtered = colorThemes.filter((t) =>
+    t.label.toLowerCase().includes(search.toLowerCase())
   )
-}
-
-function LayoutConfig() {
-  const { open, setOpen } = useSidebar()
-  const { defaultCollapsible, collapsible, setCollapsible } = useLayout()
-
-  const radioState = open ? 'default' : collapsible
 
   return (
-    <div className='max-md:hidden'>
+    <div className='flex min-h-0 flex-1 flex-col'>
       <SectionTitle
-        title='Layout'
-        showReset={radioState !== 'default'}
-        onReset={() => {
-          setOpen(true)
-          setCollapsible(defaultCollapsible)
-        }}
-        resetAriaLabel='Reset layout options to default'
+        title='Color Theme'
+        showReset={colorTheme !== DEFAULT_COLOR_THEME}
+        onReset={() => setColorTheme(DEFAULT_COLOR_THEME)}
+        resetAriaLabel='Reset color theme to default'
       />
-      <Radio
-        value={radioState}
-        onValueChange={(v) => {
-          if (v === 'default') {
-            setOpen(true)
-            return
-          }
-          setOpen(false)
-          setCollapsible(v as Collapsible)
-        }}
-        className='grid w-full max-w-md grid-cols-3 gap-4'
-        aria-label='Select layout style'
-        aria-describedby='layout-description'
-      >
-        {[
-          {
-            value: 'default',
-            label: 'Default',
-            icon: IconLayoutDefault,
-          },
-          {
-            value: 'icon',
-            label: 'Compact',
-            icon: IconLayoutCompact,
-          },
-          {
-            value: 'offcanvas',
-            label: 'Full layout',
-            icon: IconLayoutFull,
-          },
-        ].map((item) => (
-          <RadioGroupItem key={item.value} item={item} />
-        ))}
-      </Radio>
-      <div id='layout-description' className='sr-only'>
-        Choose between default expanded, compact icon-only, or full layout mode
+
+      {/* Search input */}
+      <div className='relative mb-3'>
+        <Search className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
+        <input
+          type='text'
+          placeholder='Search themes...'
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className={cn(
+            'w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm',
+            'placeholder:text-muted-foreground',
+            'focus:outline-none focus:ring-2 focus:ring-ring',
+            'transition-colors'
+          )}
+        />
       </div>
-    </div>
-  )
-}
 
-function DirConfig() {
-  const { defaultDir, dir, setDir } = useDirection()
-  return (
-    <div>
-      <SectionTitle
-        title='Direction'
-        showReset={defaultDir !== dir}
-        onReset={() => setDir(defaultDir)}
-        resetAriaLabel='Reset text direction to default'
-      />
-      <Radio
-        value={dir}
-        onValueChange={setDir}
-        className='grid w-full max-w-md grid-cols-3 gap-4'
-        aria-label='Select site direction'
-        aria-describedby='direction-description'
+      {/* Theme count */}
+      <p className='mb-2 text-xs text-muted-foreground'>
+        {filtered.length} theme{filtered.length !== 1 ? 's' : ''}
+      </p>
+
+      {/* Scrollable theme list */}
+      <div
+        className='flex-1 space-y-0.5 overflow-y-auto rounded-lg pr-1'
+        role='radiogroup'
+        aria-label='Select color theme'
       >
-        {[
-          {
-            value: 'ltr',
-            label: 'Left to Right',
-            icon: (props: SVGProps<SVGSVGElement>) => (
-              <IconDir dir='ltr' {...props} />
-            ),
-          },
-          {
-            value: 'rtl',
-            label: 'Right to Left',
-            icon: (props: SVGProps<SVGSVGElement>) => (
-              <IconDir dir='rtl' {...props} />
-            ),
-          },
-        ].map((item) => (
-          <RadioGroupItem key={item.value} item={item} />
+        {filtered.length === 0 && (
+          <p className='py-8 text-center text-sm text-muted-foreground'>
+            No themes found
+          </p>
+        )}
+        {filtered.map((ct) => (
+          <button
+            key={ct.name}
+            onClick={() => setColorTheme(ct.name)}
+            role='radio'
+            aria-checked={colorTheme === ct.name}
+            aria-label={`Select ${ct.label} theme`}
+            className={cn(
+              'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-150',
+              colorTheme === ct.name
+                ? 'bg-primary text-primary-foreground shadow-md'
+                : 'hover:bg-accent'
+            )}
+          >
+            {/* Color preview dots */}
+            <div className='flex gap-1'>
+              {ct.colors.map((color, i) => (
+                <span
+                  key={i}
+                  className={cn(
+                    'size-3.5 rounded-full shadow-sm',
+                    colorTheme === ct.name
+                      ? 'ring-1 ring-primary-foreground/30'
+                      : 'ring-1 ring-border/50'
+                  )}
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+
+            {/* Theme name */}
+            <span className='text-sm font-medium'>{ct.label}</span>
+
+            {/* Selected indicator */}
+            {colorTheme === ct.name && (
+              <Check className='ml-auto size-4 shrink-0' strokeWidth={3} />
+            )}
+          </button>
         ))}
-      </Radio>
-      <div id='direction-description' className='sr-only'>
-        Choose between left-to-right or right-to-left site direction
       </div>
     </div>
   )

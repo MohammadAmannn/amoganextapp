@@ -5,24 +5,23 @@ import { useAuthStore } from '@/stores/auth-store'
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: ({ location }) => {
     const { auth } = useAuthStore.getState()
+    const redirectTo = location.href
 
-    // Check if user has a valid access token and user data
     if (!auth.accessToken || !auth.user) {
       throw redirect({
         to: '/sign-in',
         search: {
-          redirect: location.pathname + location.search,
+          redirect: redirectTo,
         },
       })
     }
 
-    // Check if session has expired
     if (auth.user.exp && auth.user.exp < Date.now()) {
       auth.reset()
       throw redirect({
         to: '/sign-in',
         search: {
-          redirect: location.pathname + location.search,
+          redirect: redirectTo,
         },
       })
     }

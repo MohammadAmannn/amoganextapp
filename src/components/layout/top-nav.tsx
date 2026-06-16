@@ -62,7 +62,10 @@ export function TopNav({ className, links, ...props }: TopNavProps) {
           <Button
             size='icon'
             variant='outline'
-            className={cn('md:size-7 lg:hidden', className)}
+            className={cn(
+              'hidden size-8 shrink-0 md:inline-flex lg:hidden',
+              className
+            )}
           >
             <Menu />
             <span className='sr-only'>Toggle navigation menu</span>

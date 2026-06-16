@@ -2,34 +2,30 @@ import {
   Construction,
   LayoutDashboard,
   Mail,
-  Monitor,
   Bug,
   ListTodo,
   FileX,
   HelpCircle,
   Lock,
-  Bell,
   Package,
-  Palette,
   ServerOff,
   Settings,
-  Wrench,
-  UserCog,
   UserX,
   Users,
   MessagesSquare,
   ShieldCheck,
-  AudioWaveform,
   Command,
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
 export const sidebarData: SidebarData = {
+  // Footer me dikhne wala current user data.
   user: {
     name: 'satnaing',
     email: 'satnaingdev@gmail.com',
     avatar: '/avatars/shadcn.jpg',
   },
+  // Sidebar header team switcher ke dropdown options.
   teams: [
     {
       name: 'Shadcn Admin',
@@ -37,27 +33,31 @@ export const sidebarData: SidebarData = {
       plan: 'Vite + ShadcnUI',
     },
    
-    {
-      name: 'Acme Corp.',
-      logo: AudioWaveform,
-      plan: 'Startup',
-    },
+    // {
+    //   name: 'Acme Corp.',
+    //   logo: AudioWaveform,
+    //   plan: 'Startup',
+    // },
   ],
   navGroups: [
     {
+      // Primary work/navigation group.
       title: 'General',
       items: [
         {
+          // Landing page / overview screen.
           title: 'Dashboard',
           url: '/',
           icon: LayoutDashboard,
         },
         {
+          // Task management module.
           title: 'Tasks',
           url: '/tasks',
           icon: ListTodo,
         },
         {
+          // Inbox with unread count badge.
           title: 'Inbox',
           url: '/inbox',
           badge: '4',
@@ -82,6 +82,7 @@ export const sidebarData: SidebarData = {
       ],
     },
     {
+      // Auth aur error pages ko group karke dikhata hai.
       title: 'Pages',
       items: [
         {
@@ -144,37 +145,17 @@ export const sidebarData: SidebarData = {
       ],
     },
     {
+      // Support/utility section (settings + help).
       title: 'Other',
       items: [
         {
+          // Settings ke andar sub-pages nested menu me show hote hain.
           title: 'Settings',
           icon: Settings,
           items: [
-            {
-              title: 'Profile',
-              url: '/settings',
-              icon: UserCog,
-            },
-            {
-              title: 'Account',
-              url: '/settings',
-              icon: Wrench,
-            },
-            {
-              title: 'Appearance',
-              url: '/settings',
-              icon: Palette,
-            },
-            {
-              title: 'Notifications',
-              url: '/settings',
-              icon: Bell,
-            },
-            {
-              title: 'Display',
-              url: '/settings',
-              icon: Monitor,
-            },
+
+            // Settings ke andar sub-pages aagynge 
+   
           ],
         },
         {

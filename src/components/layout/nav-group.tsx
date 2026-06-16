@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, X } from 'lucide-react'
+import { useLayout } from '@/context/layout-provider'
 import {
   Collapsible,
   CollapsibleContent,
@@ -17,6 +18,7 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { Button } from '@/components/ui/button'
 import { Badge } from '../ui/badge'
 import {
   DropdownMenu,
@@ -34,17 +36,36 @@ import {
 } from './types'
 
 export function NavGroup({ title, items }: NavGroupProps) {
-  const { state, isMobile } = useSidebar()
+  const { state, isMobile, openMobile, setOpenMobile } = useSidebar()
   const href = useLocation({ select: (location) => location.href })
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>{title}</SidebarGroupLabel>
+      <SidebarGroupLabel className='justify-between gap-2'>
+        <span>{title}</span>
+        {/* Mobile-only: "General" ke right side pe close (X) button,
+            taki user sidebar ko easily close kar sake */}
+        {title === 'General' && isMobile && openMobile && (
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon'
+            className='size-6 shrink-0'
+            aria-label='Close sidebar'
+            onClick={() => setOpenMobile(false)}
+          >
+            <X className='size-4' aria-hidden='true' />
+          </Button>
+        )}
+      </SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
           const key = `${item.title}-${item.url}`
 
           if (!item.items)
             return <SidebarMenuLink key={key} item={item} href={href} />
+
+          if (item.title === 'Settings' && item.items.length === 0)
+            return <SidebarMenuSettings key={key} item={item} />
 
           if (state === 'collapsed' && !isMobile)
             return (
@@ -64,6 +85,8 @@ function NavBadge({ children }: { children: ReactNode }) {
 
 function SidebarMenuLink({ item, href }: { item: NavLink; href: string }) {
   const { setOpenMobile } = useSidebar()
+  const { setShowInlineNotFound } = useLayout()
+
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
@@ -71,11 +94,38 @@ function SidebarMenuLink({ item, href }: { item: NavLink; href: string }) {
         isActive={checkIsActive(href, item)}
         tooltip={item.title}
       >
-        <Link to={item.url} onClick={() => setOpenMobile(false)}>
+        <Link
+          to={item.url}
+          onClick={() => {
+            setShowInlineNotFound(false)
+            setOpenMobile(false)
+          }}
+        >
           {item.icon && <item.icon />}
           <span>{item.title}</span>
           {item.badge && <NavBadge>{item.badge}</NavBadge>}
         </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  )
+}
+
+function SidebarMenuSettings({ item }: { item: NavCollapsible }) {
+  const { setOpenMobile } = useSidebar()
+  const { showInlineNotFound, setShowInlineNotFound } = useLayout()
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        tooltip={item.title}
+        isActive={showInlineNotFound}
+        onClick={() => {
+          setShowInlineNotFound(true)
+          setOpenMobile(false)
+        }}
+      >
+        {item.icon && <item.icon />}
+        <span>{item.title}</span>
       </SidebarMenuButton>
     </SidebarMenuItem>
   )
@@ -89,6 +139,7 @@ function SidebarMenuCollapsible({
   href: string
 }) {
   const { setOpenMobile } = useSidebar()
+  const { setShowInlineNotFound } = useLayout()
   return (
     <Collapsible
       asChild
@@ -112,7 +163,13 @@ function SidebarMenuCollapsible({
                   asChild
                   isActive={checkIsActive(href, subItem)}
                 >
-                  <Link to={subItem.url} onClick={() => setOpenMobile(false)}>
+                  <Link
+                    to={subItem.url}
+                    onClick={() => {
+                      setShowInlineNotFound(false)
+                      setOpenMobile(false)
+                    }}
+                  >
                     {subItem.icon && <subItem.icon />}
                     <span>{subItem.title}</span>
                     {subItem.badge && <NavBadge>{subItem.badge}</NavBadge>}

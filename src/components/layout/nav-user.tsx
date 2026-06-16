@@ -1,19 +1,10 @@
-import { Link } from '@tanstack/react-router'
-import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  CreditCard,
-  LogOut,
-  Sparkles,
-} from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import useDialogState from '@/hooks/use-dialog-state'
 import { useAuthStore } from '@/stores/auth-store'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -40,7 +31,6 @@ export function NavUser({ user: fallbackUser }: NavUserProps) {
   const [open, setOpen] = useDialogState()
   const { auth } = useAuthStore()
 
-  // Use real user data from auth store, falling back to prop data
   const userName = auth.user?.name || auth.user?.email?.split('@')[0] || fallbackUser.name
   const userEmail = auth.user?.email || fallbackUser.email
   const userAvatar = auth.user?.picture || fallbackUser.avatar
@@ -69,7 +59,6 @@ export function NavUser({ user: fallbackUser }: NavUserProps) {
                   <span className='truncate font-semibold'>{userName}</span>
                   <span className='truncate text-xs'>{userEmail}</span>
                 </div>
-                <ChevronsUpDown className='ms-auto size-4' />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -90,34 +79,6 @@ export function NavUser({ user: fallbackUser }: NavUserProps) {
                   </div>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  <Sparkles />
-                  Upgrade to Pro
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem asChild>
-                  <Link to='/settings'>
-                    <BadgeCheck />
-                    Account
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to='/settings'>
-                    <CreditCard />
-                    Billing
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to='/settings'>
-                    <Bell />
-                    Notifications
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant='destructive'

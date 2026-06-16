@@ -4,14 +4,29 @@ import { Button } from '@/components/ui/button'
 
 type NotFoundErrorProps = React.HTMLAttributes<HTMLDivElement> & {
   embedded?: boolean
+  onDismiss?: () => void
 }
 
 export function NotFoundError({
   className,
   embedded = false,
+  onDismiss,
 }: NotFoundErrorProps) {
   const navigate = useNavigate()
   const { history } = useRouter()
+
+  const handleGoBack = () => {
+    if (onDismiss) {
+      onDismiss()
+      return
+    }
+    history.go(-1)
+  }
+
+  const handleGoHome = () => {
+    if (onDismiss) onDismiss()
+    navigate({ to: '/' })
+  }
   return (
     <div className={cn(embedded ? 'min-h-96 w-full py-8' : 'h-svh', className)}>
       <div className='m-auto flex h-full w-full flex-col items-center justify-center gap-2'>
@@ -29,10 +44,10 @@ export function NotFoundError({
           does not exist or might have been removed.
         </p>
         <div className='mt-6 flex gap-4'>
-          <Button variant='outline' onClick={() => history.go(-1)}>
+          <Button variant='outline' onClick={handleGoBack}>
             Go Back
           </Button>
-          <Button onClick={() => navigate({ to: '/' })}>Back to Home</Button>
+          <Button onClick={handleGoHome}>Back to Home</Button>
         </div>
       </div>
     </div>

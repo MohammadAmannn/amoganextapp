@@ -29,12 +29,16 @@ export function DashboardHeader({ activeNav, onNavChange }: DashboardHeaderProps
 
   return (
     <Header>
+      <Search className='min-w-0 flex-1 md:flex-none md:pe-12' />
       <TopNav links={links} className='me-auto' />
-      <Search />
-      <ThemeSelector />
-      <ThemeSwitch />
-      <ConfigDrawer />
-      <ProfileDropdown />
+      <div className='flex shrink-0 items-center gap-1 sm:gap-1.5 md:gap-2'>
+        <ThemeSelector />
+        <ThemeSwitch />
+        <div className='max-[380px]:hidden'>
+          <ConfigDrawer />
+        </div>
+        <ProfileDropdown />
+      </div>
     </Header>
   )
 }

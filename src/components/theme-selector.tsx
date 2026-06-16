@@ -23,7 +23,7 @@ export function ThemeSelector() {
         <Button
           variant='ghost'
           size='icon'
-          className='relative scale-95 rounded-full'
+          className='relative size-8 shrink-0 scale-95 rounded-full'
           aria-label='Select color theme'
         >
           <Palette className='size-[1.2rem]' />

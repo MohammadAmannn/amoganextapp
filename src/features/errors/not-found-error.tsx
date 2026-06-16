@@ -1,13 +1,28 @@
 import { useNavigate, useRouter } from '@tanstack/react-router'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
-export function NotFoundError() {
+type NotFoundErrorProps = React.HTMLAttributes<HTMLDivElement> & {
+  embedded?: boolean
+}
+
+export function NotFoundError({
+  className,
+  embedded = false,
+}: NotFoundErrorProps) {
   const navigate = useNavigate()
   const { history } = useRouter()
   return (
-    <div className='h-svh'>
+    <div className={cn(embedded ? 'min-h-96 w-full py-8' : 'h-svh', className)}>
       <div className='m-auto flex h-full w-full flex-col items-center justify-center gap-2'>
-        <h1 className='text-[7rem] leading-tight font-bold'>404</h1>
+        <h1
+          className={cn(
+            'leading-tight font-bold',
+            embedded ? 'text-6xl' : 'text-[7rem]'
+          )}
+        >
+          404
+        </h1>
         <span className='font-medium'>Oops! Page Not Found!</span>
         <p className='text-center text-muted-foreground'>
           It seems like the page you're looking for <br />

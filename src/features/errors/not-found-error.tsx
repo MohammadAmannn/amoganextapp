@@ -23,7 +23,7 @@ export function NotFoundError({
         >
           404
         </h1>
-        <span className='font-medium'>Oops! Page Not Found!</span>
+        <span className='font-medium'>Oops! Page Not Found :-(!</span>
         <p className='text-center text-muted-foreground'>
           It seems like the page you're looking for <br />
           does not exist or might have been removed.

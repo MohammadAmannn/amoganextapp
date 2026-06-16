@@ -17,6 +17,10 @@ function RootError({ error }: ErrorComponentProps) {
   return <GeneralError />
 }
 
+function RootNotFound() {
+  return <NotFoundError />
+}
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
 }>()({
@@ -35,6 +39,6 @@ export const Route = createRootRouteWithContext<{
       </>
     )
   },
-  notFoundComponent: NotFoundError,
+  notFoundComponent: RootNotFound,
   errorComponent: RootError,
 })

@@ -157,22 +157,22 @@ export const sidebarData: SidebarData = {
             },
             {
               title: 'Account',
-              url: '/settings/account',
+              url: '/settings',
               icon: Wrench,
             },
             {
               title: 'Appearance',
-              url: '/settings/appearance',
+              url: '/settings',
               icon: Palette,
             },
             {
               title: 'Notifications',
-              url: '/settings/notifications',
+              url: '/settings',
               icon: Bell,
             },
             {
               title: 'Display',
-              url: '/settings/display',
+              url: '/settings',
               icon: Monitor,
             },
           ],

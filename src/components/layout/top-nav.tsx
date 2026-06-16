@@ -12,13 +12,49 @@ import {
 type TopNavProps = React.HTMLAttributes<HTMLElement> & {
   links: {
     title: string
-    href: string
+    href?: string
     isActive: boolean
     disabled?: boolean
+    onClick?: () => void
   }[]
 }
 
 export function TopNav({ className, links, ...props }: TopNavProps) {
+  const renderLink = ({
+    title,
+    href,
+    isActive,
+    disabled,
+    onClick,
+  }: TopNavProps['links'][number]) => {
+    const className = `text-sm font-medium transition-colors hover:text-primary ${isActive ? '' : 'text-muted-foreground'}`
+
+    if (onClick) {
+      return (
+        <button
+          type='button'
+          key={title}
+          onClick={onClick}
+          disabled={disabled}
+          className={className}
+        >
+          {title}
+        </button>
+      )
+    }
+
+    return (
+      <Link
+        key={title}
+        to={href!}
+        disabled={disabled}
+        className={className}
+      >
+        {title}
+      </Link>
+    )
+  }
+
   return (
     <>
       <DropdownMenu modal={false}>
@@ -33,15 +69,26 @@ export function TopNav({ className, links, ...props }: TopNavProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent side='bottom' align='start'>
-          {links.map(({ title, href, isActive, disabled }) => (
-            <DropdownMenuItem key={`${title}-${href}`} asChild>
-              <Link
-                to={href}
-                className={!isActive ? 'text-muted-foreground' : ''}
-                disabled={disabled}
-              >
-                {title}
-              </Link>
+          {links.map((link) => (
+            <DropdownMenuItem
+              key={link.title}
+              disabled={link.disabled}
+              onClick={link.onClick}
+              asChild={!link.onClick}
+            >
+              {link.onClick ? (
+                <span className={!link.isActive ? 'text-muted-foreground' : ''}>
+                  {link.title}
+                </span>
+              ) : (
+                <Link
+                  to={link.href!}
+                  className={!link.isActive ? 'text-muted-foreground' : ''}
+                  disabled={link.disabled}
+                >
+                  {link.title}
+                </Link>
+              )}
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>
@@ -54,16 +101,7 @@ export function TopNav({ className, links, ...props }: TopNavProps) {
         )}
         {...props}
       >
-        {links.map(({ title, href, isActive, disabled }) => (
-          <Link
-            key={`${title}-${href}`}
-            to={href}
-            disabled={disabled}
-            className={`text-sm font-medium transition-colors hover:text-primary ${isActive ? '' : 'text-muted-foreground'}`}
-          >
-            {title}
-          </Link>
-        ))}
+        {links.map((link) => renderLink(link))}
       </nav>
     </>
   )

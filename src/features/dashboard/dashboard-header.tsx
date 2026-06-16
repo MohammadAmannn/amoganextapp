@@ -1,4 +1,3 @@
-import { useLocation } from '@tanstack/react-router'
 import { ConfigDrawer } from '@/components/config-drawer'
 import { Header } from '@/components/layout/header'
 import { TopNav } from '@/components/layout/top-nav'
@@ -7,19 +6,25 @@ import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { ThemeSelector } from '@/components/theme-selector'
 
-const topNavLinks = [
-  { title: 'Overview', href: '/' },
-  { title: 'Customers', href: '/dashboard/customers' },
-  { title: 'Products', href: '/dashboard/products' },
-  { title: 'Settings', href: '/dashboard/settings' },
+export type DashboardNavId = 'overview' | 'customers' | 'products' | 'settings'
+
+type DashboardHeaderProps = {
+  activeNav: DashboardNavId
+  onNavChange: (nav: DashboardNavId) => void
+}
+
+const topNavItems: { title: string; id: DashboardNavId }[] = [
+  { title: 'Overview', id: 'overview' },
+  { title: 'Customers', id: 'customers' },
+  { title: 'Products', id: 'products' },
+  { title: 'Settings', id: 'settings' },
 ]
 
-export function DashboardHeader() {
-  const { pathname } = useLocation()
-
-  const links = topNavLinks.map((link) => ({
-    ...link,
-    isActive: pathname === link.href,
+export function DashboardHeader({ activeNav, onNavChange }: DashboardHeaderProps) {
+  const links = topNavItems.map((item) => ({
+    title: item.title,
+    isActive: activeNav === item.id,
+    onClick: () => onNavChange(item.id),
   }))
 
   return (

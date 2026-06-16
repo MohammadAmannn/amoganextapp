@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -11,13 +12,18 @@ import { Main } from '@/components/layout/main'
 import { Analytics } from './components/analytics'
 import { Overview } from './components/overview'
 import { RecentSales } from './components/recent-sales'
-import { DashboardHeader } from './dashboard-header'
+import { DashboardHeader, type DashboardNavId } from './dashboard-header'
+import { NotFoundError } from '@/features/errors/not-found-error'
 
 export function Dashboard() {
+  const [activeNav, setActiveNav] = useState<DashboardNavId>('overview')
+
   return (
     <>
-      <DashboardHeader />
+      <DashboardHeader activeNav={activeNav} onNavChange={setActiveNav} />
       <Main>
+        {activeNav === 'overview' ? (
+          <>
         <div className='mb-2 flex items-center justify-between space-y-2'>
           <h1 className='text-2xl font-bold tracking-tight'>Dashboard</h1>
           <div className='flex items-center space-x-2'>
@@ -171,6 +177,10 @@ export function Dashboard() {
             <Analytics />
           </TabsContent>
         </Tabs>
+          </>
+        ) : (
+          <NotFoundError embedded />
+        )}
       </Main>
     </>
   )

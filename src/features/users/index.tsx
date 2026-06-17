@@ -1,6 +1,5 @@
 import { getRouteApi } from '@tanstack/react-router'
 import { ConfigDrawer } from '@/components/config-drawer'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
@@ -10,7 +9,7 @@ import { UsersPrimaryButtons } from './components/users-primary-buttons'
 import { UsersProvider } from './components/users-provider'
 import { UsersTable } from './components/users-table'
 import { users } from './data/users'
-
+import { AppHeader } from '@/components/layout/app-header'
 const route = getRouteApi('/_authenticated/users/')
 
 export function Users() {
@@ -19,12 +18,12 @@ export function Users() {
 
   return (
     <UsersProvider>
-      <Header fixed>
+      <AppHeader fixed>
         <Search className='me-auto' />
         <ThemeSwitch />
         <ConfigDrawer />
         <ProfileDropdown />
-      </Header>
+      </AppHeader>
 
       <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
         <div className='flex flex-wrap items-end justify-between gap-2'>

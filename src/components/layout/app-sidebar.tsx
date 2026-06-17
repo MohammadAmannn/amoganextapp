@@ -17,28 +17,28 @@ export function AppSidebar() {
   return (
     // Sidebar ko fixed "sidebar" variant par lock kiya gaya hai (floating remove).
     <Sidebar collapsible={collapsible} variant='sidebar'>
-      {/* Top area: app/team identity + desktop par sidebar open/close trigger */}
-      <SidebarHeader className='flex-row items-center justify-between gap-2'>
-        <TeamSwitcher teams={sidebarData.teams} />
-        <SidebarTrigger
-          variant='outline'
-          className='hidden md:inline-flex'
-          aria-label='Toggle sidebar'
-        />
-
-        {/* Replace <TeamSwitch /> with the following <AppTitle />
-         /* if you want to use the normal app title instead of TeamSwitch dropdown */}
-        {/* <AppTitle /> */}
-      </SidebarHeader>
-      {/* Middle area: yahan General / Pages / Other groups render hote hain */}
-      <SidebarContent>
-        {sidebarData.navGroups.map((props) => (
-          <NavGroup key={props.title} {...props} />
-        ))}
-      </SidebarContent>
-
-      {/* Edge rail: collapsed sidebar ko mouse se expand/collapse karne ka clickable area */}
-      <SidebarRail />
-    </Sidebar>
+    {/* Logo */}
+    <SidebarHeader>
+      <TeamSwitcher teams={sidebarData.teams} />
+    </SidebarHeader>
+  
+    {/* NEW: Toggle sits below logo */}
+    {/* ==========================================
+    Show toggle below logo ONLY when collapsed
+========================================== */}
+<div className='hidden group-data-[state=collapsed]:flex justify-center py-2'>
+  <SidebarTrigger
+    variant='ghost'
+    className='h-8 w-8'
+    aria-label='Toggle sidebar'
+  />
+</div>
+    {/* Navigation */}
+    <SidebarContent>
+      {sidebarData.navGroups.map((props) => (
+        <NavGroup key={props.title} {...props} />
+      ))}
+    </SidebarContent>
+  </Sidebar>
   )
 }

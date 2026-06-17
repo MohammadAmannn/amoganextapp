@@ -27,6 +27,8 @@ import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { NewChat } from './components/new-chat'
 import { type ChatUser, type Convo } from './data/chat-types'
+import { AppHeader } from '@/components/layout/app-header'
+
 // Fake Data
 import { conversations } from './data/convo.json'
 
@@ -66,12 +68,12 @@ export function Chats() {
   return (
     <>
       {/* ===== Top Heading ===== */}
-      <Header>
+      <AppHeader fixed>
         <Search className='me-auto' />
         <ThemeSwitch />
         <ConfigDrawer />
         <ProfileDropdown />
-      </Header>
+      </AppHeader>
 
       <Main fixed>
         <section className='flex h-full gap-6'>

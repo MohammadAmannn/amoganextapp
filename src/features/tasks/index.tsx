@@ -9,16 +9,17 @@ import { TasksPrimaryButtons } from './components/tasks-primary-buttons'
 import { TasksProvider } from './components/tasks-provider'
 import { TasksTable } from './components/tasks-table'
 import { tasks } from './data/tasks'
+import { AppHeader } from '@/components/layout/app-header'
 
 export function Tasks() {
   return (
     <TasksProvider>
-      <Header fixed>
+      <AppHeader fixed>
         <Search className='me-auto' />
         <ThemeSwitch />
         <ConfigDrawer />
         <ProfileDropdown />
-      </Header>
+      </AppHeader>
 
       <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
         <div className='flex flex-wrap items-end justify-between gap-2'>

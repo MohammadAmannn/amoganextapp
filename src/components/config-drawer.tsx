@@ -22,7 +22,14 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 
-export function ConfigDrawer() {
+// ✅ ADDED: Allow custom trigger
+type ConfigDrawerProps = {
+  trigger?: React.ReactNode
+}
+
+export function ConfigDrawer({
+  trigger,
+}: ConfigDrawerProps) {
   const { resetTheme } = useTheme()
   const { resetColorTheme } = useColorTheme()
 
@@ -33,16 +40,27 @@ export function ConfigDrawer() {
 
   return (
     <Sheet>
+      {/* ==========================================
+          UPDATED
+          Use custom trigger if provided
+          Otherwise show default settings button
+      ========================================== */}
       <SheetTrigger asChild>
-        <Button
-          size='icon'
-          variant='ghost'
-          aria-label='Open theme settings'
-          className='rounded-full'
-        >
-          <Settings aria-hidden='true' />
-        </Button>
+        {trigger ?? (
+          <Button
+            size='icon'
+            variant='ghost'
+            aria-label='Open theme settings'
+            className='rounded-full'
+          >
+            <Settings aria-hidden='true' />
+          </Button>
+        )}
       </SheetTrigger>
+
+      {/* ==========================================
+          EXISTING DRAWER CONTENT
+      ========================================== */}
       <SheetContent className='flex flex-col'>
         <SheetHeader className='pb-0 text-start'>
           <SheetTitle>Theme Settings</SheetTitle>
@@ -50,15 +68,16 @@ export function ConfigDrawer() {
             Customize the look and feel of your dashboard.
           </SheetDescription>
         </SheetHeader>
+
         <div className='flex flex-1 flex-col gap-6 overflow-hidden px-4'>
           <ThemeConfig />
           <ThemeListSelector />
         </div>
+
         <SheetFooter className='gap-2'>
           <Button
             variant='destructive'
             onClick={handleReset}
-            aria-label='Reset all settings to default values'
           >
             Reset
           </Button>

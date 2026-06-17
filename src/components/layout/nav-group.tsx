@@ -16,6 +16,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
@@ -38,25 +39,41 @@ import {
 export function NavGroup({ title, items }: NavGroupProps) {
   const { state, isMobile, openMobile, setOpenMobile } = useSidebar()
   const href = useLocation({ select: (location) => location.href })
+
   return (
     <SidebarGroup>
-      <SidebarGroupLabel className='justify-between gap-2'>
-        <span>{title}</span>
-        {/* Mobile-only: "General" ke right side pe close (X) button,
-            taki user sidebar ko easily close kar sake */}
-        {title === 'General' && isMobile && openMobile && (
-          <Button
-            type='button'
-            variant='ghost'
-            size='icon'
-            className='size-6 shrink-0'
-            aria-label='Close sidebar'
-            onClick={() => setOpenMobile(false)}
-          >
-            <X className='size-4' aria-hidden='true' />
-          </Button>
-        )}
-      </SidebarGroupLabel>
+      {/* ✅ UPDATED: Added flex layout for title + trigger */}
+    {/* ==========================================
+    UPDATED: Desktop + Mobile Layout
+========================================== */}
+<SidebarGroupLabel className='flex items-center justify-between'>
+  {/* Left Side */}
+  <span>{title}</span>
+
+  {/* Desktop: Toggle on far right */}
+  {title === 'General' && !isMobile && (
+    <SidebarTrigger
+      variant='ghost'
+      className='h-5 w-5'
+      aria-label='Toggle sidebar'
+    />
+  )}
+
+  {/* Mobile: Close button */}
+  {title === 'General' && isMobile && openMobile && (
+    <Button
+      type='button'
+      variant='ghost'
+      size='icon'
+      className='size-6 shrink-0'
+      aria-label='Close sidebar'
+      onClick={() => setOpenMobile(false)}
+    >
+      <X className='size-4' aria-hidden='true' />
+    </Button>
+  )}
+</SidebarGroupLabel>
+
       <SidebarMenu>
         {items.map((item) => {
           const key = `${item.title}-${item.url}`

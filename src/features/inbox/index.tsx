@@ -14,7 +14,7 @@ import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
-
+import { AppHeader } from '@/components/layout/app-header'
 export function Inbox() {
   const [emails] = useState<Email[]>(emailData)
   const [searchQuery, setSearchQuery] = useState('')
@@ -33,12 +33,12 @@ export function Inbox() {
 
   return (
     <>
-      <Header fixed>
+      <AppHeader fixed>
         <Search className='me-auto' />
         <ThemeSwitch />
         <ConfigDrawer />
         <ProfileDropdown />
-      </Header>
+      </AppHeader>
 
       <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
         <div className='flex flex-wrap items-end justify-between gap-2'>

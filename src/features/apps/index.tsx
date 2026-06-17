@@ -18,6 +18,7 @@ import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { apps } from './data/apps'
+import { AppHeader } from '@/components/layout/app-header'
 
 const route = getRouteApi('/_authenticated/apps/')
 
@@ -84,12 +85,12 @@ export function Apps() {
   return (
     <>
       {/* ===== Top Heading ===== */}
-      <Header>
+      <AppHeader fixed>
         <Search className='me-auto' />
         <ThemeSwitch />
         <ConfigDrawer />
         <ProfileDropdown />
-      </Header>
+      </AppHeader>
 
       {/* ===== Content ===== */}
       <Main fixed>

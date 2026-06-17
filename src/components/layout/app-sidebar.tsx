@@ -3,7 +3,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
-  SidebarRail,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
 // import { AppTitle } from './app-title'

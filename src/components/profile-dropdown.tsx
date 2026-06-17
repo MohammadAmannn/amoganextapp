@@ -38,7 +38,7 @@ export function ProfileDropdown() {
   const userEmail = auth.user?.email || 'user@example.com'
   const userAvatar = auth.user?.picture || '/avatars/01.png'
   // ✅ ADD THIS
-const { showInlineNotFound, setShowInlineNotFound } = useLayout()
+const { setShowInlineNotFound } = useLayout()
 
   const userInitials = userName
     .split(' ')

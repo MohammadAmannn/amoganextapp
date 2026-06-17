@@ -15,49 +15,40 @@ import {
   MessagesSquare,
   ShieldCheck,
   Command,
+  Bot,
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
 export const sidebarData: SidebarData = {
-  // Footer me dikhne wala current user data.
   user: {
     name: 'satnaing',
     email: 'satnaingdev@gmail.com',
     avatar: '/avatars/shadcn.jpg',
   },
-  // Sidebar header team switcher ke dropdown options.
+
   teams: [
     {
       name: 'Shadcn Admin',
       logo: Command,
       plan: 'Vite + ShadcnUI',
     },
-   
-    // {
-    //   name: 'Acme Corp.',
-    //   logo: AudioWaveform,
-    //   plan: 'Startup',
-    // },
   ],
+
   navGroups: [
     {
-      // Primary work/navigation group.
       title: 'General',
       items: [
         {
-          // Landing page / overview screen.
           title: 'Dashboard',
           url: '/',
           icon: LayoutDashboard,
         },
         {
-          // Task management module.
           title: 'Tasks',
           url: '/tasks',
           icon: ListTodo,
         },
         {
-          // Inbox with unread count badge.
           title: 'Inbox',
           url: '/inbox',
           badge: '4',
@@ -75,14 +66,19 @@ export const sidebarData: SidebarData = {
           icon: MessagesSquare,
         },
         {
+          title: 'AI Chat',
+          url: '/ai_chat/ai-chat',
+          icon: Bot,
+        },
+        {
           title: 'Users',
           url: '/users',
           icon: Users,
         },
       ],
     },
+
     {
-      // Auth aur error pages ko group karke dikhata hai.
       title: 'Pages',
       items: [
         {
@@ -144,18 +140,15 @@ export const sidebarData: SidebarData = {
         },
       ],
     },
+
     {
-      // Support/utility section (settings + help).
       title: 'Other',
       items: [
         {
-          // Settings ke andar sub-pages nested menu me show hote hain.
           title: 'Settings',
           icon: Settings,
           items: [
-
-            // Settings ke andar sub-pages aagynge 
-   
+            // Add settings pages here
           ],
         },
         {

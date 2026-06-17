@@ -38,7 +38,7 @@ export function ProfileDropdown() {
   const userEmail = auth.user?.email || 'user@example.com'
   const userAvatar = auth.user?.picture || '/avatars/01.png'
   // ✅ ADD THIS
-const { setShowInlineNotFound } = useLayout()
+  const { setShowInlineNotFound } = useLayout()
 
   const userInitials = userName
     .split(' ')
@@ -111,16 +111,16 @@ const { setShowInlineNotFound } = useLayout()
           </DropdownMenuItem>
 
           {/* Buy Apps */}
-         {/* ==========================================
+          {/* ==========================================
     Buy Apps
     Navigate to Apps Page
 ========================================== */}
-<DropdownMenuItem asChild>
-  <Link to='/apps'>
-    <ShoppingBag className='mr-2 h-4 w-4' />
-    Buy Apps
-  </Link>
-</DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to='/apps'>
+              <ShoppingBag className='mr-2 h-4 w-4' />
+              Buy Apps
+            </Link>
+          </DropdownMenuItem>
 
 
 
@@ -128,15 +128,15 @@ const { setShowInlineNotFound } = useLayout()
           {/* ==========================================
     ADDED: Theme Settings
 ========================================== */}
-{/* Theme Settings */}
-<ConfigDrawer
-  trigger={
-    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-      <Palette className='mr-2 h-4 w-4' />
-      Theme Settings
-    </DropdownMenuItem>
-  }
-/>
+          {/* Theme Settings */}
+          <ConfigDrawer
+            trigger={
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <Palette className='mr-2 h-4 w-4' />
+                Theme Settings
+              </DropdownMenuItem>
+            }
+          />
 
           {/* Settings */}
           <DropdownMenuItem onClick={() => setShowInlineNotFound(true)}>

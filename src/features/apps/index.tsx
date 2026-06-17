@@ -81,9 +81,7 @@ export function Apps() {
   return (
     <>
       {/* ===== Top Heading ===== */}
-      <AppHeader fixed>
-       
-      </AppHeader>
+      <AppHeader title='Apps' />
 
       {/* ===== Content ===== */}
       <Main fixed>

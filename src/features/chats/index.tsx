@@ -63,9 +63,7 @@ export function Chats() {
   return (
     <>
       {/* ===== Top Heading ===== */}
-      <AppHeader fixed>
-        
-      </AppHeader>
+      <AppHeader title='Chats' />
 
       <Main fixed>
         <section className='flex h-full gap-6'>
@@ -242,7 +240,7 @@ export function Chats() {
                                   className={cn(
                                     'mt-1 block text-xs font-light text-foreground/75 italic',
                                     msg.sender === 'You' &&
-                                      'text-end text-primary-foreground/85'
+                                    'text-end text-primary-foreground/85'
                                   )}
                                 >
                                   {format(msg.timestamp, 'h:mm a')}

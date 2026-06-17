@@ -8,5 +8,8 @@
     "tdClassName:\\s*'([^']*)'",
     "thClassName:\\s*\"([^\"]*)\"",
     "thClassName:\\s*'([^']*)'"
-  ]
+  ],
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  }
 }

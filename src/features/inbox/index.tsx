@@ -29,9 +29,7 @@ export function Inbox() {
 
   return (
     <>
-      <AppHeader fixed>
-     
-      </AppHeader>
+      <AppHeader title='Inbox' />
 
       <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
         <div className='flex flex-wrap items-end justify-between gap-2'>

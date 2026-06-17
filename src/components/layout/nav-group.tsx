@@ -43,36 +43,36 @@ export function NavGroup({ title, items }: NavGroupProps) {
   return (
     <SidebarGroup>
       {/* ✅ UPDATED: Added flex layout for title + trigger */}
-    {/* ==========================================
+      {/* ==========================================
     UPDATED: Desktop + Mobile Layout
 ========================================== */}
-<SidebarGroupLabel className='flex items-center justify-between'>
-  {/* Left Side */}
-  <span>{title}</span>
+      <SidebarGroupLabel className='flex items-center justify-between'>
+        {/* Left Side */}
+        <span>{title}</span>
 
-  {/* Desktop: Toggle on far right */}
-  {title === 'General' && !isMobile && (
-    <SidebarTrigger
-      variant='ghost'
-      className='h-5 w-5'
-      aria-label='Toggle sidebar'
-    />
-  )}
+        {/* Desktop: Toggle on far right */}
+        {title === 'General' && !isMobile && (
+          <SidebarTrigger
+            variant='ghost'
+            className='h-5 w-5'
+            aria-label='Toggle sidebar'
+          />
+        )}
 
-  {/* Mobile: Close button */}
-  {title === 'General' && isMobile && openMobile && (
-    <Button
-      type='button'
-      variant='ghost'
-      size='icon'
-      className='size-6 shrink-0'
-      aria-label='Close sidebar'
-      onClick={() => setOpenMobile(false)}
-    >
-      <X className='size-4' aria-hidden='true' />
-    </Button>
-  )}
-</SidebarGroupLabel>
+        {/* Mobile: Close button */}
+        {title === 'General' && isMobile && openMobile && (
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon'
+            className='size-6 shrink-0'
+            aria-label='Close sidebar'
+            onClick={() => setOpenMobile(false)}
+          >
+            <X className='size-4' aria-hidden='true' />
+          </Button>
+        )}
+      </SidebarGroupLabel>
 
       <SidebarMenu>
         {items.map((item) => {

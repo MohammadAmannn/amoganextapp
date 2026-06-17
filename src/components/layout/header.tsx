@@ -26,9 +26,10 @@ export function Header({ className, fixed, children, ...props }: HeaderProps) {
     // Page header container: fixed mode me top par sticky behavior deta hai.
     <header
       className={cn(
-        'z-50 h-16',
-        fixed && 'header-fixed peer/header sticky top-0 w-[inherit]',
-        offset > 10 && fixed ? 'shadow' : 'shadow-none',
+        'z-50 h-16 shrink-0',
+        fixed &&
+          'header-fixed peer/header sticky top-0 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80',
+        offset > 10 && fixed ? 'shadow-sm' : 'shadow-none',
         className
       )}
       {...props}

@@ -9,9 +9,7 @@ import { AppHeader } from '@/components/layout/app-header'
 export function Tasks() {
   return (
     <TasksProvider>
-      <AppHeader fixed>
-        
-      </AppHeader>
+      <AppHeader title='Tasks' />
 
       <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
         <div className='flex flex-wrap items-end justify-between gap-2'>

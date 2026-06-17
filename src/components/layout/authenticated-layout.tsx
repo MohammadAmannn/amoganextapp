@@ -27,7 +27,7 @@ function AuthenticatedLayoutContent({ children }: AuthenticatedLayoutProps) {
       <AppSidebar />
       <SidebarInset
         className={cn(
-          '@container/content',
+          '@container/content flex min-h-svh flex-1 flex-col',
           'has-data-[layout=fixed]:h-svh',
           'peer-data-[variant=inset]:has-data-[layout=fixed]:h-[calc(100svh-(var(--spacing)*4))]'
         )}

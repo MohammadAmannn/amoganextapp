@@ -15,10 +15,7 @@ export function Tasks() {
   return (
     <TasksProvider>
       <AppHeader fixed>
-        <Search className='me-auto' />
-        <ThemeSwitch />
-        <ConfigDrawer />
-        <ProfileDropdown />
+        
       </AppHeader>
 
       <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>

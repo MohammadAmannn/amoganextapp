@@ -69,10 +69,7 @@ export function Chats() {
     <>
       {/* ===== Top Heading ===== */}
       <AppHeader fixed>
-        <Search className='me-auto' />
-        <ThemeSwitch />
-        <ConfigDrawer />
-        <ProfileDropdown />
+        
       </AppHeader>
 
       <Main fixed>

@@ -86,10 +86,7 @@ export function Apps() {
     <>
       {/* ===== Top Heading ===== */}
       <AppHeader fixed>
-        <Search className='me-auto' />
-        <ThemeSwitch />
-        <ConfigDrawer />
-        <ProfileDropdown />
+       
       </AppHeader>
 
       {/* ===== Content ===== */}

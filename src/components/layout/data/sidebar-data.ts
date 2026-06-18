@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Command,
   Bot,
+  SearchIcon,
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -69,6 +70,11 @@ export const sidebarData: SidebarData = {
           title: 'AI Chat',
           url: '/ai_chat',
           icon: Bot,
+        },
+        {
+          title: 'AI Search',
+          url: '/ai_search',
+          icon: SearchIcon,
         },
         {
           title: 'Users',

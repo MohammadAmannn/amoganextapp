@@ -28,6 +28,7 @@ import { Route as AuthenticatedInboxIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedHelpCenterIndexRouteImport } from './routes/_authenticated/help-center/index'
 import { Route as AuthenticatedChatsIndexRouteImport } from './routes/_authenticated/chats/index'
 import { Route as AuthenticatedAppsIndexRouteImport } from './routes/_authenticated/apps/index'
+import { Route as AuthenticatedAi_searchIndexRouteImport } from './routes/_authenticated/ai_search/index'
 import { Route as AuthenticatedAi_chatIndexRouteImport } from './routes/_authenticated/ai_chat/index'
 import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenticated/errors/$error'
 
@@ -127,6 +128,12 @@ const AuthenticatedAppsIndexRoute = AuthenticatedAppsIndexRouteImport.update({
   path: '/apps/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAi_searchIndexRoute =
+  AuthenticatedAi_searchIndexRouteImport.update({
+    id: '/ai_search/',
+    path: '/ai_search/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAi_chatIndexRoute =
   AuthenticatedAi_chatIndexRouteImport.update({
     id: '/ai_chat/',
@@ -154,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/503': typeof errors503Route
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/ai_chat/': typeof AuthenticatedAi_chatIndexRoute
+  '/ai_search/': typeof AuthenticatedAi_searchIndexRoute
   '/apps/': typeof AuthenticatedAppsIndexRoute
   '/chats/': typeof AuthenticatedChatsIndexRoute
   '/help-center/': typeof AuthenticatedHelpCenterIndexRoute
@@ -176,6 +184,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/ai_chat': typeof AuthenticatedAi_chatIndexRoute
+  '/ai_search': typeof AuthenticatedAi_searchIndexRoute
   '/apps': typeof AuthenticatedAppsIndexRoute
   '/chats': typeof AuthenticatedChatsIndexRoute
   '/help-center': typeof AuthenticatedHelpCenterIndexRoute
@@ -200,6 +209,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/_authenticated/ai_chat/': typeof AuthenticatedAi_chatIndexRoute
+  '/_authenticated/ai_search/': typeof AuthenticatedAi_searchIndexRoute
   '/_authenticated/apps/': typeof AuthenticatedAppsIndexRoute
   '/_authenticated/chats/': typeof AuthenticatedChatsIndexRoute
   '/_authenticated/help-center/': typeof AuthenticatedHelpCenterIndexRoute
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/503'
     | '/errors/$error'
     | '/ai_chat/'
+    | '/ai_search/'
     | '/apps/'
     | '/chats/'
     | '/help-center/'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/'
     | '/errors/$error'
     | '/ai_chat'
+    | '/ai_search'
     | '/apps'
     | '/chats'
     | '/help-center'
@@ -269,6 +281,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/errors/$error'
     | '/_authenticated/ai_chat/'
+    | '/_authenticated/ai_search/'
     | '/_authenticated/apps/'
     | '/_authenticated/chats/'
     | '/_authenticated/help-center/'
@@ -427,6 +440,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ai_search/': {
+      id: '/_authenticated/ai_search/'
+      path: '/ai_search'
+      fullPath: '/ai_search/'
+      preLoaderRoute: typeof AuthenticatedAi_searchIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/ai_chat/': {
       id: '/_authenticated/ai_chat/'
       path: '/ai_chat'
@@ -448,6 +468,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedErrorsErrorRoute: typeof AuthenticatedErrorsErrorRoute
   AuthenticatedAi_chatIndexRoute: typeof AuthenticatedAi_chatIndexRoute
+  AuthenticatedAi_searchIndexRoute: typeof AuthenticatedAi_searchIndexRoute
   AuthenticatedAppsIndexRoute: typeof AuthenticatedAppsIndexRoute
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
   AuthenticatedHelpCenterIndexRoute: typeof AuthenticatedHelpCenterIndexRoute
@@ -461,6 +482,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedErrorsErrorRoute: AuthenticatedErrorsErrorRoute,
   AuthenticatedAi_chatIndexRoute: AuthenticatedAi_chatIndexRoute,
+  AuthenticatedAi_searchIndexRoute: AuthenticatedAi_searchIndexRoute,
   AuthenticatedAppsIndexRoute: AuthenticatedAppsIndexRoute,
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,
   AuthenticatedHelpCenterIndexRoute: AuthenticatedHelpCenterIndexRoute,

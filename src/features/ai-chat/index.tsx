@@ -141,9 +141,7 @@ export function AiChat() {
                       GPT-4o
                     </option>
 
-                    <option value='anthropic/claude-3.5-sonnet'>
-                      Claude 3.5 Sonnet
-                    </option>
+                   
 
                     <option value='deepseek/deepseek-chat'>
                       DeepSeek Chat

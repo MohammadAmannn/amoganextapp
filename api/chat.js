@@ -27,6 +27,8 @@ export default async function handler(req, res) {
     const result = await generateText({
       model: openrouter.chat(model),
       prompt: message,
+        maxTokens: 512,
+
     })
 
     return res.status(200).json({

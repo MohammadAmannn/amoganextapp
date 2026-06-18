@@ -257,9 +257,9 @@ export function AiChat() {
     <>
       <AppHeader title='AI Chat' />
 
-      <Main fixed>
+      <Main fixed className='p-0'>
         <div className='flex h-screen flex-col'>
-          {/* Chat messages area - scrollable */}
+          {/* Chat messages area - scrollable with no extra padding */}
           <div className='flex-1 overflow-y-auto px-4'>
             {messages.length === 0 ? (
               <div className='flex h-full flex-col items-center justify-center gap-4 px-4'>
@@ -299,8 +299,8 @@ export function AiChat() {
             )}
           </div>
 
-          {/* Input area - Sticky at bottom with no border top */}
-          <div className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-3 sm:px-6'>
+          {/* Input area - Completely at bottom with zero gaps */}
+          <div className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 pt-1.5 pb-1.5 sm:px-6'>
             <div className='mx-auto max-w-4xl'>
               {/* Message input with send button */}
               <div className='relative rounded-2xl border-2 border-gray-200 bg-background shadow-sm hover:border-gray-300 transition-colors focus-within:border-primary'>
@@ -317,23 +317,23 @@ export function AiChat() {
                         : 'Ask a question about your data...'
                   }
                   rows={1}
-                  className={`w-full rounded-xl border-0 px-4 py-3 pr-24 text-sm sm:text-base resize-none outline-none focus:ring-0 ${
+                  className={`w-full rounded-xl border-0 px-4 py-2 pr-24 text-sm sm:text-base resize-none outline-none focus:ring-0 ${
                     isListening
                       ? 'bg-red-50 dark:bg-red-950/20'
                       : 'bg-transparent'
                   } ${loading ? 'opacity-50' : ''}`}
                   disabled={loading}
-                  style={{ minHeight: '52px', maxHeight: '120px' }}
+                  style={{ minHeight: '44px', maxHeight: '120px' }}
                 />
 
                 {/* Action buttons on the right side */}
-                <div className='absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1'>
+                <div className='absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5'>
                   {/* Voice Input button */}
                   {isSpeechSupported && (
                     <button
                       onClick={toggleVoiceInput}
                       disabled={loading || !model}
-                      className={`p-2 rounded-lg transition-colors ${
+                      className={`p-1.5 rounded-lg transition-colors ${
                         isListening
                           ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse'
                           : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -348,7 +348,7 @@ export function AiChat() {
                   <button
                     onClick={() => sendMessage()}
                     disabled={loading || !input.trim() || !model}
-                    className='p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+                    className='p-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
                     title='Send message'
                   >
                     <ArrowUp className='w-4 h-4' />
@@ -357,7 +357,7 @@ export function AiChat() {
 
                 {/* Voice input status indicator */}
                 {isListening && (
-                  <div className='absolute -bottom-6 left-4 flex items-center gap-2'>
+                  <div className='absolute -bottom-5 left-4 flex items-center gap-2'>
                     <div className='flex gap-1'>
                       <span className='w-1.5 h-1.5 bg-red-500 rounded-full animate-bounce' style={{ animationDelay: '0ms' }}></span>
                       <span className='w-1.5 h-1.5 bg-red-500 rounded-full animate-bounce' style={{ animationDelay: '150ms' }}></span>
@@ -368,12 +368,12 @@ export function AiChat() {
                 )}
               </div>
 
-              {/* Controls row - Model, API, History, Add */}
-              <div className='flex items-center justify-between gap-2 mt-2'>
-                <div className='flex items-center gap-2 flex-wrap'>
+              {/* Controls row - Model, API, History, Add - Minimal spacing */}
+              <div className='flex items-center justify-between gap-1.5 mt-1'>
+                <div className='flex items-center gap-1 flex-wrap'>
                   {/* Selected Model Display */}
                   {model && currentModel && (
-                    <div className='px-3 py-1 rounded-lg bg-muted/80 text-xs sm:text-sm text-foreground font-medium whitespace-nowrap'>
+                    <div className='px-2 py-0.5 rounded-lg bg-muted/80 text-xs text-foreground font-medium whitespace-nowrap'>
                       {currentModel.name}
                     </div>
                   )}
@@ -382,15 +382,15 @@ export function AiChat() {
                   <div className='relative'>
                     <button
                       onClick={() => setShowFilters(!showFilters)}
-                      className='p-1.5 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground'
+                      className='p-1 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground'
                       title='Select AI Model'
                     >
-                      <Sliders className='w-4 h-4' />
+                      <Sliders className='w-3.5 h-3.5' />
                     </button>
 
                     {/* Model dropdown modal */}
                     {showFilters && (
-                      <div className='absolute left-0 bottom-full mb-2 w-56 rounded-lg border border-gray-200 bg-background shadow-lg z-10'>
+                      <div className='absolute left-0 bottom-full mb-1.5 w-56 rounded-lg border border-gray-200 bg-background shadow-lg z-10'>
                         <div className='p-2'>
                           <p className='text-xs font-semibold text-foreground px-2 py-1'>Select Model</p>
                           {MODELS.map((m) => (
@@ -416,8 +416,8 @@ export function AiChat() {
 
                   {/* API selector */}
                   <div className='relative'>
-                    <button className='flex items-center gap-1.5 px-3 py-1 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-xs sm:text-sm text-foreground whitespace-nowrap'>
-                      <Zap className='w-4 h-4' />
+                    <button className='flex items-center gap-1 px-2 py-0.5 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-xs text-foreground whitespace-nowrap'>
+                      <Zap className='w-3.5 h-3.5' />
                       <span className='hidden sm:inline'>API</span>
                       <span className='sm:hidden'>{APIS.find(a => a.id === api)?.name || 'API'}</span>
                     </button>
@@ -435,20 +435,20 @@ export function AiChat() {
                   </div>
                 </div>
 
-                <div className='flex items-center gap-2'>
+                <div className='flex items-center gap-1'>
                   {/* History button with dropdown */}
                   <div className='relative'>
                     <button
                       onClick={() => setShowHistory(!showHistory)}
-                      className='flex items-center gap-1.5 px-3 py-1 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-xs sm:text-sm text-foreground whitespace-nowrap'
+                      className='flex items-center gap-1 px-2 py-0.5 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-xs text-foreground whitespace-nowrap'
                     >
-                      <History className='w-4 h-4' />
+                      <History className='w-3.5 h-3.5' />
                       <span>History</span>
                     </button>
 
                     {/* History dropdown menu */}
                     {showHistory && (
-                      <div className='absolute right-0 bottom-full mb-2 w-48 rounded-lg border border-gray-200 bg-background shadow-lg z-10'>
+                      <div className='absolute right-0 bottom-full mb-1.5 w-48 rounded-lg border border-gray-200 bg-background shadow-lg z-10'>
                         <div className='p-2'>
                           {HISTORY_OPTIONS.map((option) => (
                             <button
@@ -465,8 +465,8 @@ export function AiChat() {
                   </div>
 
                   {/* Add/New button */}
-                  <button className='p-1.5 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground'>
-                    <Plus className='w-4 h-4' />
+                  <button className='p-1 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground'>
+                    <Plus className='w-3.5 h-3.5' />
                   </button>
                 </div>
               </div>

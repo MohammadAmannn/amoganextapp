@@ -28,8 +28,8 @@ import { Route as AuthenticatedInboxIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedHelpCenterIndexRouteImport } from './routes/_authenticated/help-center/index'
 import { Route as AuthenticatedChatsIndexRouteImport } from './routes/_authenticated/chats/index'
 import { Route as AuthenticatedAppsIndexRouteImport } from './routes/_authenticated/apps/index'
+import { Route as AuthenticatedAi_chatIndexRouteImport } from './routes/_authenticated/ai_chat/index'
 import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenticated/errors/$error'
-import { Route as AuthenticatedAi_chatAiChatRouteImport } from './routes/_authenticated/ai_chat/ai-chat'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -127,16 +127,16 @@ const AuthenticatedAppsIndexRoute = AuthenticatedAppsIndexRouteImport.update({
   path: '/apps/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAi_chatIndexRoute =
+  AuthenticatedAi_chatIndexRouteImport.update({
+    id: '/ai_chat/',
+    path: '/ai_chat/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedErrorsErrorRoute =
   AuthenticatedErrorsErrorRouteImport.update({
     id: '/errors/$error',
     path: '/errors/$error',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAi_chatAiChatRoute =
-  AuthenticatedAi_chatAiChatRouteImport.update({
-    id: '/ai_chat/ai-chat',
-    path: '/ai_chat/ai-chat',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
@@ -152,8 +152,8 @@ export interface FileRoutesByFullPath {
   '/404': typeof errors404Route
   '/500': typeof errors500Route
   '/503': typeof errors503Route
-  '/ai_chat/ai-chat': typeof AuthenticatedAi_chatAiChatRoute
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
+  '/ai_chat/': typeof AuthenticatedAi_chatIndexRoute
   '/apps/': typeof AuthenticatedAppsIndexRoute
   '/chats/': typeof AuthenticatedChatsIndexRoute
   '/help-center/': typeof AuthenticatedHelpCenterIndexRoute
@@ -174,8 +174,8 @@ export interface FileRoutesByTo {
   '/500': typeof errors500Route
   '/503': typeof errors503Route
   '/': typeof AuthenticatedIndexRoute
-  '/ai_chat/ai-chat': typeof AuthenticatedAi_chatAiChatRoute
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
+  '/ai_chat': typeof AuthenticatedAi_chatIndexRoute
   '/apps': typeof AuthenticatedAppsIndexRoute
   '/chats': typeof AuthenticatedChatsIndexRoute
   '/help-center': typeof AuthenticatedHelpCenterIndexRoute
@@ -198,8 +198,8 @@ export interface FileRoutesById {
   '/(errors)/500': typeof errors500Route
   '/(errors)/503': typeof errors503Route
   '/_authenticated/': typeof AuthenticatedIndexRoute
-  '/_authenticated/ai_chat/ai-chat': typeof AuthenticatedAi_chatAiChatRoute
   '/_authenticated/errors/$error': typeof AuthenticatedErrorsErrorRoute
+  '/_authenticated/ai_chat/': typeof AuthenticatedAi_chatIndexRoute
   '/_authenticated/apps/': typeof AuthenticatedAppsIndexRoute
   '/_authenticated/chats/': typeof AuthenticatedChatsIndexRoute
   '/_authenticated/help-center/': typeof AuthenticatedHelpCenterIndexRoute
@@ -222,8 +222,8 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/503'
-    | '/ai_chat/ai-chat'
     | '/errors/$error'
+    | '/ai_chat/'
     | '/apps/'
     | '/chats/'
     | '/help-center/'
@@ -244,8 +244,8 @@ export interface FileRouteTypes {
     | '/500'
     | '/503'
     | '/'
-    | '/ai_chat/ai-chat'
     | '/errors/$error'
+    | '/ai_chat'
     | '/apps'
     | '/chats'
     | '/help-center'
@@ -267,8 +267,8 @@ export interface FileRouteTypes {
     | '/(errors)/500'
     | '/(errors)/503'
     | '/_authenticated/'
-    | '/_authenticated/ai_chat/ai-chat'
     | '/_authenticated/errors/$error'
+    | '/_authenticated/ai_chat/'
     | '/_authenticated/apps/'
     | '/_authenticated/chats/'
     | '/_authenticated/help-center/'
@@ -427,6 +427,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ai_chat/': {
+      id: '/_authenticated/ai_chat/'
+      path: '/ai_chat'
+      fullPath: '/ai_chat/'
+      preLoaderRoute: typeof AuthenticatedAi_chatIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/errors/$error': {
       id: '/_authenticated/errors/$error'
       path: '/errors/$error'
@@ -434,20 +441,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedErrorsErrorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/ai_chat/ai-chat': {
-      id: '/_authenticated/ai_chat/ai-chat'
-      path: '/ai_chat/ai-chat'
-      fullPath: '/ai_chat/ai-chat'
-      preLoaderRoute: typeof AuthenticatedAi_chatAiChatRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
-  AuthenticatedAi_chatAiChatRoute: typeof AuthenticatedAi_chatAiChatRoute
   AuthenticatedErrorsErrorRoute: typeof AuthenticatedErrorsErrorRoute
+  AuthenticatedAi_chatIndexRoute: typeof AuthenticatedAi_chatIndexRoute
   AuthenticatedAppsIndexRoute: typeof AuthenticatedAppsIndexRoute
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
   AuthenticatedHelpCenterIndexRoute: typeof AuthenticatedHelpCenterIndexRoute
@@ -459,8 +459,8 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
-  AuthenticatedAi_chatAiChatRoute: AuthenticatedAi_chatAiChatRoute,
   AuthenticatedErrorsErrorRoute: AuthenticatedErrorsErrorRoute,
+  AuthenticatedAi_chatIndexRoute: AuthenticatedAi_chatIndexRoute,
   AuthenticatedAppsIndexRoute: AuthenticatedAppsIndexRoute,
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,
   AuthenticatedHelpCenterIndexRoute: AuthenticatedHelpCenterIndexRoute,

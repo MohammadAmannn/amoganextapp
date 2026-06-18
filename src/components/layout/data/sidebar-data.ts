@@ -67,7 +67,7 @@ export const sidebarData: SidebarData = {
         },
         {
           title: 'AI Chat',
-          url: '/ai_chat/ai-chat',
+          url: '/ai_chat',
           icon: Bot,
         },
         {

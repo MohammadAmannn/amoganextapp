@@ -75,12 +75,7 @@ export function AiChat() {
           <div className='flex-1 overflow-y-auto p-4'>
             {messages.length === 0 ? (
               <div className='flex h-full items-center justify-center'>
-                <div className='text-center'>
-                  <h1 className='text-4xl font-bold'>🤖 AI Chat</h1>
-                  <p className='mt-2 text-muted-foreground'>
-                    Ask anything to Gemini AI
-                  </p>
-                </div>
+                
               </div>
             ) : (
               <div className='mx-auto max-w-4xl space-y-4'>

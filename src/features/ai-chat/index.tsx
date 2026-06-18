@@ -62,22 +62,28 @@ declare global {
 export function AiChat() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [model, setModel] = useState('')
+  const [model, setModel] = useState('google/gemini-2.5-flash')
   const [api, setApi] = useState('openrouter')
   const [messages, setMessages] = useState<Message[]>([])
   const [showFilters, setShowFilters] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [isSpeechSupported, setIsSpeechSupported] = useState(true)
-  
+
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const accumulatedTranscriptRef = useRef<string>('')
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   // Define sendMessage using useCallback
   const sendMessage = useCallback(async (message?: string) => {
     const textToSend = message || input.trim()
-    
+
     if (!textToSend || loading || !model) return
 
     setMessages((prev) => [
@@ -136,7 +142,7 @@ export function AiChat() {
   useEffect(() => {
     // Check if browser supports SpeechRecognition
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-    
+
     if (!SpeechRecognition) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsSpeechSupported(false)
@@ -144,7 +150,6 @@ export function AiChat() {
     }
 
     const recognition = new SpeechRecognition()
-    // KEY FIX: Set continuous to true to capture full sentences
     recognition.continuous = true
     recognition.interimResults = true
     recognition.lang = 'en-US'
@@ -152,23 +157,18 @@ export function AiChat() {
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interimTranscript = ''
 
-      // Build transcript from all results, not just new ones
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript
 
         if (event.results[i].isFinal) {
-          // Accumulate final results
           accumulatedTranscriptRef.current += transcript + ' '
         } else {
-          // Interim results
           interimTranscript += transcript
         }
       }
 
-      // Combine accumulated and interim transcripts
       const displayText = (accumulatedTranscriptRef.current + interimTranscript).trim()
 
-      // Update input with combined results
       if (displayText) {
         setInput(displayText)
       }
@@ -178,12 +178,10 @@ export function AiChat() {
       // eslint-disable-next-line no-console
       console.error('Speech recognition error:', event.error)
       setIsListening(false)
-      
-      // Handle specific errors
+
       if (event.error === 'not-allowed') {
         alert('Please allow microphone access to use voice input')
       } else if (event.error === 'no-speech') {
-        // Silently handle no speech
         setIsListening(false)
       }
     }
@@ -194,7 +192,6 @@ export function AiChat() {
 
     recognitionRef.current = recognition
 
-    // Cleanup
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.abort()
@@ -209,21 +206,19 @@ export function AiChat() {
     }
 
     if (isListening) {
-      // Stop listening and reset accumulated transcript
       if (recognitionRef.current) {
         recognitionRef.current.stop()
       }
       accumulatedTranscriptRef.current = ''
       setIsListening(false)
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 100)
     } else {
-      // Start listening
       try {
         if (recognitionRef.current) {
-          // Reset the accumulated transcript
           accumulatedTranscriptRef.current = ''
-          // Clear input when starting to listen
           setInput('')
-          // Start recognition
           recognitionRef.current.start()
           setIsListening(true)
         }
@@ -243,16 +238,12 @@ export function AiChat() {
   }
 
   const handleHistorySelect = (option: string) => {
-    // Handle history option selection
     switch (option) {
       case 'history':
-        // Handle history
         break
       case 'my-prompts':
-        // Handle my prompts
         break
       case 'prompts-history':
-        // Handle prompts history
         break
       default:
         break
@@ -267,9 +258,9 @@ export function AiChat() {
       <AppHeader title='AI Chat' />
 
       <Main fixed>
-        <div className='flex h-full flex-col'>
-          {/* Chat messages area */}
-          <div className='flex-1 overflow-y-auto p-4'>
+        <div className='flex h-screen flex-col'>
+          {/* Chat messages area - scrollable */}
+          <div className='flex-1 overflow-y-auto px-4'>
             {messages.length === 0 ? (
               <div className='flex h-full flex-col items-center justify-center gap-4 px-4'>
                 <h1 className='text-3xl sm:text-4xl font-bold'>🤖 AI Chat</h1>
@@ -278,13 +269,11 @@ export function AiChat() {
                 </p>
               </div>
             ) : (
-              <div className='mx-auto max-w-4xl space-y-4'>
+              <div className='mx-auto max-w-4xl space-y-4 py-4'>
                 {messages.map((message, index) => (
                   <div
                     key={index}
-                    className={`flex ${
-                      message.role === 'user' ? 'justify-end' : 'justify-start'
-                    }`}
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
                       className={`max-w-[85%] sm:max-w-[80%] rounded-xl px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base whitespace-pre-wrap ${
@@ -305,32 +294,40 @@ export function AiChat() {
                     </div>
                   </div>
                 )}
+                <div ref={messagesEndRef} />
               </div>
             )}
           </div>
 
-          {/* Input area */}
-          <div className='p-4 sm:p-6 bg-background'>
-            <div className='mx-auto max-w-4xl space-y-3'>
+          {/* Input area - Sticky at bottom with no border top */}
+          <div className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-3 sm:px-6'>
+            <div className='mx-auto max-w-4xl'>
               {/* Message input with send button */}
-              <div className='relative'>
+              <div className='relative rounded-2xl border-2 border-gray-200 bg-background shadow-sm hover:border-gray-300 transition-colors focus-within:border-primary'>
                 <textarea
                   ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={isListening ? '🎤 Listening...' : 'Ask a question about your data...'}
-                  rows={2}
-                  className={`w-full rounded-xl border px-4 py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none ${
+                  placeholder={
                     isListening 
-                      ? 'border-red-500 bg-red-50 dark:bg-red-950/20' 
-                      : 'border-gray-300 bg-background'
-                  }`}
-                  disabled={isListening}
+                      ? '🎤 Listening... Speak now' 
+                      : loading 
+                        ? 'Thinking...' 
+                        : 'Ask a question about your data...'
+                  }
+                  rows={1}
+                  className={`w-full rounded-xl border-0 px-4 py-3 pr-24 text-sm sm:text-base resize-none outline-none focus:ring-0 ${
+                    isListening
+                      ? 'bg-red-50 dark:bg-red-950/20'
+                      : 'bg-transparent'
+                  } ${loading ? 'opacity-50' : ''}`}
+                  disabled={loading}
+                  style={{ minHeight: '52px', maxHeight: '120px' }}
                 />
 
-                {/* Action buttons on top right of textarea */}
-                <div className='absolute right-3 top-3 flex gap-2'>
+                {/* Action buttons on the right side */}
+                <div className='absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1'>
                   {/* Voice Input button */}
                   {isSpeechSupported && (
                     <button
@@ -343,49 +340,49 @@ export function AiChat() {
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                       title={isListening ? 'Stop recording' : 'Start voice input'}
                     >
-                      <Mic className='w-5 h-5' />
+                      <Mic className='w-4 h-4' />
                     </button>
                   )}
 
                   {/* Send button */}
                   <button
                     onClick={() => sendMessage()}
-                    disabled={loading || !input.trim() || !model || isListening}
+                    disabled={loading || !input.trim() || !model}
                     className='p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
                     title='Send message'
                   >
-                    <ArrowUp className='w-5 h-5' />
+                    <ArrowUp className='w-4 h-4' />
                   </button>
                 </div>
 
                 {/* Voice input status indicator */}
                 {isListening && (
-                  <div className='absolute bottom-3 left-4 flex items-center gap-2'>
+                  <div className='absolute -bottom-6 left-4 flex items-center gap-2'>
                     <div className='flex gap-1'>
-                      <span className='w-2 h-2 bg-red-500 rounded-full animate-bounce' style={{ animationDelay: '0ms' }}></span>
-                      <span className='w-2 h-2 bg-red-500 rounded-full animate-bounce' style={{ animationDelay: '150ms' }}></span>
-                      <span className='w-2 h-2 bg-red-500 rounded-full animate-bounce' style={{ animationDelay: '300ms' }}></span>
+                      <span className='w-1.5 h-1.5 bg-red-500 rounded-full animate-bounce' style={{ animationDelay: '0ms' }}></span>
+                      <span className='w-1.5 h-1.5 bg-red-500 rounded-full animate-bounce' style={{ animationDelay: '150ms' }}></span>
+                      <span className='w-1.5 h-1.5 bg-red-500 rounded-full animate-bounce' style={{ animationDelay: '300ms' }}></span>
                     </div>
                     <span className='text-xs text-red-500 font-medium'>Listening...</span>
                   </div>
                 )}
               </div>
 
-              {/* Controls row - Filter, API, History, Add */}
-              <div className='flex items-center justify-between gap-2'>
-                <div className='flex items-center gap-2'>
+              {/* Controls row - Model, API, History, Add */}
+              <div className='flex items-center justify-between gap-2 mt-2'>
+                <div className='flex items-center gap-2 flex-wrap'>
                   {/* Selected Model Display */}
                   {model && currentModel && (
-                    <div className='px-3 py-2 rounded-lg bg-muted text-sm text-foreground font-medium'>
-                      ✓ {currentModel.name}
+                    <div className='px-3 py-1 rounded-lg bg-muted/80 text-xs sm:text-sm text-foreground font-medium whitespace-nowrap'>
+                      {currentModel.name}
                     </div>
                   )}
 
                   {/* Filter button - opens model selector */}
                   <div className='relative'>
-                    <button 
+                    <button
                       onClick={() => setShowFilters(!showFilters)}
-                      className='p-2 rounded-lg border border-gray-300 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground'
+                      className='p-1.5 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground'
                       title='Select AI Model'
                     >
                       <Sliders className='w-4 h-4' />
@@ -393,9 +390,9 @@ export function AiChat() {
 
                     {/* Model dropdown modal */}
                     {showFilters && (
-                      <div className='absolute left-0 bottom-full mb-2 w-48 rounded-lg border border-gray-300 bg-background shadow-lg z-10'>
-                        <div className='p-3 border-b border-gray-300'>
-                          <p className='text-xs font-semibold text-foreground mb-3'>Select Model</p>
+                      <div className='absolute left-0 bottom-full mb-2 w-56 rounded-lg border border-gray-200 bg-background shadow-lg z-10'>
+                        <div className='p-2'>
+                          <p className='text-xs font-semibold text-foreground px-2 py-1'>Select Model</p>
                           {MODELS.map((m) => (
                             <button
                               key={m.id}
@@ -403,7 +400,7 @@ export function AiChat() {
                                 setModel(m.id)
                                 setShowFilters(false)
                               }}
-                              className={`w-full text-left px-3 py-2 rounded text-sm mb-1 transition-colors ${
+                              className={`w-full text-left px-3 py-2 rounded text-sm mb-0.5 transition-colors ${
                                 model === m.id
                                   ? 'bg-primary text-primary-foreground'
                                   : 'hover:bg-muted text-foreground'
@@ -413,27 +410,21 @@ export function AiChat() {
                             </button>
                           ))}
                         </div>
-                        {model && currentModel && (
-                          <div className='px-3 py-2 text-xs text-muted-foreground'>
-                            Current: {currentModel.name}
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>
 
-                  {/* API selector button */}
+                  {/* API selector */}
                   <div className='relative'>
-                    <button className='flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 hover:bg-muted transition-colors text-sm text-foreground'>
+                    <button className='flex items-center gap-1.5 px-3 py-1 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-xs sm:text-sm text-foreground whitespace-nowrap'>
                       <Zap className='w-4 h-4' />
-                      <span>API</span>
+                      <span className='hidden sm:inline'>API</span>
+                      <span className='sm:hidden'>{APIS.find(a => a.id === api)?.name || 'API'}</span>
                     </button>
-
-                    {/* Dropdown menu for API selection */}
                     <select
                       value={api}
                       onChange={(e) => setApi(e.target.value)}
-                      className='absolute left-0 top-full mt-1 w-32 p-2 rounded-lg border border-gray-300 bg-background text-sm outline-none focus:ring-2 focus:ring-primary opacity-0 w-0 h-0 pointer-events-none'
+                      className='absolute inset-0 w-full h-full opacity-0 cursor-pointer'
                     >
                       {APIS.map((a) => (
                         <option key={a.id} value={a.id}>
@@ -447,23 +438,23 @@ export function AiChat() {
                 <div className='flex items-center gap-2'>
                   {/* History button with dropdown */}
                   <div className='relative'>
-                    <button 
+                    <button
                       onClick={() => setShowHistory(!showHistory)}
-                      className='flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-muted transition-colors text-sm text-foreground'
+                      className='flex items-center gap-1.5 px-3 py-1 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-xs sm:text-sm text-foreground whitespace-nowrap'
                     >
                       <History className='w-4 h-4' />
                       <span>History</span>
                     </button>
 
-                    {/* History dropdown menu - appears upward */}
+                    {/* History dropdown menu */}
                     {showHistory && (
-                      <div className='absolute right-0 bottom-full mb-2 w-48 rounded-lg border border-gray-300 bg-background shadow-lg z-10'>
-                        <div className='p-3'>
+                      <div className='absolute right-0 bottom-full mb-2 w-48 rounded-lg border border-gray-200 bg-background shadow-lg z-10'>
+                        <div className='p-2'>
                           {HISTORY_OPTIONS.map((option) => (
                             <button
                               key={option.id}
                               onClick={() => handleHistorySelect(option.id)}
-                              className='w-full text-left px-3 py-2 rounded text-sm mb-1 hover:bg-muted text-foreground transition-colors last:mb-0'
+                              className='w-full text-left px-3 py-2 rounded text-sm mb-0.5 hover:bg-muted text-foreground transition-colors last:mb-0'
                             >
                               {option.name}
                             </button>
@@ -474,7 +465,7 @@ export function AiChat() {
                   </div>
 
                   {/* Add/New button */}
-                  <button className='p-2 rounded-lg border border-gray-300 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground'>
+                  <button className='p-1.5 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground'>
                     <Plus className='w-4 h-4' />
                   </button>
                 </div>

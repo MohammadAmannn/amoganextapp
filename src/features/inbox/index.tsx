@@ -1,16 +1,15 @@
 import { useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
-import { Mail, Search as SearchIcon } from 'lucide-react'
+import { Mail, Search as SearchIcon, Filter, ChevronDown, Inbox as InboxIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { type Email, emails as emailData } from './data/emails'
 import { Main } from '@/components/layout/main'
-
 import { AppHeader } from '@/components/layout/app-header'
+
 export function Inbox() {
   const [emails] = useState<Email[]>(emailData)
   const [searchQuery, setSearchQuery] = useState('')
@@ -31,112 +30,150 @@ export function Inbox() {
     <>
       <AppHeader title='Inbox' />
 
-      <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
-        <div className='flex flex-wrap items-end justify-between gap-2'>
-          <div>
-            <div className='flex items-center gap-2'>
-              <h2 className='text-2xl font-bold tracking-tight'>Inbox</h2>
-              {unreadCount > 0 && (
-                <Badge variant='default' className='rounded-full px-2 py-0.5 text-xs'>
-                  {unreadCount}
-                </Badge>
+      <Main className='flex flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6 bg-background'>
+        {/* Search Bar - Centered */}
+        <div className='flex flex-col items-center justify-center w-full max-w-3xl mx-auto gap-4'>
+          <div className='relative w-full'>
+            <SearchIcon className='absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+            <Input
+              id='inbox-search'
+              placeholder='Search your inbox...'
+              className='pl-11 pr-4 py-6 text-base rounded-2xl border-2 border-muted/30 bg-background shadow-sm hover:shadow-md transition-all duration-200 focus:border-primary/50 focus:shadow-lg'
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <div className='absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2'>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className='text-xs text-muted-foreground hover:text-foreground transition-colors'
+                >
+                  Clear
+                </button>
               )}
+              <Badge variant='outline' className='hidden sm:flex text-xs px-2 py-0.5'>
+                {filteredEmails.length} {filteredEmails.length === 1 ? 'result' : 'results'}
+              </Badge>
             </div>
-            <p className='text-muted-foreground'>
-              View and manage your messages in one place.
-            </p>
           </div>
         </div>
 
-        <div className='flex h-[calc(100vh-theme(spacing.16)-theme(spacing.12)-theme(spacing.20))] flex-col overflow-hidden rounded-lg border bg-card'>
-          {/* Tabs */}
-          <div className='flex items-center justify-end px-4 pt-4 pb-2'>
-            <Tabs value={tab} onValueChange={(v) => setTab(v as 'all' | 'unread')}>
-              <TabsList className='h-8'>
-                <TabsTrigger value='all' className='text-xs px-3'>
-                  All mail
+        {/* Stats Bar */}
+        <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-2'>
+          <div className='flex items-center gap-4'>
+            <div className='flex items-center gap-2'>
+              <InboxIcon className='h-5 w-5 text-muted-foreground' />
+              <span className='text-sm font-medium'>
+                {filteredEmails.length} {filteredEmails.length === 1 ? 'conversation' : 'conversations'}
+              </span>
+            </div>
+            {unreadCount > 0 && (
+              <Badge variant='default' className='rounded-full px-3 py-1 text-xs font-medium'>
+                {unreadCount} unread
+              </Badge>
+            )}
+          </div>
+
+          <div className='flex items-center gap-2 w-full sm:w-auto'>
+            <Tabs value={tab} onValueChange={(v) => setTab(v as 'all' | 'unread')} className='w-full sm:w-auto'>
+              <TabsList className='h-9 w-full sm:w-auto bg-muted/30'>
+                <TabsTrigger value='all' className='text-xs px-4 flex-1 sm:flex-none'>
+                  All
                 </TabsTrigger>
-                <TabsTrigger value='unread' className='text-xs px-3'>
+                <TabsTrigger value='unread' className='text-xs px-4 flex-1 sm:flex-none'>
                   Unread
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+            
+            <button className='hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-background hover:bg-muted transition-colors text-xs font-medium'>
+              <Filter className='h-3.5 w-3.5' />
+              Filter
+            </button>
           </div>
-
-          <Separator />
-
-          {/* Search */}
-          <div className='p-4'>
-            <div className='relative'>
-              <SearchIcon className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
-              <Input
-                id='inbox-search'
-                placeholder='Search'
-                className='pl-9'
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Email list */}
-          <ScrollArea className='flex-1'>
-            <div className='flex flex-col gap-1 px-4 pb-4'>
-              {filteredEmails.length === 0 ? (
-                <div className='flex flex-col items-center justify-center py-12 text-muted-foreground'>
-                  <Mail className='mb-3 h-10 w-10 opacity-40' />
-                  <p className='text-sm'>No emails found</p>
-                </div>
-              ) : (
-                filteredEmails.map((email) => (
-                  <div
-                    key={email.id}
-                    id={`email-item-${email.id}`}
-                    className={cn(
-                      'flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent',
-                      !email.read && 'border-l-2 border-l-primary'
-                    )}
-                  >
-                    <div className='flex w-full flex-col gap-1'>
-                      <div className='flex items-center justify-between'>
-                        <div className='flex items-center gap-2'>
-                          <span className={cn('font-semibold', !email.read && 'font-bold')}>
-                            {email.name}
-                          </span>
-                          {!email.read && (
-                            <span className='h-2 w-2 rounded-full bg-primary' />
-                          )}
-                        </div>
-                        <span className='text-xs text-muted-foreground whitespace-nowrap'>
-                          {formatDistanceToNow(email.date, { addSuffix: true })}
-                        </span>
-                      </div>
-                      <span className={cn('text-xs font-medium', !email.read && 'font-semibold')}>
-                        {email.subject}
-                      </span>
-                    </div>
-                    <p className='line-clamp-2 text-xs text-muted-foreground leading-relaxed'>
-                      {email.preview}
-                    </p>
-                    {email.labels.length > 0 && (
-                      <div className='flex flex-wrap gap-1'>
-                        {email.labels.map((label) => (
-                          <Badge
-                            key={label}
-                            variant={getLabelVariant(label)}
-                            className='rounded-md px-2 py-0 text-[10px] font-medium'
-                          >
-                            {label}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </ScrollArea>
         </div>
+
+        {/* Email List - No outer box */}
+        <ScrollArea className='flex-1'>
+          <div className='flex flex-col gap-2 pb-4'>
+            {filteredEmails.length === 0 ? (
+              <div className='flex flex-col items-center justify-center py-20 text-muted-foreground'>
+                <div className='rounded-full bg-muted/20 p-6 mb-4'>
+                  <Mail className='h-10 w-10 opacity-30' />
+                </div>
+                <p className='text-sm font-medium'>No emails found</p>
+                <p className='text-xs text-muted-foreground/60 mt-1'>Try adjusting your search or filters</p>
+              </div>
+            ) : (
+              filteredEmails.map((email, index) => (
+                <div
+                  key={email.id}
+                  id={`email-item-${email.id}`}
+                  className={cn(
+                    'group relative flex flex-col gap-2 rounded-xl p-4 transition-all duration-200 cursor-pointer',
+                    'hover:bg-muted/50 hover:shadow-sm',
+                    !email.read 
+                      ? 'bg-primary/5 border-l-4 border-l-primary' 
+                      : 'bg-background hover:bg-muted/30'
+                  )}
+                  style={{ animationDelay: `${index * 30}ms` }}
+                >
+                  <div className='flex items-start justify-between gap-3'>
+                    <div className='flex-1 min-w-0'>
+                      <div className='flex items-center gap-2.5 mb-1 flex-wrap'>
+                        <span className={cn(
+                          'text-sm font-medium truncate',
+                          !email.read && 'font-semibold'
+                        )}>
+                          {email.name}
+                        </span>
+                        {!email.read && (
+                          <span className='inline-flex h-2 w-2 rounded-full bg-primary flex-shrink-0' />
+                        )}
+                        {email.labels.length > 0 && (
+                          <div className='flex flex-wrap gap-1'>
+                            {email.labels.slice(0, 2).map((label) => (
+                              <Badge
+                                key={label}
+                                variant={getLabelVariant(label)}
+                                className='rounded-md px-2 py-0 text-[10px] font-medium'
+                              >
+                                {label}
+                              </Badge>
+                            ))}
+                            {email.labels.length > 2 && (
+                              <Badge variant='outline' className='rounded-md px-2 py-0 text-[10px]'>
+                                +{email.labels.length - 2}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <p className={cn(
+                        'text-sm truncate',
+                        !email.read ? 'font-medium text-foreground' : 'text-muted-foreground'
+                      )}>
+                        {email.subject}
+                      </p>
+                      <p className='text-xs text-muted-foreground/70 line-clamp-2 mt-1.5 leading-relaxed'>
+                        {email.preview}
+                      </p>
+                    </div>
+                    <div className='flex flex-col items-end gap-2 flex-shrink-0'>
+                      <span className='text-[11px] text-muted-foreground whitespace-nowrap'>
+                        {formatDistanceToNow(email.date, { addSuffix: true })}
+                      </span>
+                      <button className='opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted/50'>
+                        <span className='sr-only'>More options</span>
+                        <ChevronDown className='h-3.5 w-3.5' />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </ScrollArea>
       </Main>
     </>
   )

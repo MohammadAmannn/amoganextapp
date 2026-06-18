@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { ArrowUp, Sliders, Zap, History, Plus,  } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { ArrowUp, Sliders, Zap, History, Plus, Mic } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 import { Main } from '@/components/layout/main'
 
@@ -29,6 +29,36 @@ const HISTORY_OPTIONS = [
   { id: 'prompts-history', name: 'Prompts History' },
 ]
 
+// Define types for Web Speech API
+interface SpeechRecognitionEvent {
+  resultIndex: number
+  results: SpeechRecognitionResultList
+}
+
+interface SpeechRecognitionErrorEvent {
+  error: string
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean
+  interimResults: boolean
+  lang: string
+  start: () => void
+  stop: () => void
+  abort: () => void
+  onresult: ((event: SpeechRecognitionEvent) => void) | null
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null
+  onend: (() => void) | null
+}
+
+// Extend Window interface
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition
+    webkitSpeechRecognition: new () => SpeechRecognition
+  }
+}
+
 export function AiChat() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -37,17 +67,24 @@ export function AiChat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [showFilters, setShowFilters] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [isListening, setIsListening] = useState(false)
+  const [isSpeechSupported, setIsSpeechSupported] = useState(true)
+  
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const accumulatedTranscriptRef = useRef<string>('')
 
-  const sendMessage = async () => {
-    if (!input.trim() || loading || !model) return
-
-    const userMessage = input.trim()
+  // Define sendMessage using useCallback
+  const sendMessage = useCallback(async (message?: string) => {
+    const textToSend = message || input.trim()
+    
+    if (!textToSend || loading || !model) return
 
     setMessages((prev) => [
       ...prev,
       {
         role: 'user',
-        content: userMessage,
+        content: textToSend,
       },
     ])
 
@@ -61,7 +98,7 @@ export function AiChat() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: userMessage,
+          message: textToSend,
           model,
           api,
         }),
@@ -80,7 +117,9 @@ export function AiChat() {
           content: data.text || 'No response received.',
         },
       ])
-    } catch {
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error sending message:', error)
       setMessages((prev) => [
         ...prev,
         {
@@ -91,13 +130,120 @@ export function AiChat() {
     } finally {
       setLoading(false)
     }
+  }, [input, loading, model, api])
+
+  // Initialize speech recognition
+  useEffect(() => {
+    // Check if browser supports SpeechRecognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    
+    if (!SpeechRecognition) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsSpeechSupported(false)
+      return
+    }
+
+    const recognition = new SpeechRecognition()
+    // KEY FIX: Set continuous to true to capture full sentences
+    recognition.continuous = true
+    recognition.interimResults = true
+    recognition.lang = 'en-US'
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let interimTranscript = ''
+
+      // Build transcript from all results, not just new ones
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript
+
+        if (event.results[i].isFinal) {
+          // Accumulate final results
+          accumulatedTranscriptRef.current += transcript + ' '
+        } else {
+          // Interim results
+          interimTranscript += transcript
+        }
+      }
+
+      // Combine accumulated and interim transcripts
+      const displayText = (accumulatedTranscriptRef.current + interimTranscript).trim()
+
+      // Update input with combined results
+      if (displayText) {
+        setInput(displayText)
+      }
+    }
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      // eslint-disable-next-line no-console
+      console.error('Speech recognition error:', event.error)
+      setIsListening(false)
+      
+      // Handle specific errors
+      if (event.error === 'not-allowed') {
+        alert('Please allow microphone access to use voice input')
+      } else if (event.error === 'no-speech') {
+        // Silently handle no speech
+        setIsListening(false)
+      }
+    }
+
+    recognition.onend = () => {
+      setIsListening(false)
+    }
+
+    recognitionRef.current = recognition
+
+    // Cleanup
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort()
+      }
+    }
+  }, [])
+
+  const toggleVoiceInput = () => {
+    if (!isSpeechSupported) {
+      alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.')
+      return
+    }
+
+    if (isListening) {
+      // Stop listening and reset accumulated transcript
+      if (recognitionRef.current) {
+        recognitionRef.current.stop()
+      }
+      accumulatedTranscriptRef.current = ''
+      setIsListening(false)
+    } else {
+      // Start listening
+      try {
+        if (recognitionRef.current) {
+          // Reset the accumulated transcript
+          accumulatedTranscriptRef.current = ''
+          // Clear input when starting to listen
+          setInput('')
+          // Start recognition
+          recognitionRef.current.start()
+          setIsListening(true)
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to start speech recognition:', error)
+        alert('Failed to start voice input. Please try again.')
+      }
+    }
   }
 
-  const currentModel = MODELS.find(m => m.id === model)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage()
+    }
+  }
 
   const handleHistorySelect = (option: string) => {
     // Handle history option selection
-    // TODO: Add your logic here for different history options
     switch (option) {
       case 'history':
         // Handle history
@@ -113,6 +259,8 @@ export function AiChat() {
     }
     setShowHistory(false)
   }
+
+  const currentModel = MODELS.find(m => m.id === model)
 
   return (
     <>
@@ -167,39 +315,60 @@ export function AiChat() {
               {/* Message input with send button */}
               <div className='relative'>
                 <textarea
+                  ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      void sendMessage()
-                    }
-                  }}
-                  placeholder='Ask a question about your data...'
+                  onKeyDown={handleKeyDown}
+                  placeholder={isListening ? '🎤 Listening...' : 'Ask a question about your data...'}
                   rows={2}
-                  className='w-full rounded-xl border border-gray-300 bg-background px-4 py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none'
+                  className={`w-full rounded-xl border px-4 py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none ${
+                    isListening 
+                      ? 'border-red-500 bg-red-50 dark:bg-red-950/20' 
+                      : 'border-gray-300 bg-background'
+                  }`}
+                  disabled={isListening}
                 />
 
                 {/* Action buttons on top right of textarea */}
                 <div className='absolute right-3 top-3 flex gap-2'>
-                  {/* Attachment button */}
-                  <button
-                    className='p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground'
-                    title='Attach file'
-                  >
-              
-                  </button>
+                  {/* Voice Input button */}
+                  {isSpeechSupported && (
+                    <button
+                      onClick={toggleVoiceInput}
+                      disabled={loading || !model}
+                      className={`p-2 rounded-lg transition-colors ${
+                        isListening
+                          ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      title={isListening ? 'Stop recording' : 'Start voice input'}
+                    >
+                      <Mic className='w-5 h-5' />
+                    </button>
+                  )}
 
                   {/* Send button */}
                   <button
-                    onClick={() => void sendMessage()}
-                    disabled={loading || !input.trim() || !model}
+                    onClick={() => sendMessage()}
+                    disabled={loading || !input.trim() || !model || isListening}
                     className='p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
                     title='Send message'
                   >
                     <ArrowUp className='w-5 h-5' />
                   </button>
                 </div>
+
+                {/* Voice input status indicator */}
+                {isListening && (
+                  <div className='absolute bottom-3 left-4 flex items-center gap-2'>
+                    <div className='flex gap-1'>
+                      <span className='w-2 h-2 bg-red-500 rounded-full animate-bounce' style={{ animationDelay: '0ms' }}></span>
+                      <span className='w-2 h-2 bg-red-500 rounded-full animate-bounce' style={{ animationDelay: '150ms' }}></span>
+                      <span className='w-2 h-2 bg-red-500 rounded-full animate-bounce' style={{ animationDelay: '300ms' }}></span>
+                    </div>
+                    <span className='text-xs text-red-500 font-medium'>Listening...</span>
+                  </div>
+                )}
               </div>
 
               {/* Controls row - Filter, API, History, Add */}

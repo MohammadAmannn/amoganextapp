@@ -134,7 +134,7 @@ export function AiChat() {
                     <select
                       value={model}
                       onChange={(e) => setModel(e.target.value)}
-                      className={`w-full sm:w-[160px] md:w-[200px] h-10 appearance-none rounded-lg border bg-background px-3 sm:px-4 pr-7 sm:pr-8 text-xs sm:text-sm outline-none transition-colors hover:bg-muted/50 focus:ring-2 focus:ring-primary ${
+                      className={`w-full sm:w-40 md:w-50 h-10 appearance-none rounded-lg border bg-background px-3 sm:px-4 pr-7 sm:pr-8 text-xs sm:text-sm outline-none transition-colors hover:bg-muted/50 focus:ring-2 focus:ring-primary ${
                         !model ? 'text-muted-foreground' : ''
                       }`}
                     >
@@ -154,7 +154,7 @@ export function AiChat() {
                   {model && (
                     <div className='flex items-center sm:hidden text-xs text-muted-foreground px-1'>
                       <Bot className='h-3 w-3 mr-1' />
-                      <span className='truncate max-w-[80px]'>
+                      <span className='truncate max-w-20'>
                         {currentModel?.name}
                       </span>
                     </div>

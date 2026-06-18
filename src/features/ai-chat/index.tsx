@@ -1,7 +1,20 @@
 import { useState } from 'react'
+import { Bot, History, Link2, Plus } from 'lucide-react'
 
 import { AppHeader } from '@/components/layout/app-header'
 import { Main } from '@/components/layout/main'
+
+import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+
+import models from '@/data/models.json'
+import apis from '@/data/apis.json'
 
 type Message = {
   role: 'user' | 'assistant'
@@ -11,12 +24,9 @@ type Message = {
 export function AiChat() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-
-  const [model, setModel] = useState(
-    'google/gemini-2.5-flash'
-  )
-
   const [messages, setMessages] = useState<Message[]>([])
+  const [selectedModel, setSelectedModel] = useState('')
+  const [selectedApi, setSelectedApi] = useState('')
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return
@@ -42,24 +52,22 @@ export function AiChat() {
         },
         body: JSON.stringify({
           message: userMessage,
-          model,
+          model: selectedModel,
+          api: selectedApi,
         }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(
-          data.error || 'Failed to get response'
-        )
+        throw new Error(data.error || 'Failed to get response')
       }
 
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content:
-            data.text || 'No response received.',
+          content: data.text || 'No response received.',
         },
       ])
     } catch {
@@ -67,8 +75,7 @@ export function AiChat() {
         ...prev,
         {
           role: 'assistant',
-          content:
-            'Something went wrong. Please try again.',
+          content: 'Something went wrong. Please try again.',
         },
       ])
     } finally {
@@ -76,90 +83,35 @@ export function AiChat() {
     }
   }
 
+  const getModelName = (id: string) => {
+    const model = models.find((m) => m.id === id)
+    return model?.name || 'Select a model'
+  }
+
   return (
     <>
       <AppHeader title='AI Chat' />
 
       <Main fixed>
-        <div className='flex h-full flex-col'>
+        <div className='flex h-full flex-col rounded-lg border'>
           <div className='flex-1 overflow-y-auto p-4'>
             {messages.length === 0 ? (
-              <div className='flex h-full flex-col items-center justify-center gap-4'>
-                <h1 className='text-4xl font-bold'>
-                  🤖 AI Chat
-                </h1>
-
-                <p className='text-muted-foreground'>
+              <div className='flex h-full flex-col items-center justify-center'>
+                <h1 className='text-4xl font-bold'>🤖 AI Chat</h1>
+                <p className='mt-2 text-muted-foreground'>
                   Select a model and start chatting
                 </p>
-
-                <div className='w-full max-w-sm'>
-                  <select
-                    value={model}
-                    onChange={(e) =>
-                      setModel(e.target.value)
-                    }
-                    className='w-full rounded-lg border bg-background px-4 py-2'
-                  >
-                    <option value='google/gemini-2.5-flash'>
-                      Gemini 2.5 Flash
-                    </option>
-
-                    <option value='openai/gpt-4o'>
-                      GPT-4o
-                    </option>
-
-                    <option value='anthropic/claude-3.5-sonnet'>
-                      Claude 3.5 Sonnet
-                    </option>
-
-                    <option value='deepseek/deepseek-chat'>
-                      DeepSeek Chat
-                    </option>
-
-                    <option value='meta-llama/llama-3.3-70b-instruct'>
-                      Llama 3.3 70B
-                    </option>
-                  </select>
+                <div className='mt-4 rounded-md border px-4 py-2 text-sm'>
+                  Model: {selectedModel ? getModelName(selectedModel) : 'None selected'}
                 </div>
               </div>
             ) : (
               <div className='mx-auto max-w-4xl space-y-4'>
-                <div className='sticky top-0 z-10 flex justify-end bg-background pb-2'>
-                  <select
-                    value={model}
-                    onChange={(e) =>
-                      setModel(e.target.value)
-                    }
-                    className='rounded-lg border bg-background px-3 py-2 text-sm'
-                  >
-                    <option value='google/gemini-2.5-flash'>
-                      Gemini 2.5 Flash
-                    </option>
-
-                    <option value='openai/gpt-4o'>
-                      GPT-4o
-                    </option>
-
-                   
-
-                    <option value='deepseek/deepseek-chat'>
-                      DeepSeek Chat
-                    </option>
-
-                    <option value='meta-llama/llama-3.3-70b-instruct'>
-                      Llama 3.3 70B
-                    </option>
-                  </select>
-                </div>
-
                 {messages.map((message, index) => (
                   <div
                     key={index}
                     className={`flex ${
-                      message.role === 'user'
-                        ? 'justify-end'
-                        : 'justify-start'
+                      message.role === 'user' ? 'justify-end' : 'justify-start'
                     }`}
                   >
                     <div
@@ -173,12 +125,9 @@ export function AiChat() {
                     </div>
                   </div>
                 ))}
-
                 {loading && (
                   <div className='flex justify-start'>
-                    <div className='rounded-xl bg-muted px-4 py-3'>
-                      Thinking...
-                    </div>
+                    <div className='rounded-xl bg-muted px-4 py-3'>Thinking...</div>
                   </div>
                 )}
               </div>
@@ -186,30 +135,69 @@ export function AiChat() {
           </div>
 
           <div className='border-t p-4'>
-            <div className='mx-auto flex max-w-4xl gap-2'>
-              <input
-                value={input}
-                onChange={(e) =>
-                  setInput(e.target.value)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    void sendMessage()
-                  }
-                }}
-                placeholder='Ask anything...'
-                className='flex-1 rounded-lg border bg-background px-4 py-2 outline-none'
-              />
+            <div className='mx-auto max-w-4xl'>
+              <div className='flex gap-2'>
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      void sendMessage()
+                    }
+                  }}
+                  placeholder='Ask anything...'
+                  className='flex-1 rounded-lg border bg-background px-4 py-2 outline-none focus:ring-2 focus:ring-primary'
+                />
+                <button
+                  onClick={() => void sendMessage()}
+                  disabled={loading || !selectedModel}
+                  className='rounded-lg bg-primary px-6 py-2 text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors'
+                >
+                  {loading ? '...' : 'Send'}
+                </button>
+              </div>
 
-              <button
-                onClick={() => {
-                  void sendMessage()
-                }}
-                disabled={loading}
-                className='rounded-lg bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50'
-              >
-                {loading ? '...' : 'Send'}
-              </button>
+              <div className='mt-3 flex items-center justify-between'>
+                <div className='flex items-center gap-2 flex-wrap'>
+                  <Select value={selectedModel} onValueChange={setSelectedModel}>
+                    <SelectTrigger className='w-50'>
+                      <Bot className='h-4 w-4 mr-2' />
+                      <SelectValue placeholder='Select Model' />
+                    </SelectTrigger>
+                    <SelectContent side='top' align='start' className='max-h-75'>
+                      {models.map((model) => (
+                        <SelectItem key={model.id} value={model.id} className='cursor-pointer'>
+                          {model.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={selectedApi} onValueChange={setSelectedApi}>
+                    <SelectTrigger className='w-45'>
+                      <Link2 className='h-4 w-4 mr-2' />
+                      <SelectValue placeholder='Select API' />
+                    </SelectTrigger>
+                    <SelectContent side='top' align='start' className='max-h-75'>
+                      {apis.map((api) => (
+                        <SelectItem key={api.id} value={api.id} className='cursor-pointer'>
+                          {api.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className='flex items-center gap-2'>
+                  <Button variant='outline' size='sm'>
+                    <History className='mr-2 h-4 w-4' />
+                    History
+                  </Button>
+                  <Button variant='outline' size='icon'>
+                    <Plus className='h-4 w-4' />
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

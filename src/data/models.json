@@ -1,0 +1,14 @@
+[
+  {
+    "id": "openrouter",
+    "name": "OpenRouter"
+  },
+  {
+    "id": "gemini",
+    "name": "Gemini Direct"
+  },
+  {
+    "id": "openai",
+    "name": "OpenAI"
+  }
+]

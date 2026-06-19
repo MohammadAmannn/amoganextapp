@@ -94,46 +94,65 @@ Instructions:
     }
   }
 
+  const handleFollowUp = async () => {
+    if (!query.trim()) return
+    await handleSearch()
+  }
+
   return (
     <>
       <AppHeader title="AI Search" />
       
-      <div className="min-h-screen bg-white">
-        <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
-          {/* Search Input - Always visible */}
-          <div className="mb-8">
-            <div className="relative">
-              <div className="relative flex items-center rounded-xl border border-gray-200 bg-white shadow-sm transition-all focus-within:border-gray-400 focus-within:shadow-md">
-                <Search className="absolute left-4 h-5 w-5 text-gray-400" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder={lastQuery ? "Ask a follow-up..." : "What would you like to know?"}
-                  className="w-full rounded-xl border-0 py-3.5 pl-11 pr-32 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0"
-                />
-                <div className="absolute right-2 flex items-center gap-2">
-                  <button className="hidden rounded-lg px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 sm:block">
-                    <Globe className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={handleSearch}
-                    disabled={loading}
-                    className="rounded-lg bg-black px-4 py-1.5 text-sm font-medium text-white transition-all hover:bg-gray-800 disabled:opacity-50"
-                  >
-                    {loading ? 'Searching...' : 'Search'}
-                  </button>
-                </div>
+      <div className="min-h-screen bg-white flex flex-col">
+        {/* Main Content Area */}
+        {!lastQuery && !loading ? (
+          // Initial State - Centered Search
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
+            <div className="w-full max-w-2xl space-y-8">
+              {/* Heading */}
+              <div className="text-center">
+                <h1 className="text-4xl font-semibold text-gray-900 mb-8">What would you like to know?</h1>
               </div>
-              {!lastQuery && !loading && (
-                <div className="mt-3 flex flex-wrap gap-2">
+
+              {/* Centered Search Input */}
+              <div className="space-y-4">
+                <div className="relative">
+                  <div className="relative flex items-center rounded-xl border border-gray-200 bg-white shadow-sm transition-all focus-within:border-gray-400 focus-within:shadow-md">
+                    <Search className="absolute left-4 h-5 w-5 text-gray-400" />
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                      placeholder="Search..."
+                      className="w-full rounded-xl border-0 py-3.5 pl-11 pr-32 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0"
+                    />
+                    <div className="absolute right-2 flex items-center gap-2">
+                      <button className="hidden rounded-lg px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 sm:block">
+                        <Globe className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={handleSearch}
+                        disabled={loading}
+                        className="rounded-lg bg-black px-4 py-1.5 text-sm font-medium text-white transition-all hover:bg-gray-800 disabled:opacity-50"
+                      >
+                        {loading ? 'Searching...' : 'Search'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Suggested Chips */}
+                <div className="flex flex-wrap gap-2 justify-center">
                   {['Weather in India', 'Latest technology news', 'AI trends 2026', 'Stock market'].map(
                     (suggestion) => (
                       <button
                         key={suggestion}
                         onClick={() => {
                           setQuery(suggestion)
-                          handleSearch()
+                          // Trigger search with the suggestion
+                          setTimeout(() => {
+                            handleSearch()
+                          }, 0)
                         }}
                         className="rounded-full border border-gray-200 px-4 py-1.5 text-sm text-gray-600 transition-all hover:border-gray-300 hover:bg-gray-50"
                       >
@@ -142,13 +161,13 @@ Instructions:
                     )
                   )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
-
-          {/* Results Area */}
-          {(lastQuery || loading) && (
-            <div className="space-y-6">
+        ) : (
+          // Results State
+          <div className="flex flex-col px-4 py-6 sm:px-6 min-h-screen">
+            <div className="mx-auto w-full max-w-4xl space-y-6 pb-32">
               {/* Loading State */}
               {loading && (
                 <div className="space-y-4">
@@ -159,7 +178,7 @@ Instructions:
                 </div>
               )}
 
-              {/* Sources Section - Top */}
+              {/* Sources Section */}
               {!loading && sources.length > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -214,8 +233,38 @@ Instructions:
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* Sticky Follow-up Input - Properly Centered */}
+        {lastQuery && (
+          <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white shadow-lg flex justify-center">
+            <div className="w-full max-w-2xl px-4 py-4">
+              <div className="relative flex items-center rounded-xl border border-gray-200 bg-white shadow-sm transition-all focus-within:border-gray-400 focus-within:shadow-md">
+                <Search className="absolute left-4 h-5 w-5 text-gray-400" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleFollowUp()}
+                  placeholder="Ask a follow-up..."
+                  className="w-full rounded-xl border-0 py-3.5 pl-11 pr-32 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0"
+                />
+                <div className="absolute right-2 flex items-center gap-2">
+                  <button className="hidden rounded-lg px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 sm:block">
+                    <Globe className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={handleFollowUp}
+                    disabled={loading}
+                    className="rounded-lg bg-black px-4 py-1.5 text-sm font-medium text-white transition-all hover:bg-gray-800 disabled:opacity-50"
+                  >
+                    {loading ? 'Searching...' : 'Search'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   )

@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable no-console */
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { ArrowUp, Sliders, Zap, History, Plus, Mic, Globe, Wrench, Image, X } from 'lucide-react'
+import { ArrowUp, Zap, History, Plus, Mic, Globe, Image, X, ChevronDown, } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 import { Main } from '@/components/layout/main'
 
@@ -26,15 +27,29 @@ const MODELS = [
 
 const APIS = [
   { id: 'openrouter', name: 'OpenRouter' },
-  { id: 'openai', name: 'OpenAI' },
-  { id: 'anthropic', name: 'Anthropic' },
-  { id: 'google', name: 'Google AI' },
+  // { id: 'openai', name: 'OpenAI' },
+  // { id: 'anthropic', name: 'Anthropic' },
+  // { id: 'google', name: 'Google AI' },
 ]
 
 const HISTORY_OPTIONS = [
   { id: 'history', name: 'History' },
   { id: 'my-prompts', name: 'My Prompts' },
   { id: 'prompts-history', name: 'Prompts History' },
+]
+
+// Tool configuration
+const TOOLS = [
+  {
+    id: 'chat',
+    name: 'AI Chat',
+    icon: '',
+  },
+  {
+    id: 'web-search',
+    name: 'Web Search',
+    icon: '🌐'
+  },
 ]
 
 // Tavily API Key from environment variables
@@ -76,14 +91,14 @@ export function AiChat() {
   const [model, setModel] = useState('google/gemini-2.5-flash')
   const [api, setApi] = useState('openrouter')
   const [messages, setMessages] = useState<Message[]>([])
-  const [showFilters, setShowFilters] = useState(false)
+  const [showModelDropdown, setShowModelDropdown] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
-  const [showTools, setShowTools] = useState(false)
-  const [webSearchEnabled, setWebSearchEnabled] = useState(false)
+  const [showToolsDropdown, setShowToolsDropdown] = useState(false)
+  const [tool, setTool] = useState('chat')
   const [isListening, setIsListening] = useState(false)
   const [isSpeechSupported, setIsSpeechSupported] = useState(true)
   const [sources, setSources] = useState<any[]>([])
-  const [images, setImages] = useState<string[]>([]) // State for images
+  const [images, setImages] = useState<string[]>([])
   const [showImageModal, setShowImageModal] = useState(false)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
@@ -96,6 +111,20 @@ export function AiChat() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (showModelDropdown) {
+        setShowModelDropdown(false)
+      }
+      if (showToolsDropdown) {
+        setShowToolsDropdown(false)
+      }
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [showModelDropdown, showToolsDropdown])
 
   // Define sendMessage using useCallback
   const sendMessage = useCallback(async (message?: string) => {
@@ -114,7 +143,7 @@ export function AiChat() {
     setInput('')
     setLoading(true)
     setSources([])
-    setImages([]) // Clear previous images
+    setImages([])
 
     try {
       let finalPrompt = textToSend
@@ -122,7 +151,7 @@ export function AiChat() {
       let imageUrls: string[] = []
 
       // If web search is enabled, fetch from Tavily
-      if (webSearchEnabled) {
+      if (tool === 'web-search') {
         try {
           const tavilyResponse = await fetch(
             'https://api.tavily.com/search',
@@ -143,9 +172,8 @@ export function AiChat() {
 
           const tavilyData = await tavilyResponse.json()
           searchResults = tavilyData.results || []
-          imageUrls = tavilyData.images || [] // Extract images from response
+          imageUrls = tavilyData.images || []
 
-          // Set sources and images for display
           setSources(searchResults)
           setImages(imageUrls)
 
@@ -175,7 +203,6 @@ Instructions:
 - Cite sources where appropriate.`
         } catch (error) {
           console.error('Tavily Error:', error)
-          // Continue without search results if Tavily fails
         }
       }
 
@@ -189,6 +216,7 @@ Instructions:
           message: finalPrompt,
           model,
           api,
+          tool,
         }),
       })
 
@@ -223,11 +251,10 @@ Instructions:
     } finally {
       setLoading(false)
     }
-  }, [input, loading, model, api, webSearchEnabled])
+  }, [input, loading, model, api, tool])
 
   // Initialize speech recognition
   useEffect(() => {
-    // Check if browser supports SpeechRecognition
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
 
     if (!SpeechRecognition) {
@@ -336,6 +363,7 @@ Instructions:
   }
 
   const currentModel = MODELS.find(m => m.id === model)
+  const currentTool = TOOLS.find(t => t.id === tool)
 
   return (
     <>
@@ -343,13 +371,15 @@ Instructions:
 
       <Main fixed className='p-0'>
         <div className='flex h-screen flex-col'>
-          {/* Chat messages area - scrollable with no extra padding */}
+          {/* Chat messages area */}
           <div className='flex-1 overflow-y-auto px-4'>
             {messages.length === 0 ? (
               <div className='flex h-full flex-col items-center justify-center gap-4 px-4'>
-                <h1 className='text-3xl sm:text-4xl font-bold'>🤖 AI Chat</h1>
+                <h1 className='text-3xl sm:text-4xl font-bold'> AI Chat</h1>
                 <p className='text-sm sm:text-base text-muted-foreground text-center'>
-                  Ask a question about your data...
+                  {tool === 'chat' 
+                    ? 'Ask a question about your data...' 
+                    : 'Search the web with AI...'}
                 </p>
               </div>
             ) : (
@@ -391,7 +421,6 @@ Instructions:
                                   alt={`Search result ${idx + 1}`}
                                   className='w-full h-full object-cover hover:scale-105 transition-transform duration-200'
                                   onError={(e) => {
-                                    // Hide broken images
                                     (e.target as HTMLImageElement).style.display = 'none'
                                   }}
                                 />
@@ -438,13 +467,13 @@ Instructions:
                 {loading && (
                   <div className='flex justify-start'>
                     <div className='rounded-xl bg-muted px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base'>
-                      {webSearchEnabled ? 'Searching the web...' : 'Thinking...'}
+                      {tool === 'web-search' ? 'Searching the web...' : 'Thinking...'}
                     </div>
                   </div>
                 )}
 
                 {/* Sources and Images display for current web search results */}
-                {webSearchEnabled && !loading && (sources.length > 0 || images.length > 0) && (
+                {tool === 'web-search' && !loading && (sources.length > 0 || images.length > 0) && (
                   <div className='mx-auto max-w-4xl mt-4 space-y-3'>
                     {/* Images display */}
                     {images.length > 0 && (
@@ -469,7 +498,6 @@ Instructions:
                                 alt={`Search result ${index + 1}`}
                                 className='w-full h-full object-cover hover:scale-105 transition-transform duration-200'
                                 onError={(e) => {
-                                  // Hide broken images
                                   (e.target as HTMLImageElement).style.display = 'none'
                                 }}
                               />
@@ -545,7 +573,7 @@ Instructions:
             </div>
           )}
 
-          {/* Input area - Completely at bottom with zero gaps */}
+          {/* Input area */}
           <div className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 pt-1.5 pb-1.5 sm:px-6'>
             <div className='mx-auto max-w-4xl'>
               {/* Message input with send button */}
@@ -559,8 +587,10 @@ Instructions:
                     isListening 
                       ? '🎤 Listening... Speak now' 
                       : loading 
-                        ? webSearchEnabled ? 'Searching...' : 'Thinking...' 
-                        : 'Ask a question about your data...'
+                        ? tool === 'web-search' ? 'Searching...' : 'Thinking...' 
+                        : tool === 'chat'
+                          ? 'Ask a question about your data...'
+                          : 'Search the web...'
                   }
                   rows={1}
                   className={`w-full rounded-xl border-0 px-4 py-2 pr-24 text-sm sm:text-base resize-none outline-none focus:ring-0 ${
@@ -614,51 +644,39 @@ Instructions:
                 )}
               </div>
 
-              {/* Controls row - Model, API, History, Add - Minimal spacing */}
+              {/* Controls row - Simplified with 2 selectors */}
               <div className='flex items-center justify-between gap-1.5 mt-1'>
-                <div className='flex items-center gap-1 flex-wrap'>
-                  {/* Selected Model Display */}
-                  {model && currentModel && (
-                    <>
-                      <div className='px-2 py-0.5 rounded-lg bg-muted/80 text-xs text-foreground font-medium whitespace-nowrap'>
-                        {currentModel.name}
-                      </div>
-
-                      {webSearchEnabled && (
-                        <div className='px-2 py-0.5 rounded-lg bg-blue-100 text-blue-700 text-xs font-medium whitespace-nowrap flex items-center gap-1'>
-                          <Globe className='h-3 w-3' />
-                          Web Search
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {/* Filter button - opens model selector */}
+                <div className='flex items-center gap-1.5 flex-wrap'>
+                  {/* Model Selector with Label */}
                   <div className='relative'>
                     <button
-                      onClick={() => setShowFilters(!showFilters)}
-                      className='p-1 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground'
-                      title='Select AI Model'
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowModelDropdown(!showModelDropdown)
+                        setShowToolsDropdown(false)
+                      }}
+                      className='flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-muted transition-colors text-xs'
                     >
-                      <Sliders className='w-3.5 h-3.5' />
+                      <span className='text-muted-foreground'>Model:</span>
+                      <span className='font-medium'>{currentModel?.name || 'Select Model'}</span>
+                      <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform ${showModelDropdown ? 'rotate-180' : ''}`} />
                     </button>
 
-                    {/* Model dropdown modal */}
-                    {showFilters && (
-                      <div className='absolute left-0 bottom-full mb-1.5 w-56 rounded-lg border border-gray-200 bg-background shadow-lg z-10'>
-                        <div className='p-2'>
-                          <p className='text-xs font-semibold text-foreground px-2 py-1'>Select Model</p>
+                    {/* Model Dropdown */}
+                    {showModelDropdown && (
+<div className='absolute left-0 bottom-full mb-1 w-56 rounded-lg border border-gray-200 bg-background shadow-lg z-20'>                        <div className='p-1'>
                           {MODELS.map((m) => (
                             <button
                               key={m.id}
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation()
                                 setModel(m.id)
-                                setShowFilters(false)
+                                setShowModelDropdown(false)
                               }}
-                              className={`w-full text-left px-3 py-2 rounded text-sm mb-0.5 transition-colors ${
+                              className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
                                 model === m.id
                                   ? 'bg-primary text-primary-foreground'
-                                  : 'hover:bg-muted text-foreground'
+                                  : 'hover:bg-muted'
                               }`}
                             >
                               {m.name}
@@ -669,13 +687,59 @@ Instructions:
                     )}
                   </div>
 
-                  {/* API selector */}
+                  {/* Tool Selector with Label */}
                   <div className='relative'>
-                    <button className='flex items-center gap-1 px-2 py-0.5 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-xs text-foreground whitespace-nowrap'>
-                      <Zap className='w-3.5 h-3.5' />
-                      <span className='hidden sm:inline'>API</span>
-                      <span className='sm:hidden'>{APIS.find(a => a.id === api)?.name || 'API'}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowToolsDropdown(!showToolsDropdown)
+                        setShowModelDropdown(false)
+                      }}
+                      className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-muted transition-colors text-xs ${
+                        tool === 'web-search' ? 'bg-blue-50 border-blue-200' : ''
+                      }`}
+                    >
+                      <span className='text-muted-foreground'>Tool:</span>
+                      <span className='font-medium'>{currentTool?.icon} {currentTool?.name}</span>
+                      <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform ${showToolsDropdown ? 'rotate-180' : ''}`} />
                     </button>
+
+                    {/* Tools Dropdown */}
+                    {showToolsDropdown && (
+<div className='absolute left-0 bottom-full mb-1 w-48 rounded-lg border border-gray-200 bg-background shadow-lg z-20'>                        <div className='p-1'>
+                          {TOOLS.map((t) => (
+                            <button
+                              key={t.id}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setTool(t.id)
+                                setShowToolsDropdown(false)
+                                if (t.id === 'chat') {
+                                  setSources([])
+                                  setImages([])
+                                }
+                              }}
+                              className={`w-full text-left px-3 py-2 rounded text-sm transition-colors flex items-center gap-2 ${
+                                tool === t.id
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'hover:bg-muted'
+                              }`}
+                            >
+                              <span>{t.icon}</span>
+                              {t.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* API selector (hidden in dropdown, kept as select for functionality) */}
+                  <div className='relative'>
+                    {/* <button className='flex items-center gap-1 px-2 py-0.5 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-xs text-foreground whitespace-nowrap'>
+                      <Zap className='w-3 h-3' />
+                      <span className='hidden sm:inline'>{APIS.find(a => a.id === api)?.name || 'API'}</span>
+                    </button> */}
                     <select
                       value={api}
                       onChange={(e) => setApi(e.target.value)}
@@ -687,45 +751,6 @@ Instructions:
                         </option>
                       ))}
                     </select>
-                  </div>
-
-                  {/* Tools button with dropdown */}
-                  <div className='relative'>
-                    <button
-                      onClick={() => setShowTools(!showTools)}
-                      className={`flex items-center gap-1 px-2 py-0.5 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-xs ${
-                        webSearchEnabled ? 'bg-blue-50 border-blue-200 text-blue-700' : ''
-                      }`}
-                    >
-                      <Wrench className='w-3.5 h-3.5' />
-                      <span>Tools {webSearchEnabled && '•'}</span>
-                    </button>
-
-                    {showTools && (
-                      <div className='absolute left-0 bottom-full mb-1.5 w-52 rounded-lg border border-gray-200 bg-background shadow-lg z-10'>
-                        <div className='p-2'>
-                          <button
-                            onClick={() => {
-                              setWebSearchEnabled(!webSearchEnabled)
-                              setShowTools(false)
-                              // Clear sources and images when toggling off
-                              if (webSearchEnabled) {
-                                setSources([])
-                                setImages([])
-                              }
-                            }}
-                            className={`w-full text-left px-3 py-2 rounded text-sm transition-colors flex items-center justify-between ${
-                              webSearchEnabled
-                                ? 'bg-primary text-primary-foreground'
-                                : 'hover:bg-muted'
-                            }`}
-                          >
-                            <span>🌐 Web Search</span>
-                            {webSearchEnabled && <span className="text-xs">✓</span>}
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -742,13 +767,13 @@ Instructions:
 
                     {/* History dropdown menu */}
                     {showHistory && (
-                      <div className='absolute right-0 bottom-full mb-1.5 w-48 rounded-lg border border-gray-200 bg-background shadow-lg z-10'>
-                        <div className='p-2'>
+                      <div className='absolute right-0 bottom-full mt-1 w-48 rounded-lg border border-gray-200 bg-background shadow-lg z-20'>
+                        <div className='p-1'>
                           {HISTORY_OPTIONS.map((option) => (
                             <button
                               key={option.id}
                               onClick={() => handleHistorySelect(option.id)}
-                              className='w-full text-left px-3 py-2 rounded text-sm mb-0.5 hover:bg-muted text-foreground transition-colors last:mb-0'
+                              className='w-full text-left px-3 py-2 rounded text-sm hover:bg-muted transition-colors'
                             >
                               {option.name}
                             </button>

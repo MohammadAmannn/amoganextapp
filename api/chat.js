@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     const {
       message,
       model = 'google/gemini-2.5-flash',
-      webSearch = false,
+      tool = 'chat',
     } = req.body
 
     if (!message) {
@@ -28,8 +28,17 @@ export default async function handler(req, res) {
     let prompt = message
     let sources = []
 
+    if (tool === 'chat') {
+  prompt = `
+You are a helpful AI assistant.
+
+User:
+${message}
+`
+}
+
     // WEB SEARCH MODE
-    if (webSearch) {
+    if (tool === 'web-search') {
       try {
         const tavilyResponse = await fetch(
           'https://api.tavily.com/search',
@@ -62,8 +71,8 @@ URL: ${item.url}`
           )
           .join('\n\n')
 
-        prompt = `
-You are an AI search assistant.
+prompt = `
+You are an advanced AI search assistant similar to Perplexity and Morphic.
 
 User Question:
 ${message}
@@ -72,11 +81,14 @@ Search Results:
 ${context}
 
 Instructions:
-- Answer using the search results.
-- Give a complete and detailed response.
-- Use headings and bullet points where useful.
+- Use the provided search results.
+- Give a comprehensive answer.
+- Use markdown headings.
+- Use bullet points when useful.
 - Mention important facts only.
-- If information is unavailable, say so.
+- Cite sources naturally.
+- If search results conflict, explain the differences.
+- Do not invent facts.
 `
       } catch (searchError) {
         console.error('Tavily Error:', searchError)
@@ -99,6 +111,7 @@ Web search failed. Answer using your own knowledge.
 
     return res.status(200).json({
       text: result.text,
+      tool,
       sources,
     })
   } catch (error) {

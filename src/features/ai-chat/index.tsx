@@ -1,11 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable no-console */
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { ArrowUp, Sliders, Zap, History, Plus, Mic } from 'lucide-react'
+import { ArrowUp, Sliders, Zap, History, Plus, Mic, Globe, Wrench, Image, X } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 import { Main } from '@/components/layout/main'
 
 type Message = {
   role: 'user' | 'assistant'
   content: string
+  sources?: {
+    title: string
+    url: string
+  }[]
+  images?: string[]
 }
 
 const MODELS = [
@@ -28,6 +36,9 @@ const HISTORY_OPTIONS = [
   { id: 'my-prompts', name: 'My Prompts' },
   { id: 'prompts-history', name: 'Prompts History' },
 ]
+
+// Tavily API Key from environment variables
+const TAVILY_API_KEY = import.meta.env.VITE_TAVILY_API_KEY
 
 // Define types for Web Speech API
 interface SpeechRecognitionEvent {
@@ -67,8 +78,14 @@ export function AiChat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [showFilters, setShowFilters] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [showTools, setShowTools] = useState(false)
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [isSpeechSupported, setIsSpeechSupported] = useState(true)
+  const [sources, setSources] = useState<any[]>([])
+  const [images, setImages] = useState<string[]>([]) // State for images
+  const [showImageModal, setShowImageModal] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -96,15 +113,80 @@ export function AiChat() {
 
     setInput('')
     setLoading(true)
+    setSources([])
+    setImages([]) // Clear previous images
 
     try {
+      let finalPrompt = textToSend
+      let searchResults: any[] = []
+      let imageUrls: string[] = []
+
+      // If web search is enabled, fetch from Tavily
+      if (webSearchEnabled) {
+        try {
+          const tavilyResponse = await fetch(
+            'https://api.tavily.com/search',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                api_key: TAVILY_API_KEY,
+                query: textToSend,
+                search_depth: 'advanced',
+                max_results: 8,
+                include_images: true,
+              }),
+            }
+          )
+
+          const tavilyData = await tavilyResponse.json()
+          searchResults = tavilyData.results || []
+          imageUrls = tavilyData.images || [] // Extract images from response
+
+          // Set sources and images for display
+          setSources(searchResults)
+          setImages(imageUrls)
+
+          const context = searchResults
+            .map(
+              (item: any) =>
+                `Title: ${item.title}
+Content: ${item.content}
+URL: ${item.url}`
+            )
+            .join('\n\n')
+
+          finalPrompt = `
+You are an AI Search Assistant.
+
+Question:
+${textToSend}
+
+Search Results:
+${context}
+
+Instructions:
+- Use the search results to provide accurate information.
+- Give a complete and comprehensive answer.
+- Mention important facts and key details.
+- Use headings and bullet points when useful for readability.
+- Cite sources where appropriate.`
+        } catch (error) {
+          console.error('Tavily Error:', error)
+          // Continue without search results if Tavily fails
+        }
+      }
+
+      // Send to chat API
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: textToSend,
+          message: finalPrompt,
           model,
           api,
         }),
@@ -116,15 +198,20 @@ export function AiChat() {
         throw new Error(data.error || 'Failed to get response')
       }
 
+      // Add assistant message with sources and images
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
           content: data.text || 'No response received.',
+          sources: searchResults.map((result: any) => ({
+            title: result.title || 'Source',
+            url: result.url || '#',
+          })),
+          images: imageUrls.length > 0 ? imageUrls : undefined,
         },
       ])
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error('Error sending message:', error)
       setMessages((prev) => [
         ...prev,
@@ -136,7 +223,7 @@ export function AiChat() {
     } finally {
       setLoading(false)
     }
-  }, [input, loading, model, api])
+  }, [input, loading, model, api, webSearchEnabled])
 
   // Initialize speech recognition
   useEffect(() => {
@@ -144,7 +231,6 @@ export function AiChat() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
 
     if (!SpeechRecognition) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsSpeechSupported(false)
       return
     }
@@ -175,7 +261,6 @@ export function AiChat() {
     }
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      // eslint-disable-next-line no-console
       console.error('Speech recognition error:', event.error)
       setIsListening(false)
 
@@ -223,7 +308,6 @@ export function AiChat() {
           setIsListening(true)
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
         console.error('Failed to start speech recognition:', error)
         alert('Failed to start voice input. Please try again.')
       }
@@ -282,7 +366,71 @@ export function AiChat() {
                           : 'bg-muted'
                       }`}
                     >
-                      {message.content}
+                      <div>{message.content}</div>
+
+                      {/* Display images if available */}
+                      {message.role === 'assistant' && message.images && message.images.length > 0 && (
+                        <div className='mt-3 border-t pt-2'>
+                          <div className='mb-2 flex items-center gap-1 text-xs font-medium text-muted-foreground'>
+                            <Image className='h-3 w-3' />
+                            Related Images
+                          </div>
+
+                          <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
+                            {message.images.slice(0, 6).map((imageUrl, idx) => (
+                              <div
+                                key={idx}
+                                className='relative aspect-square rounded-md overflow-hidden cursor-pointer border hover:shadow-lg transition-shadow'
+                                onClick={() => {
+                                  setSelectedImage(imageUrl)
+                                  setShowImageModal(true)
+                                }}
+                              >
+                                <img
+                                  src={imageUrl}
+                                  alt={`Search result ${idx + 1}`}
+                                  className='w-full h-full object-cover hover:scale-105 transition-transform duration-200'
+                                  onError={(e) => {
+                                    // Hide broken images
+                                    (e.target as HTMLImageElement).style.display = 'none'
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+
+                          {message.images.length > 6 && (
+                            <div className='mt-1 text-xs text-muted-foreground'>
+                              +{message.images.length - 6} more images
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {message.role === 'assistant' &&
+                        message.sources &&
+                        message.sources.length > 0 && (
+                          <div className='mt-3 border-t pt-2'>
+                            <div className='mb-2 flex items-center gap-1 text-xs font-medium text-muted-foreground'>
+                              <Globe className='h-3 w-3' />
+                              Sources
+                            </div>
+
+                            <div className='flex flex-wrap gap-2'>
+                              {message.sources.slice(0, 5).map((source, idx) => (
+                                <a
+                                  key={idx}
+                                  href={source.url}
+                                  target='_blank'
+                                  rel='noreferrer'
+                                  className='rounded-md border px-2 py-1 text-xs hover:bg-muted'
+                                >
+                                  {source.title}
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                     </div>
                   </div>
                 ))}
@@ -290,14 +438,112 @@ export function AiChat() {
                 {loading && (
                   <div className='flex justify-start'>
                     <div className='rounded-xl bg-muted px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base'>
-                      Thinking...
+                      {webSearchEnabled ? 'Searching the web...' : 'Thinking...'}
                     </div>
                   </div>
                 )}
+
+                {/* Sources and Images display for current web search results */}
+                {webSearchEnabled && !loading && (sources.length > 0 || images.length > 0) && (
+                  <div className='mx-auto max-w-4xl mt-4 space-y-3'>
+                    {/* Images display */}
+                    {images.length > 0 && (
+                      <div>
+                        <div className='text-xs font-medium mb-2 text-muted-foreground flex items-center gap-1'>
+                          <Image className='h-3 w-3' />
+                          Web Search Images ({images.length})
+                        </div>
+
+                        <div className='grid grid-cols-2 sm:grid-cols-4 gap-2'>
+                          {images.slice(0, 8).map((imageUrl, index) => (
+                            <div
+                              key={index}
+                              className='relative aspect-square rounded-md overflow-hidden cursor-pointer border hover:shadow-lg transition-shadow'
+                              onClick={() => {
+                                setSelectedImage(imageUrl)
+                                setShowImageModal(true)
+                              }}
+                            >
+                              <img
+                                src={imageUrl}
+                                alt={`Search result ${index + 1}`}
+                                className='w-full h-full object-cover hover:scale-105 transition-transform duration-200'
+                                onError={(e) => {
+                                  // Hide broken images
+                                  (e.target as HTMLImageElement).style.display = 'none'
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+
+                        {images.length > 8 && (
+                          <div className='mt-1 text-xs text-muted-foreground'>
+                            +{images.length - 8} more images
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Sources display */}
+                    {sources.length > 0 && (
+                      <div>
+                        <div className='text-xs font-medium mb-2 text-muted-foreground flex items-center gap-1'>
+                          <Globe className='h-3 w-3' />
+                          Web Search Sources ({sources.length})
+                        </div>
+
+                        <div className='flex flex-wrap gap-2'>
+                          {sources.slice(0, 5).map((source, index) => (
+                            <a
+                              key={index}
+                              href={source.url}
+                              target='_blank'
+                              rel='noreferrer'
+                              className='rounded border px-2 py-1 text-xs hover:bg-muted transition-colors'
+                            >
+                              {source.title || 'Source'}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div ref={messagesEndRef} />
               </div>
             )}
           </div>
+
+          {/* Image Modal */}
+          {showImageModal && selectedImage && (
+            <div
+              className='fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm'
+              onClick={() => {
+                setShowImageModal(false)
+                setSelectedImage(null)
+              }}
+            >
+              <div className='relative max-w-4xl max-h-[90vh] p-4'>
+                <button
+                  onClick={() => {
+                    setShowImageModal(false)
+                    setSelectedImage(null)
+                  }}
+                  className='absolute top-2 right-2 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors'
+                >
+                  <X className='w-6 h-6' />
+                </button>
+                <img
+                  src={selectedImage}
+                  alt='Enlarged view'
+                  className='max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl'
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Input area - Completely at bottom with zero gaps */}
           <div className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 pt-1.5 pb-1.5 sm:px-6'>
@@ -313,7 +559,7 @@ export function AiChat() {
                     isListening 
                       ? '🎤 Listening... Speak now' 
                       : loading 
-                        ? 'Thinking...' 
+                        ? webSearchEnabled ? 'Searching...' : 'Thinking...' 
                         : 'Ask a question about your data...'
                   }
                   rows={1}
@@ -373,9 +619,18 @@ export function AiChat() {
                 <div className='flex items-center gap-1 flex-wrap'>
                   {/* Selected Model Display */}
                   {model && currentModel && (
-                    <div className='px-2 py-0.5 rounded-lg bg-muted/80 text-xs text-foreground font-medium whitespace-nowrap'>
-                      {currentModel.name}
-                    </div>
+                    <>
+                      <div className='px-2 py-0.5 rounded-lg bg-muted/80 text-xs text-foreground font-medium whitespace-nowrap'>
+                        {currentModel.name}
+                      </div>
+
+                      {webSearchEnabled && (
+                        <div className='px-2 py-0.5 rounded-lg bg-blue-100 text-blue-700 text-xs font-medium whitespace-nowrap flex items-center gap-1'>
+                          <Globe className='h-3 w-3' />
+                          Web Search
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {/* Filter button - opens model selector */}
@@ -432,6 +687,45 @@ export function AiChat() {
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  {/* Tools button with dropdown */}
+                  <div className='relative'>
+                    <button
+                      onClick={() => setShowTools(!showTools)}
+                      className={`flex items-center gap-1 px-2 py-0.5 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-xs ${
+                        webSearchEnabled ? 'bg-blue-50 border-blue-200 text-blue-700' : ''
+                      }`}
+                    >
+                      <Wrench className='w-3.5 h-3.5' />
+                      <span>Tools {webSearchEnabled && '•'}</span>
+                    </button>
+
+                    {showTools && (
+                      <div className='absolute left-0 bottom-full mb-1.5 w-52 rounded-lg border border-gray-200 bg-background shadow-lg z-10'>
+                        <div className='p-2'>
+                          <button
+                            onClick={() => {
+                              setWebSearchEnabled(!webSearchEnabled)
+                              setShowTools(false)
+                              // Clear sources and images when toggling off
+                              if (webSearchEnabled) {
+                                setSources([])
+                                setImages([])
+                              }
+                            }}
+                            className={`w-full text-left px-3 py-2 rounded text-sm transition-colors flex items-center justify-between ${
+                              webSearchEnabled
+                                ? 'bg-primary text-primary-foreground'
+                                : 'hover:bg-muted'
+                            }`}
+                          >
+                            <span>🌐 Web Search</span>
+                            {webSearchEnabled && <span className="text-xs">✓</span>}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

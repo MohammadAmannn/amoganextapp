@@ -111,7 +111,7 @@ Instructions:
             <div className="w-full max-w-2xl space-y-8">
               {/* Heading */}
               <div className="text-center">
-                <h1 className="text-4xl font-semibold text-gray-900 mb-8">What would you like to know?</h1>
+                <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 mb-8">What would you like to know?</h1>
               </div>
 
               {/* Centered Search Input */}
@@ -124,7 +124,7 @@ Instructions:
                       onChange={(e) => setQuery(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                       placeholder="Search..."
-                      className="w-full rounded-xl border-0 py-3.5 pl-11 pr-32 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0"
+                      className="w-full rounded-xl border-0 py-3.5 pl-11 pr-28 sm:pr-32 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0 text-base"
                     />
                     <div className="absolute right-2 flex items-center gap-2">
                       <button className="hidden rounded-lg px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 sm:block">
@@ -133,7 +133,7 @@ Instructions:
                       <button
                         onClick={handleSearch}
                         disabled={loading}
-                        className="rounded-lg bg-black px-4 py-1.5 text-sm font-medium text-white transition-all hover:bg-gray-800 disabled:opacity-50"
+                        className="rounded-lg bg-black px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white transition-all hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap"
                       >
                         {loading ? 'Searching...' : 'Search'}
                       </button>
@@ -154,7 +154,7 @@ Instructions:
                             handleSearch()
                           }, 0)
                         }}
-                        className="rounded-full border border-gray-200 px-4 py-1.5 text-sm text-gray-600 transition-all hover:border-gray-300 hover:bg-gray-50"
+                        className="rounded-full border border-gray-200 px-3 sm:px-4 py-1.5 text-xs sm:text-sm text-gray-600 transition-all hover:border-gray-300 hover:bg-gray-50"
                       >
                         {suggestion}
                       </button>
@@ -194,9 +194,9 @@ Instructions:
                         href={source.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="group flex items-center gap-2 rounded-full border border-gray-200 px-4 py-1.5 text-sm text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-50"
+                        className="group flex items-center gap-2 rounded-full border border-gray-200 px-3 sm:px-4 py-1.5 text-xs sm:text-sm text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-50"
                       >
-                        <span className="max-w-[200px] truncate">{source.title || 'Source'}</span>
+                        <span className="max-w-[120px] sm:max-w-[200px] truncate">{source.title || 'Source'}</span>
                         <ArrowUpRight className="h-3 w-3 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100" />
                       </a>
                     ))}
@@ -217,7 +217,7 @@ Instructions:
                         key={index}
                         src={img}
                         alt=""
-                        className="h-32 w-48 flex-shrink-0 rounded-lg object-cover border border-gray-100"
+                        className="h-24 w-36 sm:h-32 sm:w-48 flex-shrink-0 rounded-lg object-cover border border-gray-100"
                       />
                     ))}
                   </div>
@@ -227,7 +227,7 @@ Instructions:
               {/* Answer Section */}
               {!loading && answer && (
                 <div className="space-y-4">
-                  <div className="prose prose-gray max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900">
+                  <div className="prose prose-sm sm:prose-base prose-gray max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900">
                     <ReactMarkdown>{answer}</ReactMarkdown>
                   </div>
                 </div>
@@ -247,7 +247,7 @@ Instructions:
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleFollowUp()}
                   placeholder="Ask a follow-up..."
-                  className="w-full rounded-xl border-0 py-3.5 pl-11 pr-32 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0"
+                  className="w-full rounded-xl border-0 py-3.5 pl-11 pr-28 sm:pr-32 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0 text-base"
                 />
                 <div className="absolute right-2 flex items-center gap-2">
                   <button className="hidden rounded-lg px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 sm:block">
@@ -256,7 +256,7 @@ Instructions:
                   <button
                     onClick={handleFollowUp}
                     disabled={loading}
-                    className="rounded-lg bg-black px-4 py-1.5 text-sm font-medium text-white transition-all hover:bg-gray-800 disabled:opacity-50"
+                    className="rounded-lg bg-black px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white transition-all hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap"
                   >
                     {loading ? 'Searching...' : 'Search'}
                   </button>

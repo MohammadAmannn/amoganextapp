@@ -11,7 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
-import { Route as AuthenticatedChartRouteImport } from './routes/_authenticated/chart'
+import { Route as AuthenticatedCharttemplateRouteImport } from './routes/_authenticated/charttemplate'
 import { Route as errors503RouteImport } from './routes/(errors)/503'
 import { Route as errors500RouteImport } from './routes/(errors)/500'
 import { Route as errors404RouteImport } from './routes/(errors)/404'
@@ -25,6 +25,7 @@ import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-p
 import { Route as AuthenticatedUsersIndexRouteImport } from './routes/_authenticated/users/index'
 import { Route as AuthenticatedTasksIndexRouteImport } from './routes/_authenticated/tasks/index'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
+import { Route as AuthenticatedMapIndexRouteImport } from './routes/_authenticated/map/index'
 import { Route as AuthenticatedInboxIndexRouteImport } from './routes/_authenticated/inbox/index'
 import { Route as AuthenticatedHelpCenterIndexRouteImport } from './routes/_authenticated/help-center/index'
 import { Route as AuthenticatedChatsIndexRouteImport } from './routes/_authenticated/chats/index'
@@ -42,11 +43,12 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedChartRoute = AuthenticatedChartRouteImport.update({
-  id: '/chart',
-  path: '/chart',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+const AuthenticatedCharttemplateRoute =
+  AuthenticatedCharttemplateRouteImport.update({
+    id: '/charttemplate',
+    path: '/charttemplate',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const errors503Route = errors503RouteImport.update({
   id: '/(errors)/503',
   path: '/503',
@@ -113,6 +115,11 @@ const AuthenticatedSettingsIndexRoute =
     path: '/settings/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMapIndexRoute = AuthenticatedMapIndexRouteImport.update({
+  id: '/map/',
+  path: '/map/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedInboxIndexRoute = AuthenticatedInboxIndexRouteImport.update({
   id: '/inbox/',
   path: '/inbox/',
@@ -165,7 +172,7 @@ export interface FileRoutesByFullPath {
   '/404': typeof errors404Route
   '/500': typeof errors500Route
   '/503': typeof errors503Route
-  '/chart': typeof AuthenticatedChartRoute
+  '/charttemplate': typeof AuthenticatedCharttemplateRoute
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/ai_chat/': typeof AuthenticatedAi_chatIndexRoute
   '/ai_search/': typeof AuthenticatedAi_searchIndexRoute
@@ -173,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/chats/': typeof AuthenticatedChatsIndexRoute
   '/help-center/': typeof AuthenticatedHelpCenterIndexRoute
   '/inbox/': typeof AuthenticatedInboxIndexRoute
+  '/map/': typeof AuthenticatedMapIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/tasks/': typeof AuthenticatedTasksIndexRoute
   '/users/': typeof AuthenticatedUsersIndexRoute
@@ -188,7 +196,7 @@ export interface FileRoutesByTo {
   '/404': typeof errors404Route
   '/500': typeof errors500Route
   '/503': typeof errors503Route
-  '/chart': typeof AuthenticatedChartRoute
+  '/charttemplate': typeof AuthenticatedCharttemplateRoute
   '/': typeof AuthenticatedIndexRoute
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/ai_chat': typeof AuthenticatedAi_chatIndexRoute
@@ -197,6 +205,7 @@ export interface FileRoutesByTo {
   '/chats': typeof AuthenticatedChatsIndexRoute
   '/help-center': typeof AuthenticatedHelpCenterIndexRoute
   '/inbox': typeof AuthenticatedInboxIndexRoute
+  '/map': typeof AuthenticatedMapIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
@@ -214,7 +223,7 @@ export interface FileRoutesById {
   '/(errors)/404': typeof errors404Route
   '/(errors)/500': typeof errors500Route
   '/(errors)/503': typeof errors503Route
-  '/_authenticated/chart': typeof AuthenticatedChartRoute
+  '/_authenticated/charttemplate': typeof AuthenticatedCharttemplateRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/_authenticated/ai_chat/': typeof AuthenticatedAi_chatIndexRoute
@@ -223,6 +232,7 @@ export interface FileRoutesById {
   '/_authenticated/chats/': typeof AuthenticatedChatsIndexRoute
   '/_authenticated/help-center/': typeof AuthenticatedHelpCenterIndexRoute
   '/_authenticated/inbox/': typeof AuthenticatedInboxIndexRoute
+  '/_authenticated/map/': typeof AuthenticatedMapIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
@@ -241,7 +251,7 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/503'
-    | '/chart'
+    | '/charttemplate'
     | '/errors/$error'
     | '/ai_chat/'
     | '/ai_search/'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/chats/'
     | '/help-center/'
     | '/inbox/'
+    | '/map/'
     | '/settings/'
     | '/tasks/'
     | '/users/'
@@ -264,7 +275,7 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/503'
-    | '/chart'
+    | '/charttemplate'
     | '/'
     | '/errors/$error'
     | '/ai_chat'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/chats'
     | '/help-center'
     | '/inbox'
+    | '/map'
     | '/settings'
     | '/tasks'
     | '/users'
@@ -289,7 +301,7 @@ export interface FileRouteTypes {
     | '/(errors)/404'
     | '/(errors)/500'
     | '/(errors)/503'
-    | '/_authenticated/chart'
+    | '/_authenticated/charttemplate'
     | '/_authenticated/'
     | '/_authenticated/errors/$error'
     | '/_authenticated/ai_chat/'
@@ -298,6 +310,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chats/'
     | '/_authenticated/help-center/'
     | '/_authenticated/inbox/'
+    | '/_authenticated/map/'
     | '/_authenticated/settings/'
     | '/_authenticated/tasks/'
     | '/_authenticated/users/'
@@ -333,11 +346,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/chart': {
-      id: '/_authenticated/chart'
-      path: '/chart'
-      fullPath: '/chart'
-      preLoaderRoute: typeof AuthenticatedChartRouteImport
+    '/_authenticated/charttemplate': {
+      id: '/_authenticated/charttemplate'
+      path: '/charttemplate'
+      fullPath: '/charttemplate'
+      preLoaderRoute: typeof AuthenticatedCharttemplateRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/(errors)/503': {
@@ -431,6 +444,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/map/': {
+      id: '/_authenticated/map/'
+      path: '/map'
+      fullPath: '/map/'
+      preLoaderRoute: typeof AuthenticatedMapIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/inbox/': {
       id: '/_authenticated/inbox/'
       path: '/inbox'
@@ -484,7 +504,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedChartRoute: typeof AuthenticatedChartRoute
+  AuthenticatedCharttemplateRoute: typeof AuthenticatedCharttemplateRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedErrorsErrorRoute: typeof AuthenticatedErrorsErrorRoute
   AuthenticatedAi_chatIndexRoute: typeof AuthenticatedAi_chatIndexRoute
@@ -493,13 +513,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
   AuthenticatedHelpCenterIndexRoute: typeof AuthenticatedHelpCenterIndexRoute
   AuthenticatedInboxIndexRoute: typeof AuthenticatedInboxIndexRoute
+  AuthenticatedMapIndexRoute: typeof AuthenticatedMapIndexRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
   AuthenticatedTasksIndexRoute: typeof AuthenticatedTasksIndexRoute
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedChartRoute: AuthenticatedChartRoute,
+  AuthenticatedCharttemplateRoute: AuthenticatedCharttemplateRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedErrorsErrorRoute: AuthenticatedErrorsErrorRoute,
   AuthenticatedAi_chatIndexRoute: AuthenticatedAi_chatIndexRoute,
@@ -508,6 +529,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,
   AuthenticatedHelpCenterIndexRoute: AuthenticatedHelpCenterIndexRoute,
   AuthenticatedInboxIndexRoute: AuthenticatedInboxIndexRoute,
+  AuthenticatedMapIndexRoute: AuthenticatedMapIndexRoute,
   AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
   AuthenticatedTasksIndexRoute: AuthenticatedTasksIndexRoute,
   AuthenticatedUsersIndexRoute: AuthenticatedUsersIndexRoute,

@@ -18,6 +18,7 @@ import {
   Bot,
   SearchIcon,
   ChartArea,
+  Map,
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -78,10 +79,16 @@ export const sidebarData: SidebarData = {
           icon: SearchIcon,
         },
         {
-          title: 'Chart',
-          url: '/chart',
+          title: 'Chart Template',
+          url: '/charttemplate',
           icon: ChartArea,
         },
+        {
+          title:"Map",
+          url:"/map",
+          icon: Map
+        },
+      
         {
           title: 'Users',
           url: '/users',

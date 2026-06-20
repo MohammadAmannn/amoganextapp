@@ -587,8 +587,10 @@ function MarkerPopup({
 
     popup.setDOMContent(container);
     marker.setPopup(popup);
+    marker.togglePopup();
 
     return () => {
+      popup.remove();
       marker.setPopup(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

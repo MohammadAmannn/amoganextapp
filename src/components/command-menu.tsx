@@ -1,6 +1,6 @@
 import React from 'react'
-import { useNavigate } from '@tanstack/react-router'
-import { ArrowRight, ChevronRight, Laptop, Moon, Sun } from 'lucide-react'
+import { useNavigate, useRouterState } from '@tanstack/react-router'
+import { ArrowRight, ChevronRight, Laptop, Moon, Sun, MapPin } from 'lucide-react'
 import { useSearch } from '@/context/search-provider'
 import { useTheme } from '@/context/theme-provider'
 import {
@@ -14,11 +14,15 @@ import {
 } from '@/components/ui/command'
 import { sidebarData } from './layout/data/sidebar-data'
 import { ScrollArea } from './ui/scroll-area'
+import markersData from '@/features/map/data/markers.json'
 
 export function CommandMenu() {
   const navigate = useNavigate()
+  const routerState = useRouterState()
   const { setTheme } = useTheme()
   const { open, setOpen } = useSearch()
+
+  const isMapRoute = routerState.location.pathname.includes('/map')
 
   const runCommand = React.useCallback(
     (command: () => unknown) => {
@@ -34,7 +38,7 @@ export function CommandMenu() {
       <CommandList>
         <ScrollArea type='hover' className='h-72 pe-1'>
           <CommandEmpty>No results found.</CommandEmpty>
-          {sidebarData.navGroups.map((group) => (
+          {!isMapRoute && sidebarData.navGroups.map((group) => (
             <CommandGroup key={group.title} heading={group.title}>
               {group.items.map((navItem, i) => {
                 if (navItem.url)
@@ -70,20 +74,43 @@ export function CommandMenu() {
               })}
             </CommandGroup>
           ))}
-          <CommandSeparator />
-          <CommandGroup heading='Theme'>
-            <CommandItem onSelect={() => runCommand(() => setTheme('light'))}>
-              <Sun /> <span>Light</span>
-            </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => setTheme('dark'))}>
-              <Moon className='scale-90' />
-              <span>Dark</span>
-            </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => setTheme('system'))}>
-              <Laptop />
-              <span>System</span>
-            </CommandItem>
+          <CommandGroup heading='Locations'>
+            {markersData.map((marker) => (
+              <CommandItem
+                key={`search-marker-${marker.id}`}
+                value={`location-${marker.locationName}-${marker.name}`}
+                onSelect={() => {
+                  runCommand(() => navigate({ to: '/map', search: { markerId: marker.id } as any }))
+                }}
+              >
+                <div className='flex size-4 items-center justify-center mr-2'>
+                  <MapPin className='size-3.5 text-muted-foreground' />
+                </div>
+                <div className='flex flex-col align-start text-left'>
+                  <span className='font-medium text-sm text-gray-900 dark:text-gray-100'>{marker.locationName}</span>
+                  <span className='text-[10px] text-muted-foreground'>Contact: {marker.name}</span>
+                </div>
+              </CommandItem>
+            ))}
           </CommandGroup>
+          {!isMapRoute && (
+            <>
+              <CommandSeparator />
+              <CommandGroup heading='Theme'>
+                <CommandItem onSelect={() => runCommand(() => setTheme('light'))}>
+                  <Sun /> <span>Light</span>
+                </CommandItem>
+                <CommandItem onSelect={() => runCommand(() => setTheme('dark'))}>
+                  <Moon className='scale-90' />
+                  <span>Dark</span>
+                </CommandItem>
+                <CommandItem onSelect={() => runCommand(() => setTheme('system'))}>
+                  <Laptop />
+                  <span>System</span>
+                </CommandItem>
+              </CommandGroup>
+            </>
+          )}
         </ScrollArea>
       </CommandList>
     </CommandDialog>

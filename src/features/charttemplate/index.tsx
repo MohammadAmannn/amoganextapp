@@ -60,23 +60,9 @@ export default function ChartsPage() {
         <>
             <AppHeader title='Chart Template' />
             <Main fixed className="flex flex-col">
-                <div className="p-8 w-full flex-1 overflow-y-auto">
-                    {/* Page Header */}
-                    <div className="flex items-center justify-between mb-6">
-                        {/* <div>
-                            <h1 className="text-2xl font-semibold tracking-tight">Chart Template</h1>
-                            <p className="text-muted-foreground text-sm">
-                                Beautiful charts and graphs for your data
-                            </p>
-                        </div> */}
-                        {/* <Button variant="outline" size="sm">
-                            <Copy className="mr-2 h-4 w-4" />
-                            Copy Code
-                        </Button> */}
-                    </div>
-
+                <div className="w-full flex-1 overflow-y-auto">
                     {/* Navigation Tabs */}
-                    <nav className="border-b flex space-x-2 mb-6 overflow-x-auto">
+                    <nav className="border-b flex space-x-2 px-8 pt-4 overflow-x-auto">
                         {tabs.map((tab) => {
                             const Icon = tab.icon
                             return (
@@ -100,7 +86,9 @@ export default function ChartsPage() {
                     </nav>
 
                     {/* Chart Content */}
-                    {renderChart()}
+                    <div className="p-8">
+                        {renderChart()}
+                    </div>
                 </div>
             </Main>
         </>

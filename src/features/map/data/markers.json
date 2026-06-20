@@ -1,0 +1,122 @@
+[
+  {
+    "id": "1",
+    "locationName": "New York City",
+    "description": "The city that never sleeps.",
+    "name": "John Smith",
+    "mobile": "+1 234-567-8900",
+    "zipCode": "10001",
+    "lat": 40.7128,
+    "lng": -74.0060,
+    "icon": "store",
+    "population": "8.3 million"
+  },
+  {
+    "id": "2",
+    "locationName": "San Francisco",
+    "description": "The Golden Gate city.",
+    "name": "Sarah Johnson",
+    "mobile": "+1 345-678-9012",
+    "zipCode": "94105",
+    "lat": 37.7749,
+    "lng": -122.4194,
+    "icon": "pin",
+    "population": "883,305"
+  },
+  {
+    "id": "3",
+    "locationName": "London",
+    "description": "The historic capital of England.",
+    "name": "James Williams",
+    "mobile": "+44 20 7946 0958",
+    "zipCode": "EC1A 1BB",
+    "lat": 51.5074,
+    "lng": -0.1278,
+    "icon": "store",
+    "population": "8.9 million"
+  },
+  {
+    "id": "4",
+    "locationName": "Bhopal",
+    "description": "The City of Lakes.",
+    "name": "Priya Sharma",
+    "mobile": "+91 98765-43210",
+    "zipCode": "462001",
+    "lat": 23.2599,
+    "lng": 77.4126,
+    "icon": "store",
+    "population": "1.8 million"
+  },
+  {
+    "id": "5",
+    "locationName": "Tokyo",
+    "description": "The bustling metropolis of Japan.",
+    "name": "Yuki Tanaka",
+    "mobile": "+81 3-1234-5678",
+    "zipCode": "100-0001",
+    "lat": 35.6762,
+    "lng": 139.6503,
+    "icon": "pin",
+    "population": "13.9 million"
+  },
+  {
+    "id": "6",
+    "locationName": "Sydney",
+    "description": "The harbor city of Australia.",
+    "name": "Emma Wilson",
+    "mobile": "+61 2 9876-5432",
+    "zipCode": "2000",
+    "lat": -33.8688,
+    "lng": 151.2093,
+    "icon": "pin",
+    "population": "5.3 million"
+  },
+  {
+    "id": "7",
+    "locationName": "Mumbai",
+    "description": "The financial capital of India.",
+    "name": "Rohan Mehta",
+    "mobile": "+91 98123-45678",
+    "zipCode": "400001",
+    "lat": 19.0760,
+    "lng": 72.8777,
+    "icon": "store",
+    "population": "12.5 million"
+  },
+  {
+    "id": "8",
+    "locationName": "New Delhi",
+    "description": "The capital city of India.",
+    "name": "Amit Verma",
+    "mobile": "+91 98987-65432",
+    "zipCode": "110001",
+    "lat": 28.6139,
+    "lng": 77.2090,
+    "icon": "pin",
+    "population": "16.7 million"
+  },
+  {
+    "id": "9",
+    "locationName": "Bengaluru",
+    "description": "Silicon Valley of India.",
+    "name": "Ananya Rao",
+    "mobile": "+91 98450-12345",
+    "zipCode": "560001",
+    "lat": 12.9716,
+    "lng": 77.5946,
+    "icon": "store",
+    "population": "8.4 million"
+  },
+  {
+    "id": "10",
+    "locationName": "Kolkata",
+    "description": "City of Joy.",
+    "name": "Subhash Bose",
+    "mobile": "+91 98300-98765",
+    "zipCode": "700001",
+    "lat": 22.5726,
+    "lng": 88.3639,
+    "icon": "pin",
+    "population": "4.5 million"
+  }
+]

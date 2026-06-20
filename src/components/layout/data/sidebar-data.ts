@@ -84,7 +84,7 @@ export const sidebarData: SidebarData = {
           icon: ChartArea,
         },
         {
-          title:"Map",
+          title:"Map Template",
           url:"/map",
           icon: Map
         },

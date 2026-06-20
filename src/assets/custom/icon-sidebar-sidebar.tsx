@@ -9,7 +9,7 @@ export function IconSidebarSidebar(props: SVGProps<SVGSVGElement>) {
       {...props}
     >
       <path
-        d='M23.42.51h51.99c2.21 0 4 1.79 4 4v42.18c0 2.21-1.79 4-4 4H23.42s-.04-.02-.04-.04V.55s.02-.04.04-.04z'
+        d='M23.42.51h51.99c2.21 0 4 1.79 4 4v42. 18c0 2.21-1.79 4-4 4H23.42s-.04-.02-.04-.04V.55s.02-.04.04-.04z'
         opacity={0.2}
         strokeLinecap='round'
         strokeMiterlimit={10}

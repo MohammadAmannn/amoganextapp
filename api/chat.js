@@ -184,14 +184,15 @@ DATA DISPLAY:
 - Progress (value 0-100, label)
 
 FORM:
-- Form (container, wraps children)
-- Input (label, placeholder, type "text"|"email"|"password"|"number")
-- Textarea (label, placeholder, rows)
-- Select (label, placeholder, options string[] or {label,value}[])
-- Button (label, variant "default"|"destructive"|"outline"|"secondary"|"ghost"|"link", size "default"|"sm"|"lg")
-- Checkbox (label, checked)
-- Switch (label, checked)
-- RadioGroup (options string[] or {label,value}[])
+- Allowed Component Types and Props:
+- Form (props: className) -> Wrap your form elements in this. It captures and validates submissions!
+- Input (props: label, placeholder, name, required (boolean), type "text"|"email"|"password"|"number")
+- Textarea (props: label, placeholder, name, required (boolean))
+- Select (props: label, placeholder, name, required (boolean), options [array of strings or {label, value}])
+- Checkbox (props: label, name, required (boolean), checked)
+- Switch (props: label, name, required (boolean), checked)
+- RadioGroup (props: name, required (boolean), options [array])
+- Button (props: label, variant "default"|"destructive"|"outline"|"secondary"|"ghost"|"link", size "default"|"sm"|"lg"|"icon", className, type "submit"|"button") -> Use type="submit" for form buttons!
 - Calendar (mode "single"|"multiple"|"range")
 
 RULES:

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
@@ -29,7 +30,18 @@ export const registry = {
       className="space-y-4 w-full"
       onSubmit={(e) => {
         e.preventDefault()
-        if (onSubmit) onSubmit()
+        const formData = new FormData(e.currentTarget)
+        const data = Object.fromEntries(formData.entries())
+        
+        toast.success('Form Submitted Successfully!', {
+          description: (
+            <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4 overflow-x-auto">
+              <code className="text-white text-xs">{JSON.stringify(data, null, 2)}</code>
+            </pre>
+          ),
+        })
+
+        if (onSubmit) onSubmit(data)
       }}
       {...props}
     >
@@ -45,7 +57,7 @@ export const registry = {
 
     return (
       <div className="space-y-2">
-        {label && <label className="text-sm font-medium">{label}</label>}
+        {label && <label className="text-sm font-medium">{label}{props.required && <span className="text-destructive ml-1">*</span>}</label>}
         <SelectComponent value={value} onValueChange={onValueChange} {...props}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder={placeholder || 'Select an option'} />
@@ -168,23 +180,23 @@ export const registry = {
       </Card>
     )
   },
-  Input: ({ label, ...props }: any) => (
+  Input: ({ label, required, ...props }: any) => (
     <div className="space-y-2">
-      {label && <label className="text-sm font-medium">{label}</label>}
-      <Input {...props} />
+      {label && <label className="text-sm font-medium">{label}{required && <span className="text-destructive ml-1">*</span>}</label>}
+      <Input required={required} {...props} />
     </div>
   ),
-  Textarea: ({ label, ...props }: any) => (
+  Textarea: ({ label, required, ...props }: any) => (
     <div className="space-y-2">
-      {label && <label className="text-sm font-medium">{label}</label>}
-      <Textarea {...props} />
+      {label && <label className="text-sm font-medium">{label}{required && <span className="text-destructive ml-1">*</span>}</label>}
+      <Textarea required={required} {...props} />
     </div>
   ),
-  Button: ({ label, ...props }: any) => <Button {...props}>{label}</Button>,
-  Checkbox: ({ label, checked, ...props }: any) => (
+  Button: ({ label, type = 'button', ...props }: any) => <Button type={type} {...props}>{label}</Button>,
+  Checkbox: ({ label, checked, required, name, ...props }: any) => (
     <div className="flex items-center space-x-2">
-      <Checkbox id={label} checked={checked} {...props} />
-      {label && <label htmlFor={label} className="text-sm">{label}</label>}
+      <Checkbox id={name || label} name={name} required={required} checked={checked} {...props} />
+      {label && <label htmlFor={name || label} className="text-sm cursor-pointer">{label}{required && <span className="text-destructive ml-1">*</span>}</label>}
     </div>
   ),
   Badge: ({ label, ...props }: any) => <Badge {...props}>{label}</Badge>,
@@ -277,23 +289,23 @@ export const registry = {
       />
     </div>
   ),
-  Switch: ({ label, checked, onCheckedChange, ...props }: any) => (
+  Switch: ({ label, checked, onCheckedChange, required, name, ...props }: any) => (
     <div className="flex items-center space-x-2">
-      <Switch id={label} checked={checked} onCheckedChange={onCheckedChange} {...props} />
-      {label && <label htmlFor={label} className="text-sm">{label}</label>}
+      <Switch id={name || label} name={name} required={required} checked={checked} onCheckedChange={onCheckedChange} {...props} />
+      {label && <label htmlFor={name || label} className="text-sm cursor-pointer">{label}{required && <span className="text-destructive ml-1">*</span>}</label>}
     </div>
   ),
-  RadioGroup: ({ options, value, onValueChange, className }: any) => {
+  RadioGroup: ({ options, value, onValueChange, className, name, required, ...props }: any) => {
     if (!options || !Array.isArray(options)) return null
     return (
-      <RadioGroup value={value} onValueChange={onValueChange} className={className || 'space-y-2'}>
+      <RadioGroup name={name} required={required} value={value} onValueChange={onValueChange} className={className || 'space-y-2'} {...props}>
         {options.map((opt: any, index: number) => {
           const optValue = typeof opt === 'string' ? opt : opt.value
           const optLabel = typeof opt === 'string' ? opt : opt.label
           return (
-            <div key={index} className="flex items-center space-x-2">
-              <RadioGroupItem value={optValue} id={`radio-${index}-${optValue}`} />
-              <label htmlFor={`radio-${index}-${optValue}`} className="text-sm">{optLabel}</label>
+            <div key={optValue || index} className="flex items-center space-x-2">
+              <RadioGroupItem value={optValue} id={`radio-${name || ''}-${index}`} />
+              <label htmlFor={`radio-${name || ''}-${index}`} className="text-sm cursor-pointer">{optLabel}</label>
             </div>
           )
         })}

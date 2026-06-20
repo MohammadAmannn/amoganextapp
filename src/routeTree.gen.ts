@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedChartRouteImport } from './routes/_authenticated/chart'
 import { Route as errors503RouteImport } from './routes/(errors)/503'
 import { Route as errors500RouteImport } from './routes/(errors)/500'
 import { Route as errors404RouteImport } from './routes/(errors)/404'
@@ -39,6 +40,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedChartRoute = AuthenticatedChartRouteImport.update({
+  id: '/chart',
+  path: '/chart',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const errors503Route = errors503RouteImport.update({
@@ -159,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/404': typeof errors404Route
   '/500': typeof errors500Route
   '/503': typeof errors503Route
+  '/chart': typeof AuthenticatedChartRoute
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/ai_chat/': typeof AuthenticatedAi_chatIndexRoute
   '/ai_search/': typeof AuthenticatedAi_searchIndexRoute
@@ -181,6 +188,7 @@ export interface FileRoutesByTo {
   '/404': typeof errors404Route
   '/500': typeof errors500Route
   '/503': typeof errors503Route
+  '/chart': typeof AuthenticatedChartRoute
   '/': typeof AuthenticatedIndexRoute
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/ai_chat': typeof AuthenticatedAi_chatIndexRoute
@@ -206,6 +214,7 @@ export interface FileRoutesById {
   '/(errors)/404': typeof errors404Route
   '/(errors)/500': typeof errors500Route
   '/(errors)/503': typeof errors503Route
+  '/_authenticated/chart': typeof AuthenticatedChartRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/_authenticated/ai_chat/': typeof AuthenticatedAi_chatIndexRoute
@@ -232,6 +241,7 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/503'
+    | '/chart'
     | '/errors/$error'
     | '/ai_chat/'
     | '/ai_search/'
@@ -254,6 +264,7 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/503'
+    | '/chart'
     | '/'
     | '/errors/$error'
     | '/ai_chat'
@@ -278,6 +289,7 @@ export interface FileRouteTypes {
     | '/(errors)/404'
     | '/(errors)/500'
     | '/(errors)/503'
+    | '/_authenticated/chart'
     | '/_authenticated/'
     | '/_authenticated/errors/$error'
     | '/_authenticated/ai_chat/'
@@ -319,6 +331,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/chart': {
+      id: '/_authenticated/chart'
+      path: '/chart'
+      fullPath: '/chart'
+      preLoaderRoute: typeof AuthenticatedChartRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/(errors)/503': {
@@ -465,6 +484,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedChartRoute: typeof AuthenticatedChartRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedErrorsErrorRoute: typeof AuthenticatedErrorsErrorRoute
   AuthenticatedAi_chatIndexRoute: typeof AuthenticatedAi_chatIndexRoute
@@ -479,6 +499,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedChartRoute: AuthenticatedChartRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedErrorsErrorRoute: AuthenticatedErrorsErrorRoute,
   AuthenticatedAi_chatIndexRoute: AuthenticatedAi_chatIndexRoute,

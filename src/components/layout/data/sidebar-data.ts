@@ -17,6 +17,7 @@ import {
   Command,
   Bot,
   SearchIcon,
+  ChartArea,
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -75,6 +76,11 @@ export const sidebarData: SidebarData = {
           title: 'AI Search',
           url: '/ai_search',
           icon: SearchIcon,
+        },
+        {
+          title: 'Chart',
+          url: '/chart',
+          icon: ChartArea,
         },
         {
           title: 'Users',

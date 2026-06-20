@@ -267,7 +267,6 @@ export const registry = {
         </TabsList>
         {tabs.map((tab: any, index: number) => (
           <TabsContent key={index} value={tab.value} className="mt-4">
-            {/* The actual content logic could be handled if tab.content is passed as children, but simpler to just map text for now, or if it's nested schema handled outside */}
             {typeof tab.content === 'string' ? (
               <p>{tab.content}</p>
             ) : (

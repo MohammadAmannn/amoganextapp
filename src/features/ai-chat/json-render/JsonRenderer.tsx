@@ -11,7 +11,6 @@ function normalizeSchema(schema: any): { root: string; elements: Record<string, 
   if (!schema) return null
 
   let targetSchema = schema
-  // Wrap array schemas in a Stack
   if (Array.isArray(schema)) {
     targetSchema = {
       type: 'Stack',
@@ -19,7 +18,6 @@ function normalizeSchema(schema: any): { root: string; elements: Record<string, 
     }
   }
 
-  // If already in flat format with root and elements
   if (targetSchema.root && targetSchema.elements && typeof targetSchema.elements === 'object') {
     const normalizedElements = { ...targetSchema.elements }
     for (const key of Object.keys(normalizedElements)) {
@@ -29,7 +27,7 @@ function normalizeSchema(schema: any): { root: string; elements: Record<string, 
         normalizedElements[key] = {
           type,
           children,
-          props: { ...rest, ...props }, // Merge top-level properties into props
+          props: { ...rest, ...props },
         }
       }
     }
@@ -39,7 +37,6 @@ function normalizeSchema(schema: any): { root: string; elements: Record<string, 
     }
   }
 
-  // If elements is provided but root is missing, find the root key
   if (targetSchema.elements && typeof targetSchema.elements === 'object') {
     const keys = Object.keys(targetSchema.elements)
     if (keys.length > 0) {
@@ -57,7 +54,6 @@ function normalizeSchema(schema: any): { root: string; elements: Record<string, 
     }
   }
 
-  // Otherwise, it's a nested structure. Let's flatten it.
   const elements: Record<string, any> = {}
   let idCounter = 0
 
@@ -79,7 +75,6 @@ function normalizeSchema(schema: any): { root: string; elements: Record<string, 
       `${(node.type || 'element').toLowerCase()}-${idCounter++}`
     const type = node.type || 'Stack'
 
-    // Identify children (children, fields, or elements)
     const rawChildren = node.children || node.fields || node.elements
     let childrenIds: string[] = []
 
@@ -92,7 +87,6 @@ function normalizeSchema(schema: any): { root: string; elements: Record<string, 
       }
     }
 
-    // Extract props
     const props: Record<string, any> = {}
     const excludeKeys = [
       'type',
@@ -114,7 +108,6 @@ function normalizeSchema(schema: any): { root: string; elements: Record<string, 
       Object.assign(props, node.props)
     }
 
-    // If it's a Text or Heading component and has string children/fields/elements, keep it as props.children
     if ((type === 'Text' || type === 'Heading') && typeof rawChildren === 'string') {
       props.children = rawChildren
       childrenIds = []
@@ -139,7 +132,6 @@ function normalizeSchema(schema: any): { root: string; elements: Record<string, 
 }
 
 export function JsonRenderer({ schema, onAction }: JsonRendererProps) {
-  // Validate schema on mount and when it changes
   useEffect(() => {
     if (schema) {
       console.log('Rendering schema:', JSON.stringify(schema, null, 2))
@@ -185,33 +177,27 @@ export function JsonRenderer({ schema, onAction }: JsonRendererProps) {
       )
     }
 
-    // Build props
     const props = { ...element.props }
 
-    // Handle children
     let children = null
     if (element.children && Array.isArray(element.children)) {
       children = element.children.map((childId: string) => renderElement(childId, elements))
     }
 
-    // Handle actions
     if (props.onClick && onAction) {
       const actionName = props.onClick
       props.onClick = () => onAction(actionName, {})
     }
 
-    // Handle form submit action
     if (element.type === 'Form' && props.onSubmit && onAction) {
       const actionName = props.onSubmit
       props.onSubmit = () => onAction(actionName, {})
     }
 
-    // Handle checkbox special case
     if (element.type === 'Checkbox') {
       return <Component {...props} />
     }
 
-    // Render with children
     if (children && React.Children.count(children) > 0) {
       return <Component {...props}>{children}</Component>
     }

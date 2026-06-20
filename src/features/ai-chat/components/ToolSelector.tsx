@@ -4,7 +4,6 @@ const TOOLS = [
     { id: 'chat', name: 'AI Chat', icon: '' },
     { id: 'web-search', name: 'Web Search', icon: '🌐' },
     { id: 'ui-render', name: 'UI Render', icon: '🎨' },
-
 ]
 
 interface ToolSelectorProps {

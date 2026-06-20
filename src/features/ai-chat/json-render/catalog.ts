@@ -205,7 +205,6 @@ const componentTypes = {
   },
 }
 
-// Create the catalog with proper typing
 export const catalog = (defineCatalog as any)(
   schema as any,
   {
@@ -218,5 +217,4 @@ export const catalog = (defineCatalog as any)(
   } as any
 )
 
-// Export component types for use in renderer
 export const componentTypesList = Object.keys(componentTypes)

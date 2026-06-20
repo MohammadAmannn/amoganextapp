@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 import { Globe, Image } from 'lucide-react'
-import { Message } from './types'
+import { Message } from '../types'
 
 interface MessageListProps {
   messages: Message[]

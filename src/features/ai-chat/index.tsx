@@ -6,9 +6,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { AppHeader } from '@/components/layout/app-header'
 import { Main } from '@/components/layout/main'
-import { ImageModal } from './ImageModal'
-import { MessageInput } from './MessageInput'
-import { MessageList } from './MessageList'
+import { ImageModal } from './components/ImageModal'
+import { MessageInput } from './components/MessageInput'
+import { MessageList } from './components/MessageList'
 import { SchemaEditor } from './json-render/SchemaEditor'
 import {
   Message,
@@ -289,7 +289,6 @@ Instructions:
 
   const handleSchemaAction = (action: string, params?: any) => {
     console.log(`Schema action: ${action}`, params)
-    // Handle actions from the rendered UI
     if (action === 'submit') {
       alert('Form submitted!')
     }

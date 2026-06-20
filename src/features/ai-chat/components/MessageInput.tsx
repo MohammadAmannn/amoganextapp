@@ -3,8 +3,6 @@ import { ModelSelector } from './ModelSelector'
 import { ToolSelector } from './ToolSelector'
 
 const APIS = [
-
-    //more APIs can be added here in the future
   { id: 'openrouter', name: 'OpenRouter' },
 ]
 
@@ -162,10 +160,6 @@ export function MessageInput({
 
             {/* API selector */}
             <div className='relative flex-shrink-0'>
-              {/* <button className='flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-[10px] sm:text-xs text-foreground whitespace-nowrap'>
-                <span className='hidden sm:inline'>{APIS.find(a => a.id === api)?.name || 'API'}</span>
-                <span className='sm:hidden'>{APIS.find(a => a.id === api)?.name?.slice(0, 4) || 'API'}</span>
-              </button> */}
               <select
                 value={api}
                 onChange={(e) => setApi(e.target.value)}

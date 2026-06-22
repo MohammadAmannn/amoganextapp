@@ -28,6 +28,7 @@ import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedMapIndexRouteImport } from './routes/_authenticated/map/index'
 import { Route as AuthenticatedInboxIndexRouteImport } from './routes/_authenticated/inbox/index'
 import { Route as AuthenticatedHelpCenterIndexRouteImport } from './routes/_authenticated/help-center/index'
+import { Route as AuthenticatedDocIndexRouteImport } from './routes/_authenticated/doc/index'
 import { Route as AuthenticatedChatsIndexRouteImport } from './routes/_authenticated/chats/index'
 import { Route as AuthenticatedAppsIndexRouteImport } from './routes/_authenticated/apps/index'
 import { Route as AuthenticatedAi_searchIndexRouteImport } from './routes/_authenticated/ai_search/index'
@@ -131,6 +132,11 @@ const AuthenticatedHelpCenterIndexRoute =
     path: '/help-center/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDocIndexRoute = AuthenticatedDocIndexRouteImport.update({
+  id: '/doc/',
+  path: '/doc/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedChatsIndexRoute = AuthenticatedChatsIndexRouteImport.update({
   id: '/chats/',
   path: '/chats/',
@@ -178,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/ai_search/': typeof AuthenticatedAi_searchIndexRoute
   '/apps/': typeof AuthenticatedAppsIndexRoute
   '/chats/': typeof AuthenticatedChatsIndexRoute
+  '/doc/': typeof AuthenticatedDocIndexRoute
   '/help-center/': typeof AuthenticatedHelpCenterIndexRoute
   '/inbox/': typeof AuthenticatedInboxIndexRoute
   '/map/': typeof AuthenticatedMapIndexRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/ai_search': typeof AuthenticatedAi_searchIndexRoute
   '/apps': typeof AuthenticatedAppsIndexRoute
   '/chats': typeof AuthenticatedChatsIndexRoute
+  '/doc': typeof AuthenticatedDocIndexRoute
   '/help-center': typeof AuthenticatedHelpCenterIndexRoute
   '/inbox': typeof AuthenticatedInboxIndexRoute
   '/map': typeof AuthenticatedMapIndexRoute
@@ -230,6 +238,7 @@ export interface FileRoutesById {
   '/_authenticated/ai_search/': typeof AuthenticatedAi_searchIndexRoute
   '/_authenticated/apps/': typeof AuthenticatedAppsIndexRoute
   '/_authenticated/chats/': typeof AuthenticatedChatsIndexRoute
+  '/_authenticated/doc/': typeof AuthenticatedDocIndexRoute
   '/_authenticated/help-center/': typeof AuthenticatedHelpCenterIndexRoute
   '/_authenticated/inbox/': typeof AuthenticatedInboxIndexRoute
   '/_authenticated/map/': typeof AuthenticatedMapIndexRoute
@@ -257,6 +266,7 @@ export interface FileRouteTypes {
     | '/ai_search/'
     | '/apps/'
     | '/chats/'
+    | '/doc/'
     | '/help-center/'
     | '/inbox/'
     | '/map/'
@@ -282,6 +292,7 @@ export interface FileRouteTypes {
     | '/ai_search'
     | '/apps'
     | '/chats'
+    | '/doc'
     | '/help-center'
     | '/inbox'
     | '/map'
@@ -308,6 +319,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ai_search/'
     | '/_authenticated/apps/'
     | '/_authenticated/chats/'
+    | '/_authenticated/doc/'
     | '/_authenticated/help-center/'
     | '/_authenticated/inbox/'
     | '/_authenticated/map/'
@@ -465,6 +477,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHelpCenterIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/doc/': {
+      id: '/_authenticated/doc/'
+      path: '/doc'
+      fullPath: '/doc/'
+      preLoaderRoute: typeof AuthenticatedDocIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/chats/': {
       id: '/_authenticated/chats/'
       path: '/chats'
@@ -511,6 +530,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAi_searchIndexRoute: typeof AuthenticatedAi_searchIndexRoute
   AuthenticatedAppsIndexRoute: typeof AuthenticatedAppsIndexRoute
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
+  AuthenticatedDocIndexRoute: typeof AuthenticatedDocIndexRoute
   AuthenticatedHelpCenterIndexRoute: typeof AuthenticatedHelpCenterIndexRoute
   AuthenticatedInboxIndexRoute: typeof AuthenticatedInboxIndexRoute
   AuthenticatedMapIndexRoute: typeof AuthenticatedMapIndexRoute
@@ -527,6 +547,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAi_searchIndexRoute: AuthenticatedAi_searchIndexRoute,
   AuthenticatedAppsIndexRoute: AuthenticatedAppsIndexRoute,
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,
+  AuthenticatedDocIndexRoute: AuthenticatedDocIndexRoute,
   AuthenticatedHelpCenterIndexRoute: AuthenticatedHelpCenterIndexRoute,
   AuthenticatedInboxIndexRoute: AuthenticatedInboxIndexRoute,
   AuthenticatedMapIndexRoute: AuthenticatedMapIndexRoute,

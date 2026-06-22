@@ -19,6 +19,7 @@ import {
   SearchIcon,
   ChartArea,
   Map,
+  FileText,
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -87,6 +88,11 @@ export const sidebarData: SidebarData = {
           title:"Map Template",
           url:"/map",
           icon: Map
+        },
+        {
+          title:"Document Template",
+          url:"/doc",
+          icon: FileText
         },
       
         {

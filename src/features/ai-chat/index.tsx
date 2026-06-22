@@ -32,12 +32,11 @@ export function AiChat() {
   const [tool, setTool] = useState('chat')
   const [isListening, setIsListening] = useState(false)
   const [isSpeechSupported, setIsSpeechSupported] = useState(true)
-  const [sources, setSources] = useState<any[]>([])
-  const [images, setImages] = useState<string[]>([])
   const [showImageModal, setShowImageModal] = useState(false)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [uiSchema, setUiSchema] = useState<any>(null)
   const [showSchemaEditor, setShowSchemaEditor] = useState(false)
+  const [activeMobileTab, setActiveMobileTab] = useState<'chat' | 'preview'>('chat')
 
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -61,23 +60,23 @@ export function AiChat() {
 
   // Define sendMessage using useCallback
   const sendMessage = useCallback(
-    async (message?: string) => {
+    async (message?: string, overrideTool?: string) => {
       const textToSend = message || input.trim()
       if (!textToSend || loading || !model) return
+
+      const activeTool = overrideTool || tool
 
       setMessages((prev) => [...prev, { role: 'user', content: textToSend }])
 
       setInput('')
       setLoading(true)
-      setSources([])
-      setImages([])
 
       try {
         let finalPrompt = textToSend
         let searchResults: any[] = []
         let imageUrls: string[] = []
 
-        if (tool === 'web-search') {
+        if (activeTool === 'web-search') {
           try {
             const tavilyResponse = await fetch(
               'https://api.tavily.com/search',
@@ -97,9 +96,6 @@ export function AiChat() {
             const tavilyData = await tavilyResponse.json()
             searchResults = tavilyData.results || []
             imageUrls = tavilyData.images || []
-
-            setSources(searchResults)
-            setImages(imageUrls)
 
             const context = searchResults
               .map(
@@ -131,14 +127,14 @@ Instructions:
         const response = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: finalPrompt, model, api, tool }),
+          body: JSON.stringify({ message: finalPrompt, model, api, tool: activeTool }),
         })
 
         const data = await response.json()
         if (!response.ok)
           throw new Error(data.error || 'Failed to get response')
 
-        if (tool === 'ui-render') {
+        if (activeTool === 'ui-render') {
           try {
             // Strip markdown block format if present
             let cleanedText = data.text.trim();
@@ -148,6 +144,7 @@ Instructions:
             const schema = JSON.parse(cleanedText)
             setUiSchema(schema)
             setShowSchemaEditor(true)
+            setActiveMobileTab('preview') // Auto-switch to preview tab on mobile view
 
             setMessages((prev) => [
               ...prev,
@@ -201,46 +198,51 @@ Instructions:
     [input, loading, model, api, tool]
   )
 
-  // Initialize speech recognition
+  // Initialize speech recognition safely
   useEffect(() => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SpeechRecognition) {
-      setIsSpeechSupported(false)
-      return
-    }
+    try {
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition
+      if (!SpeechRecognition) {
+        setIsSpeechSupported(false)
+        return
+      }
 
-    const recognition = new SpeechRecognition()
-    recognition.continuous = true
-    recognition.interimResults = true
-    recognition.lang = 'en-US'
+      const recognition = new SpeechRecognition()
+      recognition.continuous = true
+      recognition.interimResults = true
+      recognition.lang = 'en-US'
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let interimTranscript = ''
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript
-        if (event.results[i].isFinal) {
-          accumulatedTranscriptRef.current += transcript + ' '
-        } else {
-          interimTranscript += transcript
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        let interimTranscript = ''
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript
+          if (event.results[i].isFinal) {
+            accumulatedTranscriptRef.current += transcript + ' '
+          } else {
+            interimTranscript += transcript
+          }
+        }
+        const displayText = (
+          accumulatedTranscriptRef.current + interimTranscript
+        ).trim()
+        if (displayText) setInput(displayText)
+      }
+
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        console.error('Speech recognition error:', event.error)
+        setIsListening(false)
+        if (event.error === 'not-allowed') {
+          alert('Please allow microphone access to use voice input')
         }
       }
-      const displayText = (
-        accumulatedTranscriptRef.current + interimTranscript
-      ).trim()
-      if (displayText) setInput(displayText)
-    }
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error('Speech recognition error:', event.error)
-      setIsListening(false)
-      if (event.error === 'not-allowed') {
-        alert('Please allow microphone access to use voice input')
-      }
+      recognition.onend = () => setIsListening(false)
+      recognitionRef.current = recognition
+    } catch (error) {
+      console.error('Failed to initialize speech recognition:', error)
+      setIsSpeechSupported(false)
     }
-
-    recognition.onend = () => setIsListening(false)
-    recognitionRef.current = recognition
 
     return () => {
       if (recognitionRef.current) recognitionRef.current.abort()
@@ -283,8 +285,7 @@ Instructions:
   }
 
   const handleClearSources = () => {
-    setSources([])
-    setImages([])
+    // Sources are cleared via message resets or state changes
   }
 
   const handleSchemaAction = (action: string, params?: any) => {
@@ -297,24 +298,74 @@ Instructions:
   const handleCloseSchemaEditor = () => {
     setShowSchemaEditor(false)
     setUiSchema(null)
+    setActiveMobileTab('chat')
   }
+
+  const handleSelectPrompt = useCallback((promptText: string, toolId: string) => {
+    setTool(toolId)
+    setInput(promptText)
+    sendMessage(promptText, toolId)
+  }, [sendMessage])
+
+  const handleOpenPreview = useCallback(() => {
+    if (uiSchema) {
+      setShowSchemaEditor(true)
+      setActiveMobileTab('preview')
+    }
+  }, [uiSchema])
 
   return (
     <>
       <AppHeader title='AI Chat' />
       <Main fixed className='p-0'>
+        {/* Mobile Tab Swapper Header (Visible only when UI Schema is rendering & screen is mobile) */}
+        {uiSchema && showSchemaEditor && (
+          <div className='flex lg:hidden border-b border-border bg-background justify-around p-1.5 shrink-0 z-10'>
+            <button
+              onClick={() => setActiveMobileTab('chat')}
+              className={`flex-1 py-2 text-center text-xs font-bold rounded-xl transition-all duration-200 ${
+                activeMobileTab === 'chat'
+                  ? 'bg-muted text-primary shadow-sm border border-border'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Chat View
+            </button>
+            <button
+              onClick={() => setActiveMobileTab('preview')}
+              className={`flex-1 py-2 text-center text-xs font-bold rounded-xl transition-all duration-200 ${
+                activeMobileTab === 'preview'
+                  ? 'bg-muted text-primary shadow-sm border border-border'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              UI Preview
+            </button>
+          </div>
+        )}
+
         <div className='flex h-[calc(100vh-56px)] w-full overflow-hidden flex-col lg:flex-row'>
           {/* Left panel: Chat History & Input */}
-          <div className={`flex flex-col h-full border-r border-border transition-all duration-300 ${uiSchema && showSchemaEditor ? 'w-full lg:w-5/12' : 'w-full max-w-3xl mx-auto'}`}>
+          <div
+            className={`flex flex-col h-full border-r border-border transition-all duration-300 ${
+              uiSchema && showSchemaEditor 
+                ? 'w-full lg:w-5/12' 
+                : 'w-full max-w-3xl mx-auto'
+            } ${
+              uiSchema && showSchemaEditor && activeMobileTab !== 'chat' 
+                ? 'hidden lg:flex' 
+                : 'flex'
+            }`}
+          >
             {/* Chat messages area */}
             <div className='flex-1 overflow-y-auto px-4 py-4'>
               <MessageList
                 messages={messages}
                 loading={loading}
                 tool={tool}
-                sources={sources}
-                images={images}
                 onImageClick={handleImageClick}
+                onSelectPrompt={handleSelectPrompt}
+                onOpenPreview={handleOpenPreview}
                 messagesEndRef={messagesEndRef}
               />
             </div>
@@ -339,7 +390,7 @@ Instructions:
                 setShowToolsDropdown={setShowToolsDropdown}
                 showHistory={showHistory}
                 setShowHistory={setShowHistory}
-                onSend={sendMessage}
+                onSend={() => sendMessage()}
                 onVoiceToggle={toggleVoiceInput}
                 onHistorySelect={handleHistorySelect}
                 onClearSources={handleClearSources}
@@ -350,7 +401,11 @@ Instructions:
 
           {/* Right panel: UI Schema Preview / Editor */}
           {uiSchema && showSchemaEditor && (
-            <div className='w-full lg:w-7/12 h-full bg-muted/10 overflow-y-auto p-4 lg:p-6 border-t lg:border-t-0 lg:border-l border-border flex flex-col'>
+            <div
+              className={`w-full lg:w-7/12 h-full bg-muted/10 overflow-y-auto p-4 lg:p-6 border-t lg:border-t-0 lg:border-l border-border flex flex-col ${
+                activeMobileTab !== 'preview' ? 'hidden lg:flex' : 'flex'
+              }`}
+            >
               <div className='flex-1 bg-background rounded-xl border border-border shadow-sm overflow-hidden flex flex-col p-4 lg:p-6'>
                 <SchemaEditor
                   schema={uiSchema}

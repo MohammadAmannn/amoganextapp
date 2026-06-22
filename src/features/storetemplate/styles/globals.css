@@ -117,4 +117,38 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Custom Tabs styles - remove box background */
+  .tabs-list-clean {
+    background-color: transparent !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+  
+  .tabs-trigger-clean {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0.5rem !important;
+    height: auto !important;
+    border-bottom: 2px solid transparent !important;
+  }
+  
+  .tabs-trigger-clean:hover {
+    background-color: transparent !important;
+  }
+  
+  .tabs-trigger-clean[data-state="active"] {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border-bottom-color: var(--primary) !important;
+  }
+  
+  .tabs-trigger-clean:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }

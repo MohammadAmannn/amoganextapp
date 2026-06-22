@@ -20,6 +20,7 @@
   },
   "registries": {
     "@mapcn": "https://mapcn.dev/r/{name}.json",
-    "@shadcnuikit": "https://shadcnuikit.com/r/{name}.json"
+    "@shadcnuikit": "https://shadcnuikit.com/r/{name}.json",
+    "@blocks-so": "https://blocks.so/r/{name}.json"
   }
 }

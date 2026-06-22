@@ -11,6 +11,7 @@ import { Analytics } from './components/analytics'
 import { Overview } from './components/overview'
 import { RecentSales } from './components/recent-sales'
 import { DashboardHeader } from './dashboard-header'
+import { Stats } from './components/stats'
 
 export function Dashboard() {
   return (
@@ -23,32 +24,36 @@ export function Dashboard() {
           className='space-y-4'
         >
           <div className='w-full overflow-x-auto pb-2'>
-            <TabsList className="shadow-none bg-transparent">
-              <TabsTrigger 
+            <TabsList className='h-auto gap-6 border-b border-border bg-transparent p-0 shadow-none'>
+              <TabsTrigger
                 value='overview'
-                className="data-[state=active]:shadow-none data-[state=active]:bg-transparent data-[state=active]:border-b-0"
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none'
               >
                 Overview
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value='analytics'
-                className="data-[state=active]:shadow-none data-[state=active]:bg-transparent data-[state=active]:border-b-0"
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none'
               >
                 Analytics
               </TabsTrigger>
-              <TabsTrigger 
-                value='reports' 
-                disabled
-                className="data-[state=active]:shadow-none data-[state=active]:bg-transparent data-[state=active]:border-b-0"
+              <TabsTrigger
+                value='reports'
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none'
               >
                 Reports
               </TabsTrigger>
-              <TabsTrigger 
-                value='notifications' 
-                disabled
-                className="data-[state=active]:shadow-none data-[state=active]:bg-transparent data-[state=active]:border-b-0"
+              <TabsTrigger
+                value='notifications'
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none'
               >
                 Notifications
+              </TabsTrigger>
+              <TabsTrigger
+                value='stats'
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none'
+              >
+                Stats
               </TabsTrigger>
             </TabsList>
           </div>
@@ -180,6 +185,31 @@ export function Dashboard() {
           </TabsContent>
           <TabsContent value='analytics' className='space-y-4'>
             <Analytics />
+          </TabsContent>
+          <TabsContent value='reports' className='space-y-4'>
+            <div className='flex h-[450px] items-center justify-center rounded-md border border-dashed'>
+              <div className='mx-auto flex max-w-[420px] flex-col items-center justify-center text-center'>
+                <h3 className='mt-4 text-lg font-semibold'>
+                  No reports available
+                </h3>
+                <p className='mt-2 mb-4 text-sm text-muted-foreground'>
+                  You have not generated any reports yet.
+                </p>
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value='notifications' className='space-y-4'>
+            <div className='flex h-[450px] items-center justify-center rounded-md border border-dashed'>
+              <div className='mx-auto flex max-w-[420px] flex-col items-center justify-center text-center'>
+                <h3 className='mt-4 text-lg font-semibold'>No notifications</h3>
+                <p className='mt-2 mb-4 text-sm text-muted-foreground'>
+                  You are all caught up!
+                </p>
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value='stats' className='space-y-4'>
+            <Stats />
           </TabsContent>
         </Tabs>
       </Main>

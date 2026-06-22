@@ -17,24 +17,37 @@ export function Dashboard() {
     <>
       <DashboardHeader />
       <Main>
-        {/* <div className='mb-2 flex items-center justify-between space-y-2'>
-            <h1 className='text-2xl font-bold tracking-tight'></h1>
-            <div className='flex items-center space-x-2'>
-            </div>
-          </div> */}
         <Tabs
           orientation='vertical'
           defaultValue='overview'
           className='space-y-4'
         >
           <div className='w-full overflow-x-auto pb-2'>
-            <TabsList>
-              <TabsTrigger value='overview'>Overview</TabsTrigger>
-              <TabsTrigger value='analytics'>Analytics</TabsTrigger>
-              <TabsTrigger value='reports' disabled>
+            <TabsList className="shadow-none bg-transparent">
+              <TabsTrigger 
+                value='overview'
+                className="data-[state=active]:shadow-none data-[state=active]:bg-transparent data-[state=active]:border-b-0"
+              >
+                Overview
+              </TabsTrigger>
+              <TabsTrigger 
+                value='analytics'
+                className="data-[state=active]:shadow-none data-[state=active]:bg-transparent data-[state=active]:border-b-0"
+              >
+                Analytics
+              </TabsTrigger>
+              <TabsTrigger 
+                value='reports' 
+                disabled
+                className="data-[state=active]:shadow-none data-[state=active]:bg-transparent data-[state=active]:border-b-0"
+              >
                 Reports
               </TabsTrigger>
-              <TabsTrigger value='notifications' disabled>
+              <TabsTrigger 
+                value='notifications' 
+                disabled
+                className="data-[state=active]:shadow-none data-[state=active]:bg-transparent data-[state=active]:border-b-0"
+              >
                 Notifications
               </TabsTrigger>
             </TabsList>

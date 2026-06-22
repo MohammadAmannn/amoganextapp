@@ -72,7 +72,7 @@ export function MessageInput({
     <div className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 pt-1.5 pb-1.5 sm:px-6'>
       <div className='mx-auto max-w-4xl'>
         {/* Message input with send button */}
-        <div className='relative rounded-2xl border-2 border-gray-200 bg-background shadow-sm hover:border-gray-300 transition-colors focus-within:border-primary'>
+        <div className='relative rounded-2xl border border-border/80 bg-background shadow-sm hover:border-border transition-colors focus-within:border-primary'>
           <textarea
             ref={inputRef}
             value={input}
@@ -88,7 +88,7 @@ export function MessageInput({
                     : 'Search the web...'
             }
             rows={1}
-            className={`w-full rounded-xl border-0 px-4 py-2 pr-24 text-sm sm:text-base resize-none outline-none focus:ring-0 ${
+            className={`w-full rounded-xl border-0 px-4 py-2 pr-24 text-sm sm:text-base resize-none outline-none focus:ring-0 text-foreground ${
               isListening
                 ? 'bg-red-50 dark:bg-red-950/20'
                 : 'bg-transparent'
@@ -179,20 +179,20 @@ export function MessageInput({
             <div className='relative'>
               <button
                 onClick={() => setShowHistory(!showHistory)}
-                className='flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-[10px] sm:text-xs text-foreground whitespace-nowrap'
+                className='flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg border border-border/80 hover:bg-muted transition-colors text-[10px] sm:text-xs text-foreground whitespace-nowrap'
               >
                 <History className='w-3 h-3 sm:w-3.5 sm:h-3.5' />
                 <span className='hidden xs:inline'>History</span>
               </button>
 
               {showHistory && (
-                <div className='absolute right-0 bottom-full mb-1 w-44 sm:w-48 rounded-lg border border-gray-200 bg-background shadow-lg z-20'>
+                <div className='absolute right-0 bottom-full mb-1 w-44 sm:w-48 rounded-lg border border-border bg-background shadow-lg z-20 text-foreground'>
                   <div className='p-1'>
                     {HISTORY_OPTIONS.map((option) => (
                       <button
                         key={option.id}
                         onClick={() => onHistorySelect(option.id)}
-                        className='w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded text-[11px] sm:text-sm hover:bg-muted transition-colors'
+                        className='w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded text-[11px] sm:text-sm hover:bg-muted transition-colors text-foreground'
                       >
                         {option.name}
                       </button>
@@ -202,7 +202,7 @@ export function MessageInput({
               )}
             </div>
 
-            <button className='p-1 rounded-lg border border-gray-200 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground'>
+            <button className='p-1 rounded-lg border border-border/80 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground'>
               <Plus className='w-3 h-3 sm:w-3.5 sm:h-3.5' />
             </button>
           </div>

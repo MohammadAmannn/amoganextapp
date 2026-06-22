@@ -277,7 +277,7 @@ Please provide a detailed analysis and answer.
     <>
       <AppHeader title="AI Search" />
       
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
         {/* Main Content Area */}
         {!lastQuery && !loading ? (
           // Initial State - Centered Search
@@ -285,29 +285,29 @@ Please provide a detailed analysis and answer.
             <div className="w-full max-w-2xl space-y-8">
               {/* Heading */}
               <div className="text-center">
-                <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 mb-8">What would you like to know?</h1>
+                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-8">What would you like to know?</h1>
               </div>
 
               {/* Search Section */}
               <div className="space-y-4">
                 <div className="relative">
-                  <div className="relative flex items-center rounded-xl border border-gray-200 bg-white shadow-sm transition-all focus-within:border-gray-400 focus-within:shadow-md">
-                    <Search className="absolute left-4 h-5 w-5 text-gray-400" />
+                  <div className="relative flex items-center rounded-xl border border-border bg-card shadow-sm transition-all focus-within:border-primary/50 focus-within:shadow-md">
+                    <Search className="absolute left-4 h-5 w-5 text-muted-foreground" />
                     <input
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                       placeholder="Search..."
-                      className="w-full rounded-xl border-0 py-3.5 pl-11 pr-20 sm:pr-32 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0 text-base"
+                      className="w-full rounded-xl border-0 py-3.5 pl-11 pr-20 sm:pr-32 text-foreground placeholder:text-muted-foreground bg-transparent focus:outline-none focus:ring-0 text-base"
                     />
                     <div className="absolute right-2 flex items-center gap-1 sm:gap-2">
-                      <button className="hidden rounded-lg px-2 sm:px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 sm:block">
+                      <button className="hidden rounded-lg px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted sm:block">
                         <Globe className="h-4 w-4" />
                       </button>
                       <button
                         onClick={handleSearch}
                         disabled={loading}
-                        className="rounded-lg bg-black px-2 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white transition-all hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap"
+                        className="rounded-lg bg-primary px-2 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50 whitespace-nowrap"
                       >
                         {loading ? 'Searching...' : 'Search'}
                       </button>
@@ -320,7 +320,7 @@ Please provide a detailed analysis and answer.
                   <div className="relative">
                     <button
                       onClick={() => setShowTools(!showTools)}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border text-sm text-foreground hover:bg-muted transition-colors"
                     >
                       <Wrench className="w-4 h-4" />
                       <span>{selectedTool.name}</span>
@@ -328,17 +328,17 @@ Please provide a detailed analysis and answer.
 
                     {/* Tools Dropdown */}
                     {showTools && (
-                      <div className="absolute left-0 top-full mt-1.5 w-64 rounded-lg border border-gray-200 bg-white shadow-lg z-10">
+                      <div className="absolute left-0 top-full mt-1.5 w-64 rounded-lg border border-border bg-popover shadow-lg z-10 text-popover-foreground">
                         <div className="p-2">
-                          <p className="text-xs font-semibold text-gray-700 px-2 py-1">Select Search Tool</p>
+                          <p className="text-xs font-semibold text-muted-foreground px-2 py-1">Select Search Tool</p>
                           {TOOLS.map((tool) => (
                             <button
                               key={tool.id}
                               onClick={() => handleToolSelect(tool)}
                               className={`w-full text-left px-3 py-2 rounded-lg text-sm mb-1 transition-colors flex items-center gap-3 ${
                                 selectedTool.id === tool.id
-                                  ? 'bg-black text-white'
-                                  : 'hover:bg-gray-100 text-gray-900'
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'hover:bg-muted text-foreground'
                               }`}
                             >
                               <span className="flex-shrink-0">{tool.icon}</span>
@@ -358,7 +358,7 @@ Please provide a detailed analysis and answer.
 
                   {/* Selected Tool Badge */}
                   {selectedTool && (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 text-sm">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-sm">
                       {selectedTool.icon}
                       <span>{selectedTool.name} mode active</span>
                     </div>
@@ -377,7 +377,7 @@ Please provide a detailed analysis and answer.
                             handleSearch()
                           }, 0)
                         }}
-                        className="rounded-full border border-gray-200 px-3 sm:px-4 py-1.5 text-xs sm:text-sm text-gray-600 transition-all hover:border-gray-300 hover:bg-gray-50"
+                        className="rounded-full border border-border px-3 sm:px-4 py-1.5 text-xs sm:text-sm text-foreground transition-all hover:bg-muted"
                       >
                         {suggestion}
                       </button>
@@ -389,29 +389,29 @@ Please provide a detailed analysis and answer.
           </div>
         ) : (
           // Results State
-          <div className="flex flex-col px-4 py-6 sm:px-6 min-h-screen">
+          <div className="flex flex-col px-4 py-6 sm:px-6 min-h-screen bg-background">
             <div className="mx-auto w-full max-w-4xl space-y-6 pb-32">
               {/* Loading State */}
               {loading && (
                 <div className="space-y-4">
-                  <div className="h-4 w-3/4 animate-pulse rounded bg-gray-100"></div>
-                  <div className="h-4 w-full animate-pulse rounded bg-gray-100"></div>
-                  <div className="h-4 w-2/3 animate-pulse rounded bg-gray-100"></div>
-                  <div className="h-4 w-1/2 animate-pulse rounded bg-gray-100"></div>
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-muted"></div>
+                  <div className="h-4 w-full animate-pulse rounded bg-muted"></div>
+                  <div className="h-4 w-2/3 animate-pulse rounded bg-muted"></div>
+                  <div className="h-4 w-1/2 animate-pulse rounded bg-muted"></div>
                 </div>
               )}
 
               {/* Error Message Display */}
               {!loading && error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 text-destructive">
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 text-red-500 text-lg font-bold">⚠️</div>
+                    <div className="flex-shrink-0 text-lg font-bold">⚠️</div>
                     <div className="flex-1">
-                      <h3 className="text-sm font-semibold text-red-800 mb-1">Error</h3>
-                      <p className="text-sm text-red-700 whitespace-pre-wrap">{error}</p>
+                      <h3 className="text-sm font-semibold mb-1">Error</h3>
+                      <p className="text-sm whitespace-pre-wrap">{error}</p>
                       <button
                         onClick={handleClearAll}
-                        className="mt-3 text-sm text-red-600 hover:text-red-800 font-medium underline"
+                        className="mt-3 text-sm text-destructive hover:underline font-medium"
                       >
                         Try Again
                       </button>
@@ -423,10 +423,10 @@ Please provide a detailed analysis and answer.
               {/* Sources Section */}
               {!loading && !error && sources.length > 0 && (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
                     <Globe className="h-4 w-4" />
                     <span>Sources</span>
-                    <span className="text-gray-300">•</span>
+                    <span className="text-border">•</span>
                     <span>{sources.length} results</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -436,10 +436,10 @@ Please provide a detailed analysis and answer.
                         href={source.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="group flex items-center gap-2 rounded-full border border-gray-200 px-3 sm:px-4 py-1.5 text-xs sm:text-sm text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-50"
+                        className="group flex items-center gap-2 rounded-full border border-border px-3 sm:px-4 py-1.5 text-xs sm:text-sm text-foreground transition-all hover:bg-muted"
                       >
                         <span className="max-w-[100px] sm:max-w-[200px] truncate">{source.title || 'Source'}</span>
-                        <ArrowUpRight className="h-3 w-3 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100" />
+                        <ArrowUpRight className="h-3 w-3 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                       </a>
                     ))}
                   </div>
@@ -449,7 +449,7 @@ Please provide a detailed analysis and answer.
               {/* Images Section */}
               {!loading && !error && images.length > 0 && (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
                     <Image className="h-4 w-4" />
                     <span>Related Images</span>
                   </div>
@@ -459,7 +459,7 @@ Please provide a detailed analysis and answer.
                         key={index}
                         src={img}
                         alt=""
-                        className="h-24 w-36 sm:h-32 sm:w-48 flex-shrink-0 rounded-lg object-cover border border-gray-100"
+                        className="h-24 w-36 sm:h-32 sm:w-48 flex-shrink-0 rounded-lg object-cover border border-border bg-muted"
                       />
                     ))}
                   </div>
@@ -468,8 +468,8 @@ Please provide a detailed analysis and answer.
 
               {/* Answer Section */}
               {!loading && answer && !error && (
-                <div className="space-y-4">
-                  <div className="prose prose-sm sm:prose-base prose-gray max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 break-words">
+                <div className="space-y-4 text-foreground">
+                  <div className="prose prose-sm sm:prose-base max-w-none text-foreground break-words prose-p:leading-relaxed">
                     <ReactMarkdown>{answer}</ReactMarkdown>
                   </div>
                 </div>
@@ -480,24 +480,24 @@ Please provide a detailed analysis and answer.
 
         {/* Sticky Follow-up Input - Properly Centered */}
         {lastQuery && (
-          <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white shadow-lg flex justify-center">
+          <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-lg flex justify-center z-10">
             <div className="w-full max-w-2xl px-4 py-4 space-y-3">
               {/* Tool Display Badge */}
               <div className="flex items-center gap-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-muted-foreground text-sm">
                   {selectedTool.icon}
                   <span>{selectedTool.name}</span>
                 </div>
                 <button
                   onClick={() => setShowTools(!showTools)}
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="inline-flex items-center gap-2 px-3 py-1 rounded-lg border border-border text-sm text-foreground hover:bg-muted transition-colors"
                 >
                   <Wrench className="w-3.5 h-3.5" />
                   <span>Change</span>
                 </button>
                 <button
                   onClick={handleClearAll}
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors ml-auto"
+                  className="inline-flex items-center gap-2 px-3 py-1 rounded-lg border border-border text-sm text-foreground hover:bg-muted transition-colors ml-auto"
                 >
                   <X className="w-3.5 h-3.5" />
                   <span>New</span>
@@ -505,17 +505,17 @@ Please provide a detailed analysis and answer.
 
                 {/* Tools Dropdown in Sticky Footer */}
                 {showTools && (
-                  <div className="absolute left-4 bottom-full mb-1 w-64 rounded-lg border border-gray-200 bg-white shadow-lg z-10">
+                  <div className="absolute left-4 bottom-full mb-1 w-64 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg z-10">
                     <div className="p-2">
-                      <p className="text-xs font-semibold text-gray-700 px-2 py-1">Select Search Tool</p>
+                      <p className="text-xs font-semibold text-muted-foreground px-2 py-1">Select Search Tool</p>
                       {TOOLS.map((tool) => (
                         <button
                           key={tool.id}
                           onClick={() => handleToolSelect(tool)}
                           className={`w-full text-left px-3 py-2 rounded-lg text-sm mb-1 transition-colors flex items-center gap-3 ${
                             selectedTool.id === tool.id
-                              ? 'bg-black text-white'
-                              : 'hover:bg-gray-100 text-gray-900'
+                              ? 'bg-primary text-primary-foreground'
+                              : 'hover:bg-muted text-foreground'
                           }`}
                         >
                           <span className="flex-shrink-0">{tool.icon}</span>
@@ -534,23 +534,23 @@ Please provide a detailed analysis and answer.
               </div>
 
               {/* Search Input */}
-              <div className="relative flex items-center rounded-xl border border-gray-200 bg-white shadow-sm transition-all focus-within:border-gray-400 focus-within:shadow-md">
-                <Search className="absolute left-4 h-5 w-5 text-gray-400" />
+              <div className="relative flex items-center rounded-xl border border-border bg-card shadow-sm transition-all focus-within:border-primary/50 focus-within:shadow-md">
+                <Search className="absolute left-4 h-5 w-5 text-muted-foreground" />
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleFollowUp()}
                   placeholder="Ask a follow-up..."
-                  className="w-full rounded-xl border-0 py-3.5 pl-11 pr-20 sm:pr-32 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0 text-base"
+                  className="w-full rounded-xl border-0 py-3.5 pl-11 pr-20 sm:pr-32 text-foreground placeholder:text-muted-foreground bg-transparent focus:outline-none focus:ring-0 text-base"
                 />
                 <div className="absolute right-2 flex items-center gap-1 sm:gap-2">
-                  <button className="hidden rounded-lg px-2 sm:px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 sm:block">
+                  <button className="hidden rounded-lg px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted sm:block">
                     <Globe className="h-4 w-4" />
                   </button>
                   <button
                     onClick={handleFollowUp}
                     disabled={loading}
-                    className="rounded-lg bg-black px-2 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white transition-all hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap"
+                    className="rounded-lg bg-primary px-2 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50 whitespace-nowrap"
                   >
                     {loading ? 'Searching...' : 'Search'}
                   </button>

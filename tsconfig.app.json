@@ -17,7 +17,10 @@
 
     /* Alias */
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "next/link": ["./src/features/storetemplate/lib/next-link.tsx"],
+      "next/image": ["./src/features/storetemplate/lib/next-image.tsx"],
+      "next/navigation": ["./src/features/storetemplate/lib/next-navigation.tsx"]
     },
 
     /* Linting */

@@ -33,17 +33,17 @@ export function ModelSelector({
           setShowDropdown(!showDropdown)
           setShowToolsDropdown(false)
         }}
-        className='flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-muted transition-colors text-[10px] sm:text-xs'
+        className='flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded-lg border border-border/80 hover:border-border hover:bg-muted transition-colors text-[10px] sm:text-xs text-foreground'
       >
         <span className='text-muted-foreground hidden xs:inline'>Model:</span>
-        <span className='font-medium truncate max-w-[60px] xs:max-w-[80px] sm:max-w-none'>
+        <span className='font-medium truncate max-w-[60px] xs:max-w-[80px] sm:max-w-none text-foreground'>
           {currentModel?.name || 'Select Model'}
         </span>
         <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform flex-shrink-0 ${showDropdown ? 'rotate-180' : ''}`} />
       </button>
 
       {showDropdown && (
-        <div className='absolute left-0 bottom-full mb-1 w-52 sm:w-56 max-h-[60vh] overflow-y-auto rounded-lg border border-gray-200 bg-background shadow-lg z-20'>
+        <div className='absolute left-0 bottom-full mb-1 w-52 sm:w-56 max-h-[60vh] overflow-y-auto rounded-lg border border-border bg-background shadow-lg z-20 text-foreground'>
           <div className='p-1'>
             {MODELS.map((m) => (
               <button
@@ -53,7 +53,7 @@ export function ModelSelector({
                   setModel(m.id)
                   setShowDropdown(false)
                 }}
-                className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded text-[11px] sm:text-sm transition-colors ${
+                className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded text-[11px] sm:text-sm transition-colors text-foreground ${
                   model === m.id
                     ? 'bg-primary text-primary-foreground'
                     : 'hover:bg-muted'

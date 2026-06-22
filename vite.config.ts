@@ -1,4 +1,5 @@
 /// <reference types="vitest/config" />
+// Force Vite dev server reload after dependency installation
 import path from 'path'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -88,6 +89,9 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        'next/link': path.resolve(__dirname, './src/features/storetemplate/lib/next-link.tsx'),
+        'next/image': path.resolve(__dirname, './src/features/storetemplate/lib/next-image.tsx'),
+        'next/navigation': path.resolve(__dirname, './src/features/storetemplate/lib/next-navigation.tsx'),
       },
     },
   test: {

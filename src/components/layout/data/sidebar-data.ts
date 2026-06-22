@@ -20,6 +20,7 @@ import {
   ChartArea,
   Map,
   FileText,
+  Store,
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -93,6 +94,11 @@ export const sidebarData: SidebarData = {
           title:"Document Template",
           url:"/doc",
           icon: FileText
+        },
+        {
+          title:"Store Template",
+          url:"/store",
+          icon: Store
         },
       
         {

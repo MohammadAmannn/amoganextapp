@@ -33,11 +33,11 @@ export function ToolSelector({
                     setShowDropdown(!showDropdown)
                     setShowModelDropdown(false)
                 }}
-                className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-muted transition-colors text-[10px] sm:text-xs min-w-[70px] sm:min-w-[100px] ${tool === 'web-search' ? 'bg-blue-50 border-blue-200' : ''
+                className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded-lg border border-border/80 hover:border-border hover:bg-muted transition-colors text-[10px] sm:text-xs min-w-[70px] sm:min-w-[100px] text-foreground ${tool === 'web-search' ? 'bg-blue-50/70 border-blue-200 dark:bg-blue-950/20 dark:border-blue-900/30' : ''
                     }`}
             >
                 <span className='text-muted-foreground hidden sm:inline'>Tool:</span>
-                <span className='font-medium flex items-center gap-0.5 sm:gap-1 whitespace-nowrap'>
+                <span className='font-medium flex items-center gap-0.5 sm:gap-1 whitespace-nowrap text-foreground'>
                     <span>{currentTool?.icon}</span>
                     <span className="hidden sm:inline">{currentTool?.name}</span>
                     <span className="sm:hidden">
@@ -52,7 +52,7 @@ export function ToolSelector({
             </button>
 
             {showDropdown && (
-                <div className='absolute left-0 bottom-full mb-1 w-44 sm:w-48 rounded-lg border border-gray-200 bg-background shadow-lg z-20'>
+                <div className='absolute left-0 bottom-full mb-1 w-44 sm:w-48 rounded-lg border border-border bg-background shadow-lg z-20 text-foreground'>
                     <div className='p-1'>
                         {TOOLS.map((t) => (
                             <button
@@ -63,7 +63,7 @@ export function ToolSelector({
                                     setShowDropdown(false)
                                     if (onToolChange) onToolChange()
                                 }}
-                                className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded text-[11px] sm:text-sm transition-colors flex items-center gap-1.5 sm:gap-2 ${tool === t.id
+                                className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded text-[11px] sm:text-sm transition-colors flex items-center gap-1.5 sm:gap-2 text-foreground ${tool === t.id
                                         ? 'bg-primary text-primary-foreground'
                                         : 'hover:bg-muted'
                                     }`}

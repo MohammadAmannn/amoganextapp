@@ -27,150 +27,150 @@ export function Stats() {
 
       <div className='space-y-12'>
         <section className='space-y-4'>
-          <div className='border-b border-border pb-2'>
+          <div className=' pb-2'>
             <h3 className='text-lg font-semibold'>01. Stats with Trending</h3>
           </div>
-          <div className='overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden rounded-xl  text-card-foreground shadow-xs'>
             <Stats01 />
           </div>
         </section>
 
         <section className='space-y-4'>
-          <div className='border-b border-border pb-2'>
+          <div className='pb-2'>
             <h3 className='text-lg font-semibold'>02. Stats with Borders</h3>
           </div>
-          <div className='overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden rounded-xl  text-card-foreground shadow-xs'>
             <Stats02 />
           </div>
         </section>
 
         <section className='space-y-4'>
-          <div className='border-b border-border pb-2'>
+          <div className=" pb-2">
             <h3 className='text-lg font-semibold'>
               03. Stats with Card Layout
             </h3>
           </div>
-          <div className='overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
             <Stats03 />
           </div>
         </section>
 
         <section className='space-y-4'>
-          <div className='border-b border-border pb-2'>
+          <div className=" pb-2">
             <h3 className='text-lg font-semibold'>04. Stats with Badges</h3>
           </div>
-          <div className='overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
             <Stats04 />
           </div>
         </section>
 
         <section className='space-y-4'>
-          <div className='border-b border-border pb-2'>
+          <div className=" pb-2">
             <h3 className='text-lg font-semibold'>05. Stats with Links</h3>
           </div>
-          <div className='overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
             <Stats05 />
           </div>
         </section>
 
         <section className='space-y-4'>
-          <div className='border-b border-border pb-2'>
+          <div className=" pb-2">
             <h3 className='text-lg font-semibold'>06. Stats with Status</h3>
           </div>
-          <div className='overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
             <Stats06 />
           </div>
         </section>
 
         <section className='space-y-4'>
-          <div className='border-b border-border pb-2'>
+          <div className=" pb-2">
             <h3 className='text-lg font-semibold'>
               07. Stats with Circular Progress
             </h3>
           </div>
-          <div className='overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
             <Stats07 />
           </div>
         </section>
 
         <section className='space-y-4'>
-          <div className='border-b border-border pb-2'>
+          <div className=" pb-2">
             <h3 className='text-lg font-semibold'>
               08. Stats with Circular Progress and Links
             </h3>
           </div>
-          <div className='overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
             <Stats08 />
           </div>
         </section>
 
         <section className='space-y-4'>
-          <div className='border-b border-border pb-2'>
+          <div className=" pb-2">
             <h3 className='text-lg font-semibold'>09. Stats with Progress</h3>
           </div>
-          <div className='overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
             <Stats09 />
           </div>
         </section>
 
         <section className='space-y-4'>
-          <div className='border-b border-border pb-2'>
+          <div className=" pb-2">
             <h3 className='text-lg font-semibold'>10. Stats with Area Chart</h3>
           </div>
-          <div className='overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
             <Stats10 />
           </div>
         </section>
 
         <section className='space-y-4'>
-          <div className='border-b border-border pb-2'>
+          <div className=" pb-2">
             <h3 className='text-lg font-semibold'>
               11. Stats Dashboard with Progress Bars
             </h3>
           </div>
-          <div className='overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
             <Stats11 />
           </div>
         </section>
 
         <section className='space-y-4'>
-          <div className='border-b border-border pb-2'>
+          <div className=" pb-2">
             <h3 className='text-lg font-semibold'>12. Stats Usage Dashboard</h3>
           </div>
-          <div className='overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
             <Stats12 />
           </div>
         </section>
 
         <section className='space-y-4'>
-          <div className='border-b border-border pb-2'>
+          <div className=" pb-2">
             <h3 className='text-lg font-semibold'>
               13. Stats with Segmented Progress
             </h3>
           </div>
-          <div className='overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
             <Stats13 />
           </div>
         </section>
 
         <section className='space-y-4'>
-          <div className='border-b border-border pb-2'>
+          <div className=" pb-2">
             <h3 className='text-lg font-semibold'>
               14. Stats with Usage Breakdown
             </h3>
           </div>
-          <div className='overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
             <Stats14 />
           </div>
         </section>
 
         <section className='space-y-4'>
-          <div className='border-b border-border pb-2'>
+          <div className=" pb-2">
             <h3 className='text-lg font-semibold'>
               15. Stats with Value Breakdown
             </h3>
           </div>
-          <div className='overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
             <Stats15 />
           </div>
         </section>

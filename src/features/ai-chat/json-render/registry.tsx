@@ -22,9 +22,11 @@ import { Calendar } from '@/components/ui/calendar'
 import { Switch } from '@/components/ui/switch'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import * as Icons from 'lucide-react'
+import { PremiumStats } from './PremiumStats'
 
 // Registry mapping component types to React components
 export const registry = {
+  PremiumStats: (props: any) => <PremiumStats {...props} />,
   Form: ({ children, onSubmit, ...props }: any) => (
     <form
       className="space-y-4 w-full"

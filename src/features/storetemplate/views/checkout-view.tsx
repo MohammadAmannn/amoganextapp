@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useCart } from '../hooks/use-cart'
 import { useNavigation } from '../hooks/use-navigation'
 import Navbar from '../components/navbar'
@@ -7,10 +7,15 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { ShoppingBag, CheckCircle2, ArrowLeft, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/stores/auth-store'
+import { useCreateWooOrder } from '../hooks/use-store-data'
+import { toast } from 'sonner'
 
 export default function CheckoutView() {
   const { items, clearCart } = useCart()
   const { setView } = useNavigation()
+  const { user } = useAuthStore((state) => state.auth)
+  const createOrderMutation = useCreateWooOrder()
 
   // Selection states
   const [shippingMethod, setShippingMethod] = useState<'fast' | 'free'>('fast')
@@ -19,11 +24,29 @@ export default function CheckoutView() {
   // Form states
   const [formData, setFormData] = useState({
     email: '',
+    firstName: '',
+    lastName: '',
     nameOnCard: '',
     cardNumber: '',
     cardExpiry: '',
     cardCvc: '',
   })
+
+  // Prefill email and name from user session
+  useEffect(() => {
+    if (user) {
+      const nameParts = (user.name || '').trim().split(/\s+/)
+      const fName = nameParts[0] || ''
+      const lName = nameParts.slice(1).join(' ') || ''
+      setFormData((prev) => ({
+        ...prev,
+        email: prev.email || user.email || '',
+        firstName: prev.firstName || fName,
+        lastName: prev.lastName || lName,
+        nameOnCard: prev.nameOnCard || user.name || '',
+      }))
+    }
+  }, [user])
 
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -38,19 +61,96 @@ export default function CheckoutView() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (items.length === 0) return
 
     setLoading(true)
-    
-    // Simulate API request
-    setTimeout(() => {
-      setLoading(false)
+    const toastId = toast.loading('Submitting your order to WooCommerce...')
+
+    // Aggregate duplicate items and calculate quantity
+    const lineItemsMap = new Map<string, number>()
+    items.forEach((item) => {
+      lineItemsMap.set(item.id, (lineItemsMap.get(item.id) || 0) + 1)
+    })
+    const lineItems = Array.from(lineItemsMap.entries()).map(([id, qty]) => ({
+      product_id: Number(id),
+      quantity: qty,
+    }))
+
+    // Use first and last names from form fields
+    const firstName = formData.firstName.trim() || 'Guest'
+    const lastName = formData.lastName.trim() || 'User'
+
+    // Payment method mapping
+    const payMethodId = paymentMethod === 'card' ? 'stripe' : 'bacs'
+    const payMethodTitle = paymentMethod === 'card' ? 'Credit Card (Stripe Mock)' : 'Virtual Account / Bank Transfer'
+
+    // Build WooCommerce Order payload
+    const orderPayload = {
+      payment_method: payMethodId,
+      payment_method_title: payMethodTitle,
+      set_paid: paymentMethod === 'card',
+      billing: {
+        first_name: firstName,
+        last_name: lastName,
+        email: formData.email || user?.email || '',
+        address_1: '123 E-Commerce Way',
+        city: 'Digital City',
+        state: 'DC',
+        postcode: '12345',
+        country: 'US',
+      },
+      shipping: {
+        first_name: firstName,
+        last_name: lastName,
+        address_1: '123 E-Commerce Way',
+        city: 'Digital City',
+        state: 'DC',
+        postcode: '12345',
+        country: 'US',
+      },
+      line_items: lineItems,
+      shipping_lines: [
+        {
+          method_id: shippingMethod === 'fast' ? 'flat_rate' : 'free_shipping',
+          method_title: shippingMethod === 'fast' ? 'Fast Delivery' : 'Free Shipping',
+          total: shippingMethod === 'fast' ? '4.99' : '0.00',
+        },
+      ],
+      customer_note: `Ordered via React Shop. Logged-in Google user: ${user?.name || 'Guest'} (${user?.email || 'N/A'})`,
+      meta_data: [
+        {
+          key: 'google_login_email',
+          value: user?.email || '',
+        },
+        {
+          key: 'google_login_name',
+          value: user?.name || '',
+        },
+        {
+          key: 'google_login_picture',
+          value: user?.picture || '',
+        },
+        {
+          key: 'checkout_session_id',
+          value: user?.accountNo || 'GuestSession',
+        }
+      ],
+    }
+
+    try {
+      const response = await createOrderMutation.mutateAsync(orderPayload)
+      setOrderId(String(response.id))
       setSuccess(true)
-      setOrderId('ORD-' + Math.floor(100000 + Math.random() * 900000))
+      toast.success('Order placed successfully!', { id: toastId })
       clearCart()
-    }, 1500)
+    } catch (err: any) {
+      console.error('WooCommerce Order Error:', err)
+      toast.error(err.message || 'Failed to submit WooCommerce order', { id: toastId })
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (success) {
@@ -67,6 +167,9 @@ export default function CheckoutView() {
           
           <div className="p-5 bg-card border border-border/80 rounded-2xl w-full text-left text-sm mb-6 shadow-sm space-y-2">
             <h4 className="font-bold mb-3 text-foreground border-b border-border/40 pb-2">Delivery Details</h4>
+            <p className="text-muted-foreground">
+              <span className="font-semibold text-foreground">Name:</span> {formData.firstName} {formData.lastName}
+            </p>
             {formData.email && (
               <p className="text-muted-foreground">
                 <span className="font-semibold text-foreground">Email:</span> {formData.email}
@@ -229,6 +332,32 @@ export default function CheckoutView() {
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     className="rounded-xl bg-background border-border text-foreground focus-visible:ring-1 focus-visible:ring-primary h-11"
                   />
+                </div>
+
+                {/* Name Fields */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-foreground">First name</label>
+                    <Input
+                      type="text"
+                      required
+                      placeholder="First name"
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange('firstName', e.target.value)}
+                      className="rounded-xl bg-background border-border text-foreground focus-visible:ring-1 focus-visible:ring-primary h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-foreground">Last name</label>
+                    <Input
+                      type="text"
+                      required
+                      placeholder="Last name"
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange('lastName', e.target.value)}
+                      className="rounded-xl bg-background border-border text-foreground focus-visible:ring-1 focus-visible:ring-primary h-11"
+                    />
+                  </div>
                 </div>
 
                 {/* Select Payment Method */}

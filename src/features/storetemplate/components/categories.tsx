@@ -1,12 +1,31 @@
-import { getAllCategories } from "../lib/data";
+import { useStoreProducts, getCategoriesFromProducts } from "../hooks/use-store-data";
 import CategoryCard from "./category-card";
+import { Loader2 } from "lucide-react";
 
 /**
  * The Categories component displays a list of categories in a vertical list style
  * similar to Flipkart's category listing
  */
 function Categories() {
-  const categories = getAllCategories();
+  const { data: allProducts = [], isLoading, error } = useStoreProducts();
+  const categories = getCategoriesFromProducts(allProducts);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[200px] w-full flex-col items-center justify-center gap-2">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <p className="text-xs text-muted-foreground">Loading categories...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-[200px] w-full flex-col items-center justify-center gap-2 text-center">
+        <p className="text-xs font-semibold text-destructive">Failed to load categories</p>
+      </div>
+    );
+  }
 
   return (
     <section className="w-full py-4 md:py-8">
@@ -23,9 +42,15 @@ function Categories() {
 
         {/* Vertical list layout - one category per row */}
         <div className="space-y-2 md:space-y-3">
-          {categories.map((category) => (
-            <CategoryCard key={category.id} category={category} />
-          ))}
+          {categories.length === 0 ? (
+            <div className="text-center py-8 border rounded-xl bg-muted/10 text-muted-foreground text-sm">
+              No categories found.
+            </div>
+          ) : (
+            categories.map((category) => (
+              <CategoryCard key={category.id} category={category} />
+            ))
+          )}
         </div>
       </div>
     </section>

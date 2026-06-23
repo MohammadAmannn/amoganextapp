@@ -3,12 +3,12 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { getAllCategories, getAllProducts } from "../lib/data";
+import { useStoreProducts, getCategoriesFromProducts } from "../hooks/use-store-data";
 import { Product } from "../lib/types";
 import ProductCard from "../components/product-card";
 import { Button } from "../components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "../components/ui/sheet";
-import { SearchIcon, SlidersHorizontal } from "lucide-react";
+import { Loader2, SearchIcon, SlidersHorizontal } from "lucide-react";
 import { Input } from "../components/ui/input";
 import FilterSidebar from "../components/filter-sidebar";
 import Navbar from "../components/navbar";
@@ -22,17 +22,24 @@ function SearchView() {
 
   const [searchQuery, setSearchQuery] = useState(initialQuery);
 
+  const { data: allProducts = [], isLoading, error } = useStoreProducts();
+  const categories = getCategoriesFromProducts(allProducts);
 
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 300]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [priceInitialized, setPriceInitialized] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const categories = getAllCategories();
-  const allProducts = getAllProducts();
-
   // Get min and max prices from all products
-  const minPrice = Math.min(...allProducts.map((product) => product.price));
-  const maxPrice = Math.max(...allProducts.map((product) => product.price));
+  const minPrice = allProducts.length > 0 ? Math.min(...allProducts.map((product) => product.price)) : 0;
+  const maxPrice = allProducts.length > 0 ? Math.max(...allProducts.map((product) => product.price)) : 1000;
+
+  useEffect(() => {
+    if (allProducts.length > 0 && !priceInitialized) {
+      setPriceRange([minPrice, maxPrice]);
+      setPriceInitialized(true);
+    }
+  }, [allProducts, minPrice, maxPrice, priceInitialized]);
 
   useEffect(() => {
     let results = [...allProducts];
@@ -95,6 +102,32 @@ function SearchView() {
   const handlePriceChange = (range: [number, number]) => {
     setPriceRange(range);
   };
+
+  if (isLoading) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex h-[400px] w-full flex-col items-center justify-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Searching WooCommerce shop...</p>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex h-[400px] w-full flex-col items-center justify-center gap-2 text-center p-4">
+          <p className="text-sm font-semibold text-destructive">Failed to search WooCommerce products</p>
+          <p className="text-xs text-muted-foreground">Please check your keys and internet connection.</p>
+        </div>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>

@@ -1,8 +1,8 @@
 import Footer from "../components/footer";
 import Navbar from "../components/navbar";
 import ProductCard from "../components/product-card";
-import { getCategoryBySlug, getProductsByCategory } from "../lib/data";
-import { notFound } from "next/navigation";
+import { useStoreProducts, getCategoriesFromProducts } from "../hooks/use-store-data";
+import { Loader2 } from "lucide-react";
 
 interface CategoryPageProps {
   params: {
@@ -12,13 +12,38 @@ interface CategoryPageProps {
 
 function CategoryDetailView({ params }: CategoryPageProps) {
   const { slug } = params;
-  const category = getCategoryBySlug(slug);
+  const { data: allProducts = [], isLoading, error } = useStoreProducts();
+  
+  const categories = getCategoriesFromProducts(allProducts);
+  const category = categories.find((c) => c.slug === slug);
 
-  if (!category) {
-    return notFound();
+  if (isLoading) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex h-[400px] w-full flex-col items-center justify-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading category products...</p>
+        </div>
+        <Footer />
+      </>
+    );
   }
 
-  const products = getProductsByCategory(category.name);
+  if (error || !category) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex h-[400px] w-full flex-col items-center justify-center gap-2 text-center p-4">
+          <p className="text-sm font-semibold text-destructive">Category Not Found</p>
+          <p className="text-xs text-muted-foreground">The requested category could not be resolved or loaded.</p>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
+  const products = allProducts.filter((product) => product.category === category.name);
 
   return (
     <>

@@ -1,12 +1,31 @@
 import ProductCard from "./product-card";
-import { getAllProducts } from "../lib/data";
+import { useStoreProducts } from "../hooks/use-store-data";
+import { Loader2 } from "lucide-react";
 
 /**
  * The Products component displays all products in a vertical list
  * Fully responsive with proper spacing
  */
 function Products() {
-  const allProducts = getAllProducts();
+  const { data: allProducts = [], isLoading, error } = useStoreProducts();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[300px] w-full flex-col items-center justify-center gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Fetching WooCommerce products...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2 text-center p-4">
+        <p className="text-sm font-semibold text-destructive">Failed to load WooCommerce products</p>
+        <p className="text-xs text-muted-foreground">Please check your network and consumer key setup.</p>
+      </div>
+    );
+  }
 
   return (
     <section className="w-full py-4 md:py-8">
@@ -23,9 +42,15 @@ function Products() {
 
         {/* Vertical list - one product per row */}
         <div className="space-y-3 md:space-y-5">
-          {allProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {allProducts.length === 0 ? (
+            <div className="text-center py-12 border rounded-xl bg-muted/10 text-muted-foreground">
+              No products found in WooCommerce.
+            </div>
+          ) : (
+            allProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          )}
         </div>
       </div>
     </section>

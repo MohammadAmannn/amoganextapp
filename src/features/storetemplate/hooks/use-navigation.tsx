@@ -10,6 +10,7 @@ export type ViewType =
   | 'product-detail'
   | 'category-detail'
   | 'checkout'
+  | 'add-product'
 
 export interface NavigationContextType {
   view: ViewType
@@ -88,6 +89,11 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
 
     if (path === '/checkout') {
       setViewWithParams('checkout', {})
+      return
+    }
+
+    if (path === '/add-product') {
+      setViewWithParams('add-product', {})
       return
     }
   }, [setViewWithParams])

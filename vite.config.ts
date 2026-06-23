@@ -28,7 +28,9 @@ export default defineConfig(({ mode }) => {
         name: 'api-routes',
         configureServer(server) {
           server.middlewares.use(async (req, res, next) => {
-            if (req.url?.startsWith('/api/chat')) {
+            const url = req.url || ''
+            if (url.startsWith('/api/chat') || url.startsWith('/api/products')) {
+              const isChat = url.startsWith('/api/chat')
               let body = ''
               req.on('data', (chunk) => {
                 body += chunk
@@ -64,9 +66,10 @@ export default defineConfig(({ mode }) => {
               const mockReq = Object.assign(req, { body: parsedBody })
 
               try {
-                // Dynamically load the API handler in the Vite/Node environment
+                // Dynamically load the correct API handler
+                const apiPath = isChat ? './api/chat.js' : './api/products.js'
                 const module = await server.ssrLoadModule(
-                  path.resolve(__dirname, './api/chat.js')
+                  path.resolve(__dirname, apiPath)
                 )
                 const handler = module.default
                 await handler(mockReq, mockRes)

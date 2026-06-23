@@ -10,7 +10,7 @@ import { useNavigation } from "../hooks/use-navigation";
 
 /**
  * @description The main navigation component - two row layout:
- * Row 1: Logo (Left), Centered Navigation Links (Center), Cart Sheet Button (Right)
+ * Row 1: Logo (Left), Centered Navigation Links (Center), Cart & Add Product Button (Right)
  * Row 2: Full-Width Centered Search Bar
  *
  * @returns {JSX.Element} - The navigation component.

@@ -9,6 +9,7 @@ import SearchPage from './views/search-view'
 import SingleProductPage from './views/product-detail-view'
 import CategoryPage from './views/category-detail-view'
 import CheckoutPage from './views/checkout-view'
+import AddProductPage from './views/add-product-view'
 import Navbar from './components/navbar'
 import Footer from './components/footer'
 
@@ -28,6 +29,8 @@ function StoreApp() {
       return <SingleProductPage params={{ id: params.id || '' }} />
     case 'category-detail':
       return <CategoryPage params={{ slug: params.slug || '' }} />
+    case 'add-product':
+      return <AddProductPage />
     case 'about':
       return (
         <>

@@ -1,10 +1,10 @@
-import { getProductById } from "../lib/data";
+import { useStoreProduct } from "../hooks/use-store-data";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import Image from "next/image";
-import { notFound } from "next/navigation";
 import AddToCartButton from "../components/add-to-cart-button";
 import { Separator } from "@radix-ui/react-separator";
+import { Loader2 } from "lucide-react";
 
 interface Params {
   id: string;
@@ -21,11 +21,33 @@ export default function ProductDetailView({
   params: Params;
 }) {
   const { id } = params;
+  const { data: product, isLoading, error } = useStoreProduct(id);
 
-  const product = getProductById(id);
+  if (isLoading) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex h-[400px] w-full flex-col items-center justify-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading product details...</p>
+        </div>
+        <Footer />
+      </>
+    );
+  }
 
-  // If there is no product with the given id, return a 404
-  if (!product) return notFound();
+  if (error || !product) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex h-[400px] w-full flex-col items-center justify-center gap-2 text-center p-4">
+          <p className="text-sm font-semibold text-destructive">Product Not Found</p>
+          <p className="text-xs text-muted-foreground">The requested product could not be found or loaded.</p>
+        </div>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>

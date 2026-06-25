@@ -1,3 +1,5 @@
+'use client'
+
 /* eslint-disable preserve-caught-error */
 import { useState } from 'react'
 import axios from 'axios'
@@ -5,8 +7,8 @@ import ReactMarkdown from 'react-markdown'
 import { Search, Globe, Image, ArrowUpRight, Wrench, Code, BarChart3, FileText, X} from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
-const TAVILY_API_KEY = import.meta.env.VITE_TAVILY_API_KEY
+const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY ?? ''
+const TAVILY_API_KEY = process.env.NEXT_PUBLIC_TAVILY_API_KEY ?? ''
 
 type Tool = {
   id: string

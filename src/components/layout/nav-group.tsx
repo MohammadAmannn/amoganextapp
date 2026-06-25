@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react'
-import { Link, useLocation } from '@tanstack/react-router'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { ChevronRight, X } from 'lucide-react'
 import { useLayout } from '@/context/layout-provider'
 import {
@@ -38,7 +39,7 @@ import {
 
 export function NavGroup({ title, items }: NavGroupProps) {
   const { state, isMobile, openMobile, setOpenMobile } = useSidebar()
-  const href = useLocation({ select: (location) => location.href })
+  const href = usePathname()
 
   return (
     <SidebarGroup>
@@ -112,7 +113,7 @@ function SidebarMenuLink({ item, href }: { item: NavLink; href: string }) {
         tooltip={item.title}
       >
         <Link
-          to={item.url}
+          href={item.url}
           onClick={() => {
             setShowInlineNotFound(false)
             setOpenMobile(false)
@@ -181,7 +182,7 @@ function SidebarMenuCollapsible({
                   isActive={checkIsActive(href, subItem)}
                 >
                   <Link
-                    to={subItem.url}
+                    href={subItem.url}
                     onClick={() => {
                       setShowInlineNotFound(false)
                       setOpenMobile(false)
@@ -230,7 +231,7 @@ function SidebarMenuCollapsedDropdown({
           {item.items.map((sub) => (
             <DropdownMenuItem key={`${sub.title}-${sub.url}`} asChild>
               <Link
-                to={sub.url}
+                href={sub.url}
                 className={`${checkIsActive(href, sub) ? 'bg-secondary' : ''}`}
               >
                 {sub.icon && <sub.icon />}

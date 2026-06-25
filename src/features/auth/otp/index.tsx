@@ -1,4 +1,6 @@
-import { Link } from '@tanstack/react-router'
+'use client'
+
+import Link from 'next/link'
 import {
   Card,
   CardContent,
@@ -30,7 +32,7 @@ export function Otp() {
           <p className='px-8 text-center text-sm text-muted-foreground'>
             Haven't received it?{' '}
             <Link
-              to='/sign-in'
+              href='/sign-in'
               className='underline underline-offset-4 hover:text-primary'
             >
               Resend a new code.

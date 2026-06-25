@@ -48,7 +48,7 @@ const chartConfig = {
 
 export function TooltipChartCard() {
     return (
-        <Card>
+        <Card className="border-0 shadow-none bg-transparent">
             <CardHeader>
                 <CardTitle>Chart with Custom Tooltip</CardTitle>
                 <CardDescription>

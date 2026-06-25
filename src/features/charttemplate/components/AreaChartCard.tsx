@@ -48,7 +48,7 @@ const chartConfig = {
 
 export function AreaChartCard() {
     return (
-        <Card>
+        <Card className="border-0 shadow-none bg-transparent">
             <CardHeader>
                 <CardTitle>Area Chart - Stacked</CardTitle>
                 <CardDescription>

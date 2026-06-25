@@ -41,7 +41,7 @@ const chartConfig = {
 
 export function BarChartCard() {
     return (
-        <Card>
+        <Card className="border-0 shadow-none bg-transparent">
             <CardHeader>
                 <CardTitle>Bar Chart - Multiple</CardTitle>
                 <CardDescription>

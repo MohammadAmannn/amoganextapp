@@ -1,6 +1,8 @@
+"use client"
+
 import React, { useState, useEffect } from 'react'
 import { useCart } from '../hooks/use-cart'
-import { useNavigation } from '../hooks/use-navigation'
+import { useRouter } from 'next/navigation'
 import Navbar from '../components/navbar'
 import Footer from '../components/footer'
 import { Button } from '../components/ui/button'
@@ -13,7 +15,7 @@ import { toast } from 'sonner'
 
 export default function CheckoutView() {
   const { items, clearCart } = useCart()
-  const { setView } = useNavigation()
+  const router = useRouter()
   const { user } = useAuthStore((state) => state.auth)
   const createOrderMutation = useCreateWooOrder()
 
@@ -185,7 +187,7 @@ export default function CheckoutView() {
             </p>
           </div>
 
-          <Button onClick={() => setView('/')} size="lg" className="w-full rounded-xl font-bold h-12 shadow-md shadow-primary/20 hover:shadow-none transition-all">
+          <Button onClick={() => router.push('/store')} size="lg" className="w-full rounded-xl font-bold h-12 shadow-md shadow-primary/20 hover:shadow-none transition-all">
             Continue Shopping
           </Button>
         </main>
@@ -204,7 +206,7 @@ export default function CheckoutView() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setView('/')}
+            onClick={() => router.push('/store')}
             className="flex items-center gap-1.5 hover:bg-muted text-muted-foreground hover:text-foreground rounded-xl"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -219,7 +221,7 @@ export default function CheckoutView() {
             <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h2 className="text-xl font-bold text-foreground">Your cart is empty</h2>
             <p className="text-muted-foreground mt-2 mb-6 text-sm">Add some products to your cart before checking out.</p>
-            <Button onClick={() => setView('/')} className="rounded-xl font-semibold px-6">Go to Shop</Button>
+            <Button onClick={() => router.push('/store')} className="rounded-xl font-semibold px-6">Go to Shop</Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">

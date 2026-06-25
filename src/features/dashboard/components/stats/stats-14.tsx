@@ -22,7 +22,7 @@ const colorClasses = {
 
 export function Stats14() {
   return (
-    <Card className="w-full max-w-sm shadow-none">
+    <Card className="w-full md:max-w-sm mx-auto shadow-none border-0 bg-transparent">
       <CardContent className="flex flex-col justify-between pt-0">
         <div>
           <div className="flex items-center gap-2">

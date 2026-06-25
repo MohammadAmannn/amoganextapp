@@ -1,5 +1,7 @@
-import { Outlet, useRouterState } from '@tanstack/react-router'
-import { useEffect } from 'react'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { getCookie } from '@/lib/cookies'
 import { cn } from '@/lib/utils'
 import { LayoutProvider, useLayout } from '@/context/layout-provider'
@@ -15,7 +17,7 @@ type AuthenticatedLayoutProps = {
 
 function AuthenticatedLayoutContent({ children }: AuthenticatedLayoutProps) {
   const { showInlineNotFound, setShowInlineNotFound } = useLayout()
-  const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const pathname = usePathname()
 
   useEffect(() => {
     setShowInlineNotFound(false)
@@ -38,7 +40,7 @@ function AuthenticatedLayoutContent({ children }: AuthenticatedLayoutProps) {
             onDismiss={() => setShowInlineNotFound(false)}
           />
         ) : (
-          children ?? <Outlet />
+          children
         )}
       </SidebarInset>
     </>
@@ -46,7 +48,18 @@ function AuthenticatedLayoutContent({ children }: AuthenticatedLayoutProps) {
 }
 
 export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
-  const defaultOpen = getCookie('sidebar_state') !== 'false'
+  const [defaultOpen, setDefaultOpen] = useState(true)
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setDefaultOpen(getCookie('sidebar_state') !== 'false')
+    setIsMounted(true)
+  }, [])
+
+  if (!isMounted) {
+    return null
+  }
+
   return (
     <SearchProvider>
       <LayoutProvider>

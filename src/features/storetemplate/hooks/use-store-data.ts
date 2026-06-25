@@ -51,9 +51,10 @@ export function useStoreProducts() {
   return useQuery<Product[]>({
     queryKey: ['store-products'],
     queryFn: async () => {
-      const res = await fetch('/api/products')
+      const res = await fetch('/api/products?per_page=100')
       if (!res.ok) {
-        throw new Error('Failed to fetch products from WooCommerce API')
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.error || 'Failed to fetch products from WooCommerce API')
       }
       const data = await res.json()
       return Array.isArray(data) ? data.map(mapWooProduct) : []
@@ -67,9 +68,11 @@ export function useStoreProduct(id: string) {
   return useQuery<Product | null>({
     queryKey: ['store-product', id],
     queryFn: async () => {
-      const res = await fetch(`/api/products?include=${id}`)
+      // Use ?id= so the route handler calls /wp-json/wc/v3/products/{id}
+      const res = await fetch(`/api/products?id=${id}`)
       if (!res.ok) {
-        throw new Error(`Failed to fetch product ${id}`)
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.error || `Failed to fetch product ${id}`)
       }
       const data = await res.json()
       if (Array.isArray(data) && data.length > 0) {
@@ -78,8 +81,10 @@ export function useStoreProduct(id: string) {
       return null
     },
     staleTime: 5 * 60 * 1000, // 5 minutes cache
+    enabled: !!id,
   })
 }
+
 
 // Hook to fetch categories directly from WooCommerce (via our local proxy)
 export function useStoreWooCategories() {

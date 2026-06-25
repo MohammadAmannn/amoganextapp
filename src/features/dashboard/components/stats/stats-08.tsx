@@ -48,10 +48,10 @@ const chartConfig = {
 
 export default function Stats08() {
   return (
-    <div className="flex items-center justify-center p-10 w-full">
+    <div className="flex items-center justify-center p-4 sm:p-6 md:p-10 w-full">
       <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 w-full">
         {data.map((item) => (
-          <Card key={item.name} className="p-0 gap-0 shadow-2xs">
+          <Card key={item.name} className="p-0 gap-0 shadow-none border-0 bg-transparent">
             <CardContent className="p-4">
               <div className="flex items-center space-x-3">
                 <div className="relative flex items-center justify-center">

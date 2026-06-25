@@ -35,7 +35,7 @@ const chartConfig = {
 
 export function RadialChartCard() {
     return (
-        <Card>
+        <Card className="border-0 shadow-none bg-transparent">
             <CardHeader>
                 <CardTitle>Radial Chart</CardTitle>
                 <CardDescription>

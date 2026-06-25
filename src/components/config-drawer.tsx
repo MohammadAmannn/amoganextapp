@@ -1,3 +1,5 @@
+'use client'
+
 import { type SVGProps, useState } from 'react'
 import { Root as Radio, Item } from '@radix-ui/react-radio-group'
 import { Check, CircleCheck, RotateCcw, Search, Settings } from 'lucide-react'

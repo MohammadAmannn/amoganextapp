@@ -81,7 +81,7 @@ function MetricCard({
   };
 
   return (
-    <Card className="relative overflow-hidden max-w-[280px] shadow-2xs">
+    <Card className="relative overflow-hidden w-full shadow-none border-0 bg-transparent">
       <CardContent className="p-4 py-0">
         <h5 className="text-xs font-normal leading-none tracking-wide text-muted-foreground dark:text-foreground/80 uppercase">
           {title}

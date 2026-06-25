@@ -41,7 +41,7 @@ const chartConfig = {
 
 export function RadarChartCard() {
     return (
-        <Card>
+        <Card className="border-0 shadow-none bg-transparent">
             <CardHeader>
                 <CardTitle>Radar Chart</CardTitle>
                 <CardDescription>

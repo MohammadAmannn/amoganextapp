@@ -17,8 +17,8 @@ import {
   SpeechRecognitionErrorEvent,
 } from './types'
 
-// Tavily API Key from environment variables
-const TAVILY_API_KEY = import.meta.env.VITE_TAVILY_API_KEY
+// Tavily API Key - used via /api/chat server route for web-search tool
+const TAVILY_API_KEY = process.env.NEXT_PUBLIC_TAVILY_API_KEY ?? ''
 
 export function AiChat() {
   const [input, setInput] = useState('')

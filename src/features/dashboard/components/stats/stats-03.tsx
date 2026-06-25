@@ -32,10 +32,10 @@ const data = [
 
 export default function Stats03() {
   return (
-    <div className="flex items-center justify-center p-10 w-full">
+    <div className="flex items-center justify-center p-4 sm:p-6 md:p-10 w-full">
       <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 w-full">
         {data.map((item) => (
-          <Card key={item.name} className="p-6 py-4 shadow-2xs">
+          <Card key={item.name} className="p-6 py-4 shadow-none border-0 bg-transparent">
             <CardContent className="p-0">
               <dt className="text-sm font-medium text-muted-foreground">{item.name}</dt>
               <dd className="mt-2 flex items-baseline space-x-2.5">

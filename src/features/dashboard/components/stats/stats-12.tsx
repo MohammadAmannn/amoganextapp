@@ -126,7 +126,7 @@ function DonutChart({ percentage }: { percentage: number }) {
 
 export default function Stats12() {
   return (
-    <Card className="w-full max-w-md gap-3 py-5 shadow-2xs">
+    <Card className="w-full md:max-w-md mx-auto gap-3 py-5 shadow-none border-0 bg-transparent">
       <CardHeader className="px-5">
         <div className="flex items-center justify-between">
           <div className="flex flex-col">

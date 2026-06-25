@@ -39,7 +39,7 @@ function ProductCard({ product }: ProductCardProps) {
     <Card className="overflow-hidden border border-border/80 bg-card hover:shadow-lg transition-shadow duration-300 rounded-lg flex flex-col md:flex-row w-full p-0 gap-0">
       {/* Product Image - Full width on mobile, fixed width on desktop */}
       <Link 
-        href={`/products/${product.id}`} 
+        href={`/store/products/${product.id}`} 
         className="relative overflow-hidden bg-muted flex-shrink-0 w-full md:w-48 lg:w-56 xl:w-64 aspect-square md:aspect-auto md:h-48 lg:h-56 xl:h-64"
       >
         <Image
@@ -56,7 +56,7 @@ function ProductCard({ product }: ProductCardProps) {
         <CardContent className="p-0 flex-1">
           <div className="space-y-1.5 md:space-y-2.5">
             {/* Product Name */}
-            <Link href={`/products/${product.id}`} className="block">
+            <Link href={`/store/products/${product.id}`} className="block">
               <h3 className="font-medium text-sm md:text-base text-foreground hover:text-primary transition-colors line-clamp-2 leading-tight">
                 {product.name}
               </h3>

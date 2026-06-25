@@ -1,4 +1,6 @@
-import { getRouteApi } from '@tanstack/react-router'
+'use client'
+
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Main } from '@/components/layout/main'
 import { UsersDialogs } from './components/users-dialogs'
 import { UsersPrimaryButtons } from './components/users-primary-buttons'
@@ -6,11 +8,49 @@ import { UsersProvider } from './components/users-provider'
 import { UsersTable } from './components/users-table'
 import { users } from './data/users'
 import { AppHeader } from '@/components/layout/app-header'
-const route = getRouteApi('/_authenticated/users/')
+import type { NavigateFn } from '@/hooks/use-table-url-state'
 
 export function Users() {
-  const search = route.useSearch()
-  const navigate = route.useNavigate()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  // Build search object from URL search params
+  const search = Object.fromEntries(
+    [...searchParams.entries()].map(([key, value]) => {
+      // Try to parse numbers
+      const asNum = Number(value)
+      if (!isNaN(asNum) && value !== '') return [key, asNum]
+      // Try to parse arrays (comma-separated)
+      if (value.includes(',')) return [key, value.split(',')]
+      return [key, value]
+    })
+  )
+
+  // Navigate function compatible with useTableUrlState
+  const navigate: NavigateFn = ({ search: searchUpdater, replace }) => {
+    const currentSearch = Object.fromEntries(searchParams.entries())
+    const next =
+      typeof searchUpdater === 'function'
+        ? searchUpdater(currentSearch)
+        : searchUpdater === true
+          ? currentSearch
+          : searchUpdater
+
+    // Build query string, omitting undefined values
+    const params = new URLSearchParams()
+    for (const [k, v] of Object.entries(next ?? {})) {
+      if (v !== undefined && v !== null && v !== '') {
+        params.set(k, Array.isArray(v) ? v.join(',') : String(v))
+      }
+    }
+    const qs = params.toString()
+    const url = qs ? `?${qs}` : window.location.pathname
+    if (replace) {
+      router.replace(url)
+    } else {
+      router.push(url)
+    }
+  }
 
   return (
     <UsersProvider>

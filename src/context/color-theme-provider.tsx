@@ -1,3 +1,5 @@
+'use client'
+
 import { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react'
 import { getCookie, setCookie, removeCookie } from '@/lib/cookies'
 import { useTheme } from '@/context/theme-provider'

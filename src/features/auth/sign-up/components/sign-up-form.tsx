@@ -6,7 +6,7 @@ import { Loader2, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { FcGoogle } from 'react-icons/fc'
 import { useGoogleLogin } from '@react-oauth/google'
-import { useNavigate } from '@tanstack/react-router'
+import { useRouter } from 'next/navigation'
 import { sleep, cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -45,7 +45,7 @@ export function SignUpForm({
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
 
-  const navigate = useNavigate()
+  const router = useRouter()
   const { setUser, setAccessToken } = useAuthStore((state) => state.auth)
 
   const googleLogin = useGoogleLogin({
@@ -80,7 +80,7 @@ export function SignUpForm({
 
         toast.success(`Welcome, ${user.name}! Account created successfully.`)
 
-        navigate({ to: '/', replace: true })
+        router.replace('/')
       } catch {
         toast.error('Google sign up failed. Please try again.')
       } finally {
@@ -121,7 +121,7 @@ export function SignUpForm({
 
         setAccessToken('mock-access-token-' + Date.now())
 
-        navigate({ to: '/', replace: true })
+        router.replace('/')
 
         return `Account created for ${data.email}!`
       },

@@ -21,6 +21,8 @@ import {
   Map,
   FileText,
   Store,
+  Kanban,
+  Route
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -100,7 +102,16 @@ export const sidebarData: SidebarData = {
           url:"/store",
           icon: Store
         },
-      
+        {
+          title: 'Kanban Template',
+          url: '/kanbantemplate',
+          icon: Kanban,
+        },
+        {
+          title:"Route Doc",
+          url:"/routedoc",
+          icon: Route
+        },
         {
           title: 'Users',
           url: '/users',

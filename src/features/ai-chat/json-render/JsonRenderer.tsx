@@ -162,7 +162,7 @@ export function JsonRenderer({ schema, onAction }: JsonRendererProps) {
     const element = elements[elementId]
     if (!element) {
       return (
-        <div className="text-red-500 border border-red-200 bg-red-50 p-3 rounded-md my-2 text-sm">
+        <div key={elementId} className="text-red-500 border border-red-200 bg-red-50 p-3 rounded-md my-2 text-sm">
           Element "{elementId}" not found
         </div>
       )
@@ -171,7 +171,7 @@ export function JsonRenderer({ schema, onAction }: JsonRendererProps) {
     const Component = registry[element.type as keyof typeof registry]
     if (!Component) {
       return (
-        <div className="p-3 my-2 border border-dashed border-amber-300 bg-amber-50 dark:bg-amber-950/20 text-amber-600 rounded-md text-sm">
+        <div key={elementId} className="p-3 my-2 border border-dashed border-amber-300 bg-amber-50 dark:bg-amber-950/20 text-amber-600 rounded-md text-sm">
           Unknown component: <span className="font-mono bg-amber-100 dark:bg-amber-950/40 px-1 py-0.5 rounded">{element.type}</span>
         </div>
       )
@@ -199,7 +199,16 @@ export function JsonRenderer({ schema, onAction }: JsonRendererProps) {
     }
 
     if (children && React.Children.count(children) > 0) {
-      return <Component {...props}>{children}</Component>
+      // Add unique keys to all children
+      const childrenWithKeys = React.Children.map(children, (child, index) => {
+        if (React.isValidElement(child)) {
+          // Use the element ID from the schema as key, or fallback to index
+          const childId = element.children?.[index]
+          return React.cloneElement(child, { key: childId || `child-${index}` })
+        }
+        return child
+      })
+      return <Component {...props}>{childrenWithKeys}</Component>
     }
 
     return <Component {...props} />

@@ -1,4 +1,6 @@
-import { useNavigate, useRouter } from '@tanstack/react-router'
+'use client'
+
+import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
@@ -12,20 +14,19 @@ export function NotFoundError({
   embedded = false,
   onDismiss,
 }: NotFoundErrorProps) {
-  const navigate = useNavigate()
-  const { history } = useRouter()
+  const router = useRouter()
 
   const handleGoBack = () => {
     if (onDismiss) {
       onDismiss()
       return
     }
-    history.go(-1)
+    router.back()
   }
 
   const handleGoHome = () => {
     if (onDismiss) onDismiss()
-    navigate({ to: '/' })
+    router.push('/')
   }
   return (
     <div className={cn(embedded ? 'min-h-96 w-full py-8' : 'h-svh', className)}>

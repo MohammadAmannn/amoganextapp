@@ -1,5 +1,5 @@
 import React from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useRouter } from 'next/navigation'
 import { ArrowRight, ChevronRight, Laptop, Moon, Sun } from 'lucide-react'
 import { useSearch } from '@/context/search-provider'
 import { useTheme } from '@/context/theme-provider'
@@ -16,7 +16,7 @@ import { sidebarData } from './layout/data/sidebar-data'
 import { ScrollArea } from './ui/scroll-area'
 
 export function CommandMenu() {
-  const navigate = useNavigate()
+  const router = useRouter()
   const { setTheme } = useTheme()
   const { open, setOpen } = useSearch()
 
@@ -43,7 +43,7 @@ export function CommandMenu() {
                       key={`${navItem.url}-${i}`}
                       value={navItem.title}
                       onSelect={() => {
-                        runCommand(() => navigate({ to: navItem.url }))
+                        runCommand(() => router.push(navItem.url))
                       }}
                     >
                       <div className='flex size-4 items-center justify-center'>
@@ -58,7 +58,7 @@ export function CommandMenu() {
                     key={`${navItem.title}-${subItem.url}-${i}`}
                     value={`${navItem.title}-${subItem.url}`}
                     onSelect={() => {
-                      runCommand(() => navigate({ to: subItem.url }))
+                      runCommand(() => router.push(subItem.url))
                     }}
                   >
                     <div className='flex size-4 items-center justify-center'>

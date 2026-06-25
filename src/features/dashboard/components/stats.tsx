@@ -30,7 +30,7 @@ export function Stats() {
           <div className=' pb-2'>
             <h3 className='text-lg font-semibold'>01. Stats with Trending</h3>
           </div>
-          <div className='overflow-hidden rounded-xl  text-card-foreground shadow-xs'>
+          <div className='overflow-hidden text-card-foreground'>
             <Stats01 />
           </div>
         </section>
@@ -39,7 +39,7 @@ export function Stats() {
           <div className='pb-2'>
             <h3 className='text-lg font-semibold'>02. Stats with Borders</h3>
           </div>
-          <div className='overflow-hidden rounded-xl  text-card-foreground shadow-xs'>
+          <div className='overflow-hidden text-card-foreground'>
             <Stats02 />
           </div>
         </section>
@@ -50,7 +50,7 @@ export function Stats() {
               03. Stats with Card Layout
             </h3>
           </div>
-          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden text-card-foreground'>
             <Stats03 />
           </div>
         </section>
@@ -59,7 +59,7 @@ export function Stats() {
           <div className=" pb-2">
             <h3 className='text-lg font-semibold'>04. Stats with Badges</h3>
           </div>
-          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden text-card-foreground'>
             <Stats04 />
           </div>
         </section>
@@ -68,7 +68,7 @@ export function Stats() {
           <div className=" pb-2">
             <h3 className='text-lg font-semibold'>05. Stats with Links</h3>
           </div>
-          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden text-card-foreground'>
             <Stats05 />
           </div>
         </section>
@@ -77,7 +77,7 @@ export function Stats() {
           <div className=" pb-2">
             <h3 className='text-lg font-semibold'>06. Stats with Status</h3>
           </div>
-          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden text-card-foreground'>
             <Stats06 />
           </div>
         </section>
@@ -88,7 +88,7 @@ export function Stats() {
               07. Stats with Circular Progress
             </h3>
           </div>
-          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden text-card-foreground'>
             <Stats07 />
           </div>
         </section>
@@ -99,7 +99,7 @@ export function Stats() {
               08. Stats with Circular Progress and Links
             </h3>
           </div>
-          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden text-card-foreground'>
             <Stats08 />
           </div>
         </section>
@@ -108,7 +108,7 @@ export function Stats() {
           <div className=" pb-2">
             <h3 className='text-lg font-semibold'>09. Stats with Progress</h3>
           </div>
-          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden text-card-foreground'>
             <Stats09 />
           </div>
         </section>
@@ -117,7 +117,7 @@ export function Stats() {
           <div className=" pb-2">
             <h3 className='text-lg font-semibold'>10. Stats with Area Chart</h3>
           </div>
-          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden text-card-foreground'>
             <Stats10 />
           </div>
         </section>
@@ -128,7 +128,7 @@ export function Stats() {
               11. Stats Dashboard with Progress Bars
             </h3>
           </div>
-          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden text-card-foreground'>
             <Stats11 />
           </div>
         </section>
@@ -137,7 +137,7 @@ export function Stats() {
           <div className=" pb-2">
             <h3 className='text-lg font-semibold'>12. Stats Usage Dashboard</h3>
           </div>
-          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden text-card-foreground'>
             <Stats12 />
           </div>
         </section>
@@ -148,7 +148,7 @@ export function Stats() {
               13. Stats with Segmented Progress
             </h3>
           </div>
-          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden text-card-foreground'>
             <Stats13 />
           </div>
         </section>
@@ -159,7 +159,7 @@ export function Stats() {
               14. Stats with Usage Breakdown
             </h3>
           </div>
-          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden text-card-foreground'>
             <Stats14 />
           </div>
         </section>
@@ -170,7 +170,7 @@ export function Stats() {
               15. Stats with Value Breakdown
             </h3>
           </div>
-          <div className='overflow-hidden rounded-xl  bg-card text-card-foreground shadow-xs'>
+          <div className='overflow-hidden text-card-foreground'>
             <Stats15 />
           </div>
         </section>

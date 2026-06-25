@@ -1,5 +1,7 @@
+'use client'
+
 import { type ChangeEvent, useState } from 'react'
-import { getRouteApi } from '@tanstack/react-router'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { SlidersHorizontal, ArrowUpAZ, ArrowDownAZ } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,8 +18,6 @@ import { Main } from '@/components/layout/main'
 import { apps } from './data/apps'
 import { AppHeader } from '@/components/layout/app-header'
 
-const route = getRouteApi('/_authenticated/apps/')
-
 type AppType = 'all' | 'connected' | 'notConnected'
 
 const appText = new Map<AppType, string>([
@@ -27,16 +27,29 @@ const appText = new Map<AppType, string>([
 ])
 
 export function Apps() {
-  const {
-    filter = '',
-    type = 'all',
-    sort: initSort = 'asc',
-  } = route.useSearch()
-  const navigate = route.useNavigate()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  const filter = searchParams.get('filter') ?? ''
+  const type = (searchParams.get('type') ?? 'all') as AppType
+  const initSort = (searchParams.get('sort') ?? 'asc') as 'asc' | 'desc'
 
   const [sort, setSort] = useState(initSort)
   const [appType, setAppType] = useState(type)
   const [searchTerm, setSearchTerm] = useState(filter)
+
+  const updateSearch = (updates: Record<string, string | undefined>) => {
+    const params = new URLSearchParams(searchParams.toString())
+    for (const [k, v] of Object.entries(updates)) {
+      if (v === undefined || v === '' || v === 'all') {
+        params.delete(k)
+      } else {
+        params.set(k, v)
+      }
+    }
+    const qs = params.toString()
+    router.push(qs ? `?${qs}` : window.location.pathname)
+  }
 
   const filteredApps = apps
     .sort((a, b) =>
@@ -55,27 +68,17 @@ export function Apps() {
 
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
-    navigate({
-      search: (prev) => ({
-        ...prev,
-        filter: e.target.value || undefined,
-      }),
-    })
+    updateSearch({ filter: e.target.value || undefined })
   }
 
   const handleTypeChange = (value: AppType) => {
     setAppType(value)
-    navigate({
-      search: (prev) => ({
-        ...prev,
-        type: value === 'all' ? undefined : value,
-      }),
-    })
+    updateSearch({ type: value === 'all' ? undefined : value })
   }
 
   const handleSortChange = (sort: 'asc' | 'desc') => {
     setSort(sort)
-    navigate({ search: (prev) => ({ ...prev, sort }) })
+    updateSearch({ sort })
   }
 
   return (

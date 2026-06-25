@@ -50,7 +50,7 @@ const pieChartConfig = {
 
 export function PieChartCard() {
     return (
-        <Card>
+        <Card className="border-0 shadow-none bg-transparent">
             <CardHeader>
                 <CardTitle>Pie Chart - Donut</CardTitle>
                 <CardDescription>

@@ -41,7 +41,7 @@ const chartConfig = {
 
 export function LineChartCard() {
     return (
-        <Card>
+        <Card className="border-0 shadow-none bg-transparent">
             <CardHeader>
                 <CardTitle>Line Chart - Interactive</CardTitle>
                 <CardDescription>

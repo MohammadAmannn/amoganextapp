@@ -30,13 +30,13 @@ const data = [
 
 export default function Stats01() {
   return (
-    <div className="flex items-center justify-center p-10">
+    <div className="flex items-center justify-center p-4 sm:p-6 md:p-10">
       <div className="mx-auto grid grid-cols-1 gap-px rounded-xl  sm:grid-cols-2 lg:grid-cols-4">
         {data.map((stat, index) => (
           <Card
             key={stat.name}
             className={cn(
-              "rounded-none py-0",
+              "rounded-none py-0 border-0 shadow-none bg-transparent",
               index === 0 && "rounded-l-xl",
               index === data.length - 1 && "rounded-r-xl"
             )}

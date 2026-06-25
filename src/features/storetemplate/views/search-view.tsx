@@ -3,26 +3,32 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { useStoreProducts, getCategoriesFromProducts } from "../hooks/use-store-data";
+import {
+  useStoreProducts,
+  getCategoriesFromProducts,
+} from "../hooks/use-store-data";
 import { Product } from "../lib/types";
 import ProductCard from "../components/product-card";
 import { Button } from "../components/ui/button";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "../components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "../components/ui/sheet";
 import { Loader2, SearchIcon, SlidersHorizontal } from "lucide-react";
 import { Input } from "../components/ui/input";
 import FilterSidebar from "../components/filter-sidebar";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
-import { useNavigation } from "../hooks/use-navigation";
 
 function SearchView() {
-  const { params } = useNavigation();
   const searchParams = useSearchParams();
-  const initialQuery = params.q || searchParams.get("q") || "";
 
-  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
 
   const { data: allProducts = [], isLoading, error } = useStoreProducts();
+
   const categories = getCategoriesFromProducts(allProducts);
 
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -30,9 +36,21 @@ function SearchView() {
   const [priceInitialized, setPriceInitialized] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  // Get min and max prices from all products
-  const minPrice = allProducts.length > 0 ? Math.min(...allProducts.map((product) => product.price)) : 0;
-  const maxPrice = allProducts.length > 0 ? Math.max(...allProducts.map((product) => product.price)) : 1000;
+  // Sync URL query param -> state
+  useEffect(() => {
+    const q = searchParams.get("q") || "";
+    setSearchQuery(q);
+  }, [searchParams]);
+
+  const minPrice =
+    allProducts.length > 0
+      ? Math.min(...allProducts.map((p) => p.price))
+      : 0;
+
+  const maxPrice =
+    allProducts.length > 0
+      ? Math.max(...allProducts.map((p) => p.price))
+      : 1000;
 
   useEffect(() => {
     if (allProducts.length > 0 && !priceInitialized) {
@@ -41,29 +59,24 @@ function SearchView() {
     }
   }, [allProducts, minPrice, maxPrice, priceInitialized]);
 
+  // Filter products whenever deps change
   useEffect(() => {
     let results = [...allProducts];
 
     if (searchQuery) {
       results = results.filter(
         (product) =>
-          product.name
-            .toLowerCase()
-            .includes(searchQuery.toLocaleLowerCase()) ||
-          product.description
-            .toLowerCase()
-            .includes(searchQuery.toLocaleLowerCase())
+          product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Apply Category Filter
     if (selectedCategories.length > 0) {
-      results = results.filter((product) => {
-        return selectedCategories.includes(product.category);
-      });
+      results = results.filter((product) =>
+        selectedCategories.includes(product.category)
+      );
     }
 
-    // Apply price range filter
     results = results.filter(
       (product) =>
         product.price >= priceRange[0] && product.price <= priceRange[1]
@@ -72,25 +85,16 @@ function SearchView() {
     setFilteredProducts(results);
   }, [searchQuery, priceRange, selectedCategories, allProducts]);
 
-  // Sync search input with navigation search query parameter
-  useEffect(() => {
-    if (params.q !== undefined) {
-      setSearchQuery(params.q);
-    }
-  }, [params.q]);
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
   };
 
   const handleCategoryChange = (category: string) => {
-    setSelectedCategories((prev) => {
-      if (prev.includes(category)) {
-        return prev.filter((c) => c !== category);
-      } else {
-        return [...prev, category];
-      }
-    });
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    );
   };
 
   const clearAllFilters = () => {
@@ -109,7 +113,9 @@ function SearchView() {
         <Navbar />
         <div className="flex h-[400px] w-full flex-col items-center justify-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Searching WooCommerce shop...</p>
+          <p className="text-sm text-muted-foreground">
+            Searching WooCommerce shop...
+          </p>
         </div>
         <Footer />
       </>
@@ -121,8 +127,12 @@ function SearchView() {
       <>
         <Navbar />
         <div className="flex h-[400px] w-full flex-col items-center justify-center gap-2 text-center p-4">
-          <p className="text-sm font-semibold text-destructive">Failed to search WooCommerce products</p>
-          <p className="text-xs text-muted-foreground">Please check your keys and internet connection.</p>
+          <p className="text-sm font-semibold text-destructive">
+            Failed to search WooCommerce products
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Please check your keys and internet connection.
+          </p>
         </div>
         <Footer />
       </>
@@ -137,16 +147,27 @@ function SearchView() {
           <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:gap-8">
             {/* Mobile Filter Button */}
             <div className="flex md:hidden justify-between items-center mb-2">
-              <h1 className="text-2xl font-bold tracking-tight">Search Products</h1>
+              <h1 className="text-2xl font-bold tracking-tight">
+                Search Products
+              </h1>
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" size="sm" className="rounded-xl border-border/80 text-foreground hover:bg-muted font-semibold">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-xl border-border/80 text-foreground hover:bg-muted font-semibold"
+                  >
                     <SlidersHorizontal className="h-4 w-4 mr-2" />
                     Filters
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[280px] bg-background border-r border-border text-foreground p-6">
-                  <SheetTitle className="text-lg font-bold tracking-tight mb-4">Filters</SheetTitle>
+                <SheetContent
+                  side="left"
+                  className="w-[280px] bg-background border-r border-border text-foreground p-6"
+                >
+                  <SheetTitle className="text-lg font-bold tracking-tight mb-4">
+                    Filters
+                  </SheetTitle>
                   <div className="py-2">
                     <FilterSidebar
                       categories={categories}
@@ -191,7 +212,10 @@ function SearchView() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
-                  <Button type="submit" className="rounded-xl h-11 w-11 p-0 shrink-0 font-bold">
+                  <Button
+                    type="submit"
+                    className="rounded-xl h-11 w-11 p-0 shrink-0 font-bold"
+                  >
                     <SearchIcon className="h-5 w-5" />
                   </Button>
                 </form>
@@ -199,7 +223,9 @@ function SearchView() {
 
               {/* Desktop Search input */}
               <div className="hidden md:block mb-6">
-                <h1 className="text-3xl font-extrabold tracking-tight mb-6">Search Products</h1>
+                <h1 className="text-3xl font-extrabold tracking-tight mb-6">
+                  Search Products
+                </h1>
                 <form onSubmit={handleSearch} className="flex w-full gap-2">
                   <Input
                     type="search"
@@ -208,7 +234,10 @@ function SearchView() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
-                  <Button type="submit" className="rounded-xl h-11 px-6 font-bold">
+                  <Button
+                    type="submit"
+                    className="rounded-xl h-11 px-6 font-bold"
+                  >
                     <SearchIcon className="h-4 w-4 mr-2" />
                     Search
                   </Button>
@@ -224,7 +253,9 @@ function SearchView() {
               {/* Results */}
               {filteredProducts.length === 0 ? (
                 <div className="text-center py-16 border border-dashed border-border/80 rounded-2xl bg-muted/10">
-                  <h2 className="text-xl font-semibold text-foreground">No products found</h2>
+                  <h2 className="text-xl font-semibold text-foreground">
+                    No products found
+                  </h2>
                   <p className="text-muted-foreground mt-2 text-sm">
                     Try adjusting your search or filter criteria.
                   </p>

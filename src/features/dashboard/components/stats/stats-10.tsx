@@ -134,7 +134,7 @@ const sanitizeName = (name: string) => {
 
 export default function Stats10() {
   return (
-    <div className="flex items-center justify-center p-10 w-full">
+    <div className="flex items-center justify-center p-4 sm:p-6 md:p-10 w-full">
       <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 w-full">
         {summary.map((item) => {
           const sanitizedName = sanitizeName(item.name);
@@ -144,7 +144,7 @@ export default function Stats10() {
             item.changeType === "positive" ? "hsl(142.1 76.2% 36.3%)" : "hsl(0 72.2% 50.6%)";
 
           return (
-            <Card key={item.name} className="p-0 shadow-2xs">
+            <Card key={item.name} className="p-0 shadow-none border-0 bg-transparent">
               <CardContent className="p-4 pb-0">
                 <div>
                   <dt className="text-sm font-medium text-foreground">

@@ -16,8 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ConfigDrawer } from '@/components/config-drawer'
-// ✅ ADDED
-import { Link } from '@tanstack/react-router'
+import Link from 'next/link'
 
 import {
   DropdownMenu,
@@ -116,7 +115,7 @@ export function ProfileDropdown() {
     Navigate to Apps Page
 ========================================== */}
           <DropdownMenuItem asChild>
-            <Link to='/apps'>
+            <Link href='/apps'>
               <ShoppingBag className='mr-2 h-4 w-4' />
               Buy Apps
             </Link>

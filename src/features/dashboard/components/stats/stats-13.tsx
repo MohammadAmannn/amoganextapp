@@ -37,7 +37,7 @@ export default function Stats13({
   const freeValue = totalValue - used;
 
   return (
-    <Card className={cn("w-full max-w-4xl shadow-sm", className)}>
+    <Card className={cn("w-full max-w-4xl shadow-none border-0 bg-transparent", className)}>
       <CardContent className="py-0">
         <p className="text-pretty mb-4 text-base text-muted-foreground">
           {title}{" "}

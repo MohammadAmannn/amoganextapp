@@ -1,4 +1,6 @@
-import { Link } from '@tanstack/react-router'
+'use client'
+
+import Link from 'next/link'
 import { Logo } from '@/assets/logo'
 import { cn } from '@/lib/utils'
 import dashboardDark from './assets/dashboard-dark.png'
@@ -23,7 +25,7 @@ export function SignIn2() {
               <br className='max-sm:hidden' /> your account. Don't have an
               account?{' '}
               <Link
-                to='/sign-up'
+                href='/sign-up'
                 className='text-nowrap underline underline-offset-4 hover:text-primary'
               >
                 Sign Up
@@ -58,14 +60,14 @@ export function SignIn2() {
         )}
       >
         <img
-          src={dashboardLight}
+          src={dashboardLight.src}
           className='dark:hidden'
           width={1024}
           height={1151}
           alt='Shadcn-Admin'
         />
         <img
-          src={dashboardDark}
+          src={dashboardDark.src}
           className='hidden dark:block'
           width={1024}
           height={1138}

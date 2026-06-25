@@ -1,3 +1,5 @@
+'use client'
+
 import { createContext, useContext, useEffect, useState, useMemo } from 'react'
 import { getCookie, setCookie, removeCookie } from '@/lib/cookies'
 
@@ -33,6 +35,7 @@ const initialState: ThemeProviderState = {
 const ThemeContext = createContext<ThemeProviderState>(initialState)
 
 function getSystemTheme(): ResolvedTheme {
+  if (typeof window === 'undefined') return 'light'
   return window.matchMedia('(prefers-color-scheme: dark)').matches
     ? 'dark'
     : 'light'
@@ -45,9 +48,12 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   const [theme, _setTheme] = useState<Theme>(
-    () => (getCookie(storageKey) as Theme) || defaultTheme
+    () => {
+      if (typeof window === 'undefined') return defaultTheme
+      return (getCookie(storageKey) as Theme) || defaultTheme
+    }
   )
-  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme)
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() => getSystemTheme())
 
   const resolvedTheme = useMemo((): ResolvedTheme => {
     if (theme === 'system') {

@@ -28,10 +28,10 @@ const data = [
 
 export default function Stats04() {
   return (
-    <div className="flex items-center justify-center p-10 w-full">
+    <div className="flex items-center justify-center p-4 sm:p-6 md:p-10 w-full">
       <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 w-full">
         {data.map((item) => (
-          <Card key={item.name} className="p-6 py-4 w-full shadow-2xs">
+          <Card key={item.name} className="p-6 py-4 w-full shadow-none border-0 bg-transparent">
             <CardContent className="p-0">
               <div className="flex items-center justify-between">
                 <dt className="text-sm font-medium text-muted-foreground">{item.name}</dt>

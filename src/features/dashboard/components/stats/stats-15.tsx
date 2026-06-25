@@ -20,7 +20,7 @@ const data = [
 
 export function Stats15() {
   return (
-    <div className="w-full max-w-2xs">
+    <div className="w-full md:max-w-2xs mx-auto">
       <h3 className="text-balance text-sm font-medium text-foreground">
         Investment growth projection
       </h3>

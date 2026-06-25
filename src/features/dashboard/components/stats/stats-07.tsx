@@ -45,7 +45,7 @@ const chartConfig = {
 
 export default function Stats07() {
   return (
-    <div className='flex w-full items-center justify-center p-10'>
+    <div className='flex w-full items-center justify-center p-4 sm:p-6 md:p-10'>
       <div className='w-full'>
         <h2 className='text-xl font-medium text-balance text-foreground'>
           Plan overview
@@ -63,7 +63,7 @@ export default function Stats07() {
         </p>
         <dl className='mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
           {data.map((item) => (
-            <Card key={item.name} className='p-4 shadow-2xs'>
+            <Card key={item.name} className='p-4 shadow-none border-0 bg-transparent'>
               <CardContent className='flex items-center space-x-4 p-0'>
                 <div className='relative flex items-center justify-center'>
                   <ChartContainer

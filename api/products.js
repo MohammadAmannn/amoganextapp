@@ -5,22 +5,27 @@ import path from 'path'
 export default async function handler(req, res) {
   let key = process.env.consumer_key
   let secret = process.env.consumer_secret
+  let wooUrl = process.env.WOOCOMMERCE_URL
 
   // Fallback to reading .env directly if process.env lacks credentials (e.g. dev server not restarted)
-  if (!key || !secret) {
+  if (!key || !secret || !wooUrl) {
     try {
       const envPath = path.resolve(process.cwd(), '.env')
       if (fs.existsSync(envPath)) {
         const envContent = fs.readFileSync(envPath, 'utf-8')
         const keyMatch = envContent.match(/^consumer_key\s*=\s*["']?(.*?)["']?$/m)
         const secretMatch = envContent.match(/^consumer_secret\s*=\s*["']?(.*?)["']?$/m)
-        if (keyMatch) key = keyMatch[1].trim()
-        if (secretMatch) secret = secretMatch[1].trim()
+        const urlMatch = envContent.match(/^WOOCOMMERCE_URL\s*=\s*["']?(.*?)["']?$/m)
+        if (keyMatch && !key) key = keyMatch[1].trim()
+        if (secretMatch && !secret) secret = secretMatch[1].trim()
+        if (urlMatch && !wooUrl) wooUrl = urlMatch[1].trim()
       }
     } catch (e) {
       console.error('Failed to parse .env file dynamically in products proxy:', e)
     }
   }
+
+  if (!wooUrl) wooUrl = 'https://stor.chat'
 
   if (!key || !secret) {
     return res.status(500).json({
@@ -33,17 +38,26 @@ export default async function handler(req, res) {
     
     // Parse target request parameters
     const parsedUrl = new URL(req.url, 'http://localhost')
+    const endpoint = parsedUrl.searchParams.get('endpoint')
+    const productId = parsedUrl.searchParams.get('id')
     let targetUrl
 
     // Direct categories and orders queries to correct WooCommerce endpoints
-    if (parsedUrl.searchParams.get('endpoint') === 'categories') {
-      targetUrl = new URL('https://stor.chat/wp-json/wc/v3/products/categories')
+    if (endpoint === 'categories') {
+      targetUrl = new URL(`${wooUrl}/wp-json/wc/v3/products/categories`)
       parsedUrl.searchParams.delete('endpoint')
-    } else if (parsedUrl.searchParams.get('endpoint') === 'orders') {
-      targetUrl = new URL('https://stor.chat/wp-json/wc/v3/orders')
+      if (!targetUrl.searchParams.has('per_page')) {
+        targetUrl.searchParams.set('per_page', '100')
+      }
+    } else if (endpoint === 'orders') {
+      targetUrl = new URL(`${wooUrl}/wp-json/wc/v3/orders`)
       parsedUrl.searchParams.delete('endpoint')
+    } else if (productId) {
+      // Single product fetch using the correct REST endpoint
+      targetUrl = new URL(`${wooUrl}/wp-json/wc/v3/products/${productId}`)
+      parsedUrl.searchParams.delete('id')
     } else {
-      targetUrl = new URL('https://stor.chat/wp-json/wc/v3/products')
+      targetUrl = new URL(`${wooUrl}/wp-json/wc/v3/products`)
     }
 
     // Copy search params (e.g., search, category, page, per_page)
@@ -51,9 +65,9 @@ export default async function handler(req, res) {
       targetUrl.searchParams.set(name, val)
     })
 
-    // Add default per_page if not specified (e.g. 50 products)
-    if (!targetUrl.searchParams.has('per_page') && !req.url.includes('endpoint=categories')) {
-      targetUrl.searchParams.set('per_page', '50')
+    // Add default per_page if not specified for product listings
+    if (!targetUrl.searchParams.has('per_page') && !endpoint && !productId) {
+      targetUrl.searchParams.set('per_page', '100')
     }
 
     // Prepare fetch options, forwarding body for write operations

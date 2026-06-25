@@ -10,7 +10,7 @@ import { Separator } from "../components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { useNavigation } from "../hooks/use-navigation";
+import { useRouter } from "next/navigation";
 import { useStoreWooCategories, useCreateWooCategory, useCreateWooProduct } from "../hooks/use-store-data";
 import { toast } from "sonner";
 import Navbar from "../components/navbar";
@@ -61,7 +61,7 @@ const PRESET_IMAGES = [
 ];
 
 export default function AddProductView() {
-  const { setView } = useNavigation();
+  const router = useRouter();
 
   // Load existing WooCommerce categories
   const { data: wooCategories = [], isLoading: loadingCats } = useStoreWooCategories();
@@ -173,7 +173,7 @@ export default function AddProductView() {
         id: toastId,
       });
       // Redirect back to main store products
-      setView("/products");
+      router.push("/store/products");
     } catch (err: any) {
       toast.error(err.message || "Failed to create WooCommerce product", {
         id: toastId,
@@ -192,7 +192,7 @@ export default function AddProductView() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setView("/products")}
+                onClick={() => router.push("/store/products")}
                 className="h-9 w-9 rounded-xl border-border/80 bg-background hover:bg-muted"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -465,7 +465,7 @@ export default function AddProductView() {
                     type="button"
                     variant="ghost"
                     className="w-full h-10 rounded-xl text-muted-foreground hover:text-foreground text-sm"
-                    onClick={() => setView("/products")}
+                    onClick={() => router.push("/store/products")}
                   >
                     Cancel
                   </Button>

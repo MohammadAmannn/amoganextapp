@@ -35,3 +35,8 @@ dist-ssr
 
 .vercel
 .env*
+.next/
+out/
+.next
+.next/
+*.tsbuildinfo

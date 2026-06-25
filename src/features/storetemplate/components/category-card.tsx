@@ -14,7 +14,7 @@ interface CategoryCardProps {
  */
 function CategoryCard({ category }: CategoryCardProps) {
   return (
-    <Link href={`/categories/${category.slug}`} className="group block">
+    <Link href={`/store/categories/${category.slug}`} className="group block">
       <Card className="overflow-hidden border border-border/80 bg-card hover:border-primary/50 hover:shadow-md transition-all duration-300 rounded-lg flex flex-row items-center p-2 md:p-3 gap-3 md:gap-4">
         {/* Category Image - Left side with responsive sizing */}
         <div className="relative w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0 overflow-hidden rounded-md bg-muted">

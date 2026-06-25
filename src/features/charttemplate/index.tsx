@@ -57,12 +57,12 @@ export default function ChartsPage() {
     }
 
     return (
-        <>
+        <div className='flex h-[calc(100vh-56px)] flex-col w-full overflow-hidden bg-background text-foreground'>
             <AppHeader title='Chart Template' />
-            <Main fixed className="flex flex-col">
-                <div className="w-full flex-1 overflow-y-auto">
+            <Main fixed className="flex flex-col h-full overflow-hidden">
+                <div className="w-full flex-1 overflow-y-auto no-scrollbar">
                     {/* Navigation Tabs */}
-                    <nav className="border-b flex space-x-2 px-8 pt-4 overflow-x-auto">
+                    <nav className="border-b flex space-x-2 px-4 md:px-8 pt-4 overflow-x-auto no-scrollbar">
                         {tabs.map((tab) => {
                             const Icon = tab.icon
                             return (
@@ -86,11 +86,11 @@ export default function ChartsPage() {
                     </nav>
 
                     {/* Chart Content */}
-                    <div className="p-8">
+                    <div className="p-4 sm:p-6 md:p-8">
                         {renderChart()}
                     </div>
                 </div>
             </Main>
-        </>
+        </div>
     )
 }

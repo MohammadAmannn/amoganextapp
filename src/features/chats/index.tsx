@@ -24,7 +24,8 @@ import { type ChatUser, type Convo } from './data/chat-types'
 import { AppHeader } from '@/components/layout/app-header'
 
 // Fake Data
-import { conversations } from './data/convo.json'
+import convoData from './data/convo.json'
+const conversations = convoData.conversations
 import { NewChat } from './components/new-chat'
 
 export function Chats() {

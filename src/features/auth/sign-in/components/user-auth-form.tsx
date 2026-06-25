@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, useNavigate } from '@tanstack/react-router'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 import { FcGoogle } from 'react-icons/fc'
@@ -42,7 +43,7 @@ export function UserAuthForm({
 }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
-  const navigate = useNavigate()
+  const router = useRouter()
   const { auth } = useAuthStore()
 
   const googleLogin = useGoogleLogin({
@@ -78,7 +79,7 @@ export function UserAuthForm({
         toast.success(`Welcome back, ${user.name}!`)
 
         const targetPath = getRedirectPath(redirectTo)
-        navigate({ to: targetPath, replace: true })
+        router.replace(targetPath)
       } catch {
         toast.error('Google sign in failed. Please try again.')
       } finally {
@@ -122,7 +123,7 @@ export function UserAuthForm({
 
         // Redirect to the stored location or default to dashboard
         const targetPath = getRedirectPath(redirectTo)
-        navigate({ to: targetPath, replace: true })
+        router.replace(targetPath)
 
         return `Welcome back, ${data.email}!`
       },
@@ -161,7 +162,7 @@ export function UserAuthForm({
               </FormControl>
               <FormMessage />
               <Link
-                to='/forgot-password'
+                href='/forgot-password'
                 className='absolute inset-e-0 -top-0.5 text-sm font-medium text-muted-foreground hover:opacity-75'
               >
                 Forgot password?

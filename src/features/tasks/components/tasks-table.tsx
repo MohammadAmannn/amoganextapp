@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
-import { getRouteApi } from '@tanstack/react-router'
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import type { NavigateFn } from '@/hooks/use-table-url-state'
 import {
   type SortingState,
   type VisibilityState,
@@ -28,7 +29,6 @@ import { type Task } from '../data/schema'
 import { DataTableBulkActions } from './data-table-bulk-actions'
 import { tasksColumns as columns } from './tasks-columns'
 
-const route = getRouteApi('/_authenticated/tasks/')
 
 type DataTableProps = {
   data: Task[]
@@ -39,6 +39,41 @@ export function TasksTable({ data }: DataTableProps) {
   const [rowSelection, setRowSelection] = useState({})
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  // Build search object from URL search params
+  const search = useMemo(() => Object.fromEntries(
+    [...searchParams.entries()].map(([key, value]) => {
+      const asNum = Number(value)
+      if (!isNaN(asNum) && value !== '') return [key, asNum]
+      if (value.includes(',')) return [key, value.split(',')]
+      return [key, value]
+    })
+  ), [searchParams])
+
+  const navigate: NavigateFn = ({ search: searchUpdater, replace }) => {
+    const currentSearch = Object.fromEntries(searchParams.entries())
+    const next =
+      typeof searchUpdater === 'function'
+        ? searchUpdater(currentSearch)
+        : searchUpdater === true
+          ? currentSearch
+          : searchUpdater
+    const params = new URLSearchParams()
+    for (const [k, v] of Object.entries(next ?? {})) {
+      if (v !== undefined && v !== null && v !== '') {
+        params.set(k, Array.isArray(v) ? v.join(',') : String(v))
+      }
+    }
+    const qs = params.toString()
+    const url = qs ? `?${qs}` : window.location.pathname
+    if (replace) {
+      router.replace(url)
+    } else {
+      router.push(url)
+    }
+  }
 
   // Local state management for table (uncomment to use local-only state, not synced with URL)
   // const [globalFilter, onGlobalFilterChange] = useState('')
@@ -55,8 +90,8 @@ export function TasksTable({ data }: DataTableProps) {
     onPaginationChange,
     ensurePageInRange,
   } = useTableUrlState({
-    search: route.useSearch(),
-    navigate: route.useNavigate(),
+    search,
+    navigate,
     pagination: { defaultPage: 1, defaultPageSize: 10 },
     globalFilter: { enabled: true, key: 'filter' },
     columnFilters: [

@@ -50,7 +50,7 @@ export default function CartSheet() {
               </p>
             </div>
             <Button asChild className="rounded-xl px-6" onClick={() => setIsOpen(false)}>
-              <Link href="/products">Continue Shopping</Link>
+              <Link href="/store/products">Continue Shopping</Link>
             </Button>
           </div>
         ) : (
@@ -94,7 +94,7 @@ export default function CartSheet() {
               </p>
               <div className="space-y-2 pt-2">
                 <Button asChild className="w-full h-11 rounded-xl font-bold shadow-md" onClick={() => setIsOpen(false)}>
-                  <Link href="/checkout">Proceed to Checkout</Link>
+                  <Link href="/store/checkout">Proceed to Checkout</Link>
                 </Button>
                 <Button variant="ghost" className="w-full h-11 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/5 font-semibold" onClick={() => clearCart()}>
                   Clear Cart

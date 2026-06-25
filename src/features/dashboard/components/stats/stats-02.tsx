@@ -29,12 +29,12 @@ const stats = [
 
 export default function Stats02() {
   return (
-    <div className="flex items-center justify-center p-10">
+    <div className="flex items-center justify-center p-4 sm:p-6 md:p-10">
       <div className="grid grid-cols-1 divide-y bg-border divide-border overflow-hidden rounded-lg md:grid-cols-3 md:divide-x md:divide-y-0">
         {stats.map((item) => (
           <Card
             key={item.metric}
-            className="rounded-none border-0 shadow-sm py-0"
+            className="rounded-none border-0 shadow-none bg-transparent py-0"
           >
             <CardContent className="p-4 sm:p-6">
               <CardTitle className="text-base font-normal">

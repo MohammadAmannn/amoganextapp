@@ -98,16 +98,71 @@ EXAMPLE 1 — "Design a user profile card":
 
 Available Shadcn Components:
 LAYOUT: Stack, Grid, Card, Separator, Tabs
-DATA DISPLAY: Heading, Text, Badge, Avatar, Icon, StatCard, PremiumStats, Table, Price, FeatureList, Alert, Progress
+DATA DISPLAY: Heading, Text, Badge, Avatar, Icon, StatCard, Table, Price, FeatureList, Alert, Progress, PremiumStats
 FORM: Form, Input, Textarea, Select, Checkbox, Switch, RadioGroup, Button, Calendar
+
+PREMIUMSTATS COMPONENT SPECIFICATION:
+PremiumStats displays premium statistical cards, charts, and progress bars.
+Props:
+- variant: "01" | "02" | "03" | "04" | "05" | "06" | "07" | "08" | "09" | "10" | "11" | "12" | "13" | "14" | "15" (default: "01")
+- title: string (optional)
+- description: string (optional)
+- data: array of stats objects. Depending on the variant chosen:
+  * variant "01": Array of { "name": string, "value": string, "change": string, "changeType": "positive" | "negative" }
+  * variant "02": Array of { "metric": string, "current": string, "previous": string, "difference": string, "trend": "up" | "down" }
+  * variant "05": Array of { "name": string, "value": string, "change": string, "changeType": "positive" | "negative" }
+  * variant "06": Array of { "name": string, "stat": string, "goalsAchieved": number, "status": "observe" | "within" | "critical" }
+  * variant "08": Array of { "name": string, "progress": number, "budget": string, "current": string }
+  * variant "09": Array of { "name": string, "stat": string, "limit": string, "percentage": number }
+  * variant "10" (Stock/Time series chart): Array of { "name": string, "tickerSymbol": string, "value": string, "change": string, "percentageChange": string, "changeType": "positive" | "negative", "chartData": Array<{ "date": string, "value": number }> }
+  * variant "11": Array of { "name": string, "value": string, "limit": string, "percentage": number, "progressColor": string, "details": Array<{ "label": string, "value": string, "color": string }> }
+  * variant "12": Array of { "name": string, "current": string, "limit": string, "percentage": number }
+  * variant "14" (Donut/Progress list): Array of { "label": string, "amount": number, "percentage": number, "color": "emerald" | "amber" | "rose" | "blue" | "purple" | "orange" }
+- used, total, usedLabel, totalLabel (numbers/strings, for variant "13" progress/usage)
+- change (string, for variant "14" change)
+
+TABS COMPONENT SPECIFICATION:
+Tabs displays tabbed layouts.
+Props:
+- defaultValue: string (value of default active tab)
+- tabs: Array of { "label": string, "value": string, "content": string }
+- CRITICAL RULE: Tabs does NOT accept child elements. Do NOT specify "children" for Tabs. Render the tab contents directly inside the "tabs" content field as a text or markdown string.
 
 RULES:
 1. Return ONLY the JSON object. No markdown code blocks.
 2. ALWAYS use the flat root/elements format.
 3. Build visually rich, premium UIs.
-4. Use realistic sample data.
+4. Use realistic sample data unless REAL-WORLD DATA CONTEXT from web search is provided below.
 5. Keep element IDs descriptive and kebab-case.
 `
+
+async function performTavilySearch(query: string): Promise<any[]> {
+  if (!process.env.TAVILY_API_KEY) {
+    return []
+  }
+  try {
+    const tavilyResponse = await fetch('https://api.tavily.com/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: process.env.TAVILY_API_KEY,
+        query: query,
+        search_depth: 'advanced',
+        max_results: 3,
+        include_answer: false,
+        include_images: false,
+      }),
+    })
+    if (!tavilyResponse.ok) {
+      return []
+    }
+    const tavilyData = await tavilyResponse.json()
+    return tavilyData.results || []
+  } catch (e) {
+    console.error('Tavily Search Error in helper:', e)
+    return []
+  }
+}
 
 export async function POST(request: NextRequest) {
   const openrouter = createOpenRouter({
@@ -134,29 +189,44 @@ export async function POST(request: NextRequest) {
     }
 
     if (tool === 'ui-render') {
-      prompt = `${UI_RENDER_PROMPT}\n\nUser Request:\n${message}`
+      let searchContext = ''
+      try {
+        const results = await performTavilySearch(message)
+        sources = results
+        if (results && results.length > 0) {
+          searchContext = results
+            .slice(0, 3)
+            .map((item: any) => `Title: ${item.title}\nContent: ${item.content.substring(0, 350)}...`)
+            .join('\n\n')
+        }
+      } catch (err) {
+        console.error('UI Render Web Search Error:', err)
+      }
+
+      if (searchContext) {
+        prompt = `${UI_RENDER_PROMPT}
+
+REAL-WORLD DATA CONTEXT FROM WEB SEARCH:
+${searchContext}
+
+User Request:
+${message}
+
+Instructions:
+1. You MUST use the actual real-world facts, numbers, and stats from the search results above to populate the generated UI components.
+2. Structure the data using the "PremiumStats" or "Table" or "StatCard" components to display these statistics beautifully.
+3. Return ONLY the valid JSON object. No conversational text, markdown formatting, or explanations.`
+      } else {
+        prompt = `${UI_RENDER_PROMPT}\n\nUser Request:\n${message}`
+      }
     }
 
     const maxTokens = tool === 'ui-render' ? 4096 : 1024
 
     if (tool === 'web-search') {
       try {
-        const tavilyResponse = await fetch('https://api.tavily.com/search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            api_key: process.env.TAVILY_API_KEY,
-            query: message,
-            search_depth: 'advanced',
-            max_results: 8,
-            include_answer: false,
-            include_images: false,
-          }),
-        })
-
-        const tavilyData = await tavilyResponse.json()
-        sources = tavilyData.results || []
-
+        const results = await performTavilySearch(message)
+        sources = results
         const context = sources
           .map(
             (item: any) =>

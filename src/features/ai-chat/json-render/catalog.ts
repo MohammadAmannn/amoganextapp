@@ -203,6 +203,28 @@ const componentTypes = {
       ).default([]),
     }),
   },
+  PremiumStats: {
+    props: z.object({
+      variant: z.string().default('01'),
+      title: z.string().optional(),
+      description: z.string().optional(),
+      data: z.array(z.any()).optional(),
+      buttonLabel: z.string().optional(),
+      upgradeUrl: z.string().optional(),
+      used: z.number().optional(),
+      total: z.number().optional(),
+      usedLabel: z.string().optional(),
+      totalLabel: z.string().optional(),
+      segments: z.array(
+        z.object({
+          label: z.string(),
+          value: z.number(),
+          color: z.string(),
+        })
+      ).optional(),
+      change: z.string().optional(),
+    }),
+  },
 }
 
 export const catalog = (defineCatalog as any)(

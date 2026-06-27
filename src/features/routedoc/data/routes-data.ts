@@ -169,6 +169,18 @@ export const ROUTES_DATA: RouteInfo[] = [
     priority: 0.7
   },
   {
+    path: '/uibuilder',
+    name: 'UI Template',
+    description: 'An interactive drag-and-drop UI builder to preview, construct, and customize templates using a registry of blocks and components.',
+    category: 'General',
+    folder: 'uibuilder',
+    file: 'app/(dashboard)/uibuilder/page.tsx',
+    auth: 'Authenticated',
+    status: 'Active',
+    methods: ['PAGE'],
+    priority: 0.8
+  },
+  {
     path: '/users',
     name: 'Users',
     description: 'Manage users list, credentials, settings, and authorization levels.',

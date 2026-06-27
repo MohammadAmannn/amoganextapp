@@ -19,7 +19,6 @@ export function Dashboard() {
       <DashboardHeader />
       <Main>
         <Tabs
-          orientation='vertical'
           defaultValue='overview'
           className='space-y-4'
         >

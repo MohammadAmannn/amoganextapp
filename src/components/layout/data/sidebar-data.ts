@@ -22,7 +22,8 @@ import {
   FileText,
   Store,
   Kanban,
-  Route
+  Route,
+  LayoutTemplate
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -111,6 +112,11 @@ export const sidebarData: SidebarData = {
           title:"Route Doc",
           url:"/routedoc",
           icon: Route
+        },
+        {
+          title: "UI Template",
+          url: "/uibuilder",
+          icon: LayoutTemplate
         },
         {
           title: 'Users',

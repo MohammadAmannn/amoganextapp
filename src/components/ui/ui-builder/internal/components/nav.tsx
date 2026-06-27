@@ -190,10 +190,10 @@ export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBa
 
   return (
     <div
-      className="flex items-center justify-between bg-background px-2 md:px-6 py-4 border-b"
+      className="flex items-center justify-between bg-background px-2 md:px-6 py-2 md:py-4 border-b"
       style={style}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 md:gap-2">
         {leftChildren}
         {leftChildren && <div className="hidden md:flex h-10 w-px bg-border"></div>}
         <div className="hidden md:contents">
@@ -710,9 +710,9 @@ function PagesPopover() {
               <Button
                 variant="outline"
                 size="default"
-                className="max-w-30 overflow-hidden"
+                className="max-w-[120px] sm:max-w-[200px] justify-start truncate"
               >
-                {selectedPageData?.name}
+                <span className="truncate">{selectedPageData?.name}</span>
               </Button>
             </TooltipTrigger>
           </PopoverTrigger>

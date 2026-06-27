@@ -129,7 +129,17 @@ export const findLayerRecursive = (layers: ComponentLayer[], layerId: string): C
 export const duplicateWithNewIdsAndName = (layer: ComponentLayer, addCopySuffix: boolean = true): ComponentLayer => {
     const newLayer: ComponentLayer = { ...layer, id: createId() };
     if (layer.name) {
-      newLayer.name = `${ layer.name }${ addCopySuffix ? ' (Copy)' : ''}`;
+      if (addCopySuffix) {
+        const copyMatch = layer.name.match(/\(Copy\s*(\d*)\)$/);
+        if (copyMatch) {
+          const num = copyMatch[1] ? parseInt(copyMatch[1], 10) + 1 : 2;
+          newLayer.name = layer.name.replace(/\s*\(Copy\s*\d*\)$/, ` (Copy ${num})`);
+        } else {
+          newLayer.name = `${layer.name} (Copy)`;
+        }
+      } else {
+        newLayer.name = layer.name;
+      }
     }
     if (hasLayerChildren(newLayer) && hasLayerChildren(layer)) {
       newLayer.children = layer.children.map(child => duplicateWithNewIdsAndName(child, false));

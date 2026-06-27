@@ -16,9 +16,9 @@ const componentRegistry = {
 
 export default function UIBuilderFeature() {
   return (
-    <div className='flex h-[calc(100vh-56px)] flex-col w-full overflow-hidden bg-background text-foreground'>
+    <div className='flex h-full flex-col w-full overflow-hidden bg-background text-foreground'>
       <AppHeader title='UI Template' />
-      <Main fixed className='flex flex-col h-full overflow-hidden p-0!'>
+      <Main fixed className='flex flex-col flex-grow flex-1 min-h-0 overflow-hidden p-0!'>
         <UIBuilder
           componentRegistry={componentRegistry}
           blocks={blockDefinitions}

@@ -28,6 +28,7 @@ import type {
 import { TailwindThemePanel } from "@/components/ui/ui-builder/internal/tailwind-theme-panel";
 import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
 import { VariablesPanel } from "@/components/ui/ui-builder/internal/variables-panel";
+import { LibraryPanel } from "@/components/ui/ui-builder/internal/library-panel";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -36,6 +37,7 @@ import { Toaster } from "@/components/ui/sonner";
  */
 export interface TabsContentConfig {
   layers: { title: string; content: React.ReactNode };
+  library?: { title: string; content: React.ReactNode };
   appearance?: { title: string; content: React.ReactNode };
   data?: { title: string; content: React.ReactNode };
 }
@@ -288,14 +290,14 @@ function MainLayout({ panelConfig }: { panelConfig: PanelConfig }) {
   return (
     <div
       data-testid="component-editor"
-      className="flex flex-col w-full flex-grow h-dvh"
+      className="flex flex-col w-full flex-grow h-full min-h-0"
     >
       {panelConfig.navBar}
       {/* Desktop Layout */}
-      <div className="hidden md:flex flex-1 overflow-hidden">
+      <div className="hidden md:flex flex-1 min-h-0 overflow-hidden">
         <ResizablePanelGroup
           direction="horizontal"
-          className="flex overflow-hidden flex-1"
+          className="flex overflow-hidden flex-1 min-h-0"
         >
           {mainPanels.map((panel, index) => (
             <React.Fragment key={panel.title}>
@@ -303,7 +305,7 @@ function MainLayout({ panelConfig }: { panelConfig: PanelConfig }) {
               <ResizablePanel
                 defaultSize={panel.defaultSize}
                 minSize={15}
-                className="min-h-full flex-1"
+                className="h-full min-h-0 flex-1 flex flex-col overflow-hidden"
               >
                 {panel.content}
               </ResizablePanel>
@@ -352,8 +354,8 @@ export function PageConfigPanel({
   className: string;
   tabsContent: TabsContentConfig;
 }) {
-  const { layers, appearance, data } = tabsContent;
-  const tabCount = 1 + (appearance ? 1 : 0) + (data ? 1 : 0);
+  const { layers, library, appearance, data } = tabsContent;
+  const tabCount = 1 + (library ? 1 : 0) + (appearance ? 1 : 0) + (data ? 1 : 0);
   
   return (
     <Tabs
@@ -364,6 +366,7 @@ export function PageConfigPanel({
       <div className="flex-shrink-0 px-4 pb-2">
         <TabsList className={`grid w-full grid-cols-${tabCount}`}>
           <TabsTrigger value="layers">{layers.title}</TabsTrigger>
+          {library && <TabsTrigger value="library">{library.title}</TabsTrigger>}
           {appearance && <TabsTrigger value="appearance">{appearance.title}</TabsTrigger>}
           {data && <TabsTrigger value="variables">{data.title}</TabsTrigger>}
         </TabsList>
@@ -371,6 +374,11 @@ export function PageConfigPanel({
       <TabsContent value="layers" className="flex-1 overflow-y-auto min-h-0 mt-0">
         {layers.content}
       </TabsContent>
+      {library && (
+        <TabsContent value="library" className="flex-1 overflow-y-auto min-h-0 mt-0">
+          {library.content}
+        </TabsContent>
+      )}
       {appearance && (
         <TabsContent value="appearance" className="flex-1 overflow-y-auto min-h-0 mt-0">
           {appearance.content}
@@ -394,6 +402,7 @@ export function PageConfigPanel({
 export function defaultConfigTabsContent() {
   return {
     layers: { title: "Layers", content: <LayersPanel /> },
+    library: { title: "Library", content: <LibraryPanel /> },
     appearance: { title: "Appearance", content: (
       <div className="py-2 px-4 gap-2 flex flex-col overflow-y-auto overflow-x-auto">
         <ConfigPanel />
@@ -438,7 +447,7 @@ export const getDefaultPanelConfigValues = ( tabsContent: TabsContentConfig, nav
   return {
     navBar: <NavBar leftChildren={navLeftChildren} rightChildren={navRightChildren} showExport={showExport} />,
     pageConfigPanel: (
-      <PageConfigPanel className="flex flex-col pt-4 pb-20 md:pb-4 relative size-full" tabsContent={tabsContent} />
+      <PageConfigPanel className="flex flex-col pt-4 pb-20 md:pb-4 relative size-full min-h-0 overflow-hidden" tabsContent={tabsContent} />
     ),
     editorPanel: (
       <EditorPanel
@@ -446,7 +455,7 @@ export const getDefaultPanelConfigValues = ( tabsContent: TabsContentConfig, nav
       />
     ),
     propsPanel: (
-      <PropsPanel className="px-4 pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" />
+      <PropsPanel className="px-4 pt-4 pb-20 md:pb-4 relative size-full min-h-0 overflow-hidden" />
     ),
   };
 };

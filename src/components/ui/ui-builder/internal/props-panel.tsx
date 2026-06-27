@@ -14,6 +14,11 @@ import { getBaseType } from "@/components/ui/auto-form/helpers";
 import { isVariableReference } from "@/lib/ui-builder/utils/variable-resolver";
 import { resolveVariableReferences } from "@/lib/ui-builder/utils/variable-resolver";
 
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { CodeBlock } from "@/components/ui/ui-builder/components/codeblock";
+import { generateLayerCode } from "@/components/ui/ui-builder/internal/utils/templates";
+import { cn } from "@/lib/utils";
+
 interface PropsPanelProps {
   className?: string;
 }
@@ -26,6 +31,7 @@ const PropsPanel: React.FC<PropsPanelProps> = React.memo(({ className }) => {
   const updateLayer = useLayerStore((state) => state.updateLayer);
   const addComponentLayer = useLayerStore((state) => state.addComponentLayer);
   const componentRegistry = useEditorStore((state) => state.registry);
+  const variables = useLayerStore((state) => state.variables);
   const selectedLayer = findLayerById(selectedLayerId);
 
   const handleAddComponentLayer = useCallback(
@@ -59,6 +65,16 @@ const PropsPanel: React.FC<PropsPanelProps> = React.memo(({ className }) => {
     [updateLayer]
   );
 
+  // Generate JSX/TSX React code for the selected component
+  const selectedComponentCode = useMemo(() => {
+    if (!selectedLayer) return "";
+    try {
+      return generateLayerCode(selectedLayer, 0, variables);
+    } catch (e) {
+      return `// Error generating code:\n// ${e}`;
+    }
+  }, [selectedLayer, variables]);
+
   //first check if selectedLayer.type is a valid key in componentRegistry
   if (
     selectedLayer &&
@@ -68,32 +84,43 @@ const PropsPanel: React.FC<PropsPanelProps> = React.memo(({ className }) => {
   }
 
   return (
-    <div className={className}>
-      {selectedLayer && (
-        <>
-          <Title />
-          <h3 className="text-base font-medium mb-4">
-            Type: {selectedLayer.type.replaceAll("_", "")}
-          </h3>
-        </>
+    <div className={cn("flex flex-col h-full", className)}>
+      {!selectedLayer && (
+        <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4 text-center mt-10">
+          <h3 className="text-sm font-semibold mb-1">Properties</h3>
+          <p className="text-xs">Select any element on the canvas to inspect and edit its properties.</p>
+        </div>
       )}
 
-      {!selectedLayer && (
-        <>
-          <h2 className="text-xl font-semibold mb-2">Component Properties</h2>
-          <p>No component selected</p>
-        </>
-      )}
       {selectedLayer && (
-        <ComponentPropsAutoForm
-          key={selectedLayer.id}
-          componentRegistry={componentRegistry}
-          selectedLayerId={selectedLayer.id}
-          removeLayer={handleDeleteLayer}
-          duplicateLayer={handleDuplicateLayer}
-          updateLayer={handleUpdateLayer}
-          addComponentLayer={handleAddComponentLayer}
-        />
+        <Tabs defaultValue="design" className="flex flex-col flex-1 min-h-0 w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4 shrink-0">
+            <TabsTrigger value="design">Design</TabsTrigger>
+            <TabsTrigger value="code">Inspect</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="design" className="flex-grow overflow-y-auto min-h-0 mt-0 pr-1">
+            <Title />
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+              Type: {selectedLayer.type.replaceAll("_", "")}
+            </h3>
+            <ComponentPropsAutoForm
+              key={selectedLayer.id}
+              componentRegistry={componentRegistry}
+              selectedLayerId={selectedLayer.id}
+              removeLayer={handleDeleteLayer}
+              duplicateLayer={handleDuplicateLayer}
+              updateLayer={handleUpdateLayer}
+              addComponentLayer={handleAddComponentLayer}
+            />
+          </TabsContent>
+
+          <TabsContent value="code" className="flex-grow overflow-y-auto min-h-0 mt-0 flex flex-col pr-1">
+            <div className="flex-grow overflow-auto border rounded bg-muted/20">
+              <CodeBlock language="tsx" value={selectedComponentCode} />
+            </div>
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );

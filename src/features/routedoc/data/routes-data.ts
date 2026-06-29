@@ -181,6 +181,30 @@ export const ROUTES_DATA: RouteInfo[] = [
     priority: 0.8
   },
   {
+    path: '/link-builder',
+    name: 'Link Builder',
+    description: 'Create, customize, and share personalized link trees with custom social links, profile pictures, and layouts.',
+    category: 'General',
+    folder: 'link-builder',
+    file: 'app/(dashboard)/link-builder/page.tsx',
+    auth: 'Authenticated',
+    status: 'Active',
+    methods: ['PAGE'],
+    priority: 0.8
+  },
+  {
+    path: '/l/[id]',
+    name: 'Public Link Tree',
+    description: 'Public self-contained customizable Link Tree profile view page decoded from Base64 hash.',
+    category: 'General',
+    folder: 'link-builder',
+    file: 'app/l/[id]/page.tsx',
+    auth: 'Public',
+    status: 'Active',
+    methods: ['PAGE'],
+    priority: 0.8
+  },
+  {
     path: '/users',
     name: 'Users',
     description: 'Manage users list, credentials, settings, and authorization levels.',

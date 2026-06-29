@@ -23,7 +23,8 @@ import {
   Store,
   Kanban,
   Route,
-  LayoutTemplate
+  LayoutTemplate,
+  Link
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -117,6 +118,11 @@ export const sidebarData: SidebarData = {
           title: "UI Template",
           url: "/uibuilder",
           icon: LayoutTemplate
+        },
+        {
+          title: "Link Builder",
+          url: "/link-builder",
+          icon: Link
         },
         {
           title: 'Users',

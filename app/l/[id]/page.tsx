@@ -37,6 +37,7 @@ export default function PublicLinkTreePage() {
   const [config, setConfig] = useState<LinkTreeConfig | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [isExpired, setIsExpired] = useState(false)
 
   useEffect(() => {
     if (params?.id) {
@@ -44,6 +45,18 @@ export default function PublicLinkTreePage() {
       if (decoded) {
         setConfig(decoded)
         setError(false)
+
+        // Validate expiration using the 'exp' query parameter
+        if (typeof window !== 'undefined') {
+          const searchParams = new URLSearchParams(window.location.search)
+          const expParam = searchParams.get('exp')
+          if (expParam) {
+            const expTime = parseInt(expParam, 10)
+            if (!isNaN(expTime) && Date.now() > expTime) {
+              setIsExpired(true)
+            }
+          }
+        }
       } else {
         setError(true)
       }
@@ -56,6 +69,26 @@ export default function PublicLinkTreePage() {
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white p-4">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500 mb-4" />
         <p className="text-sm font-semibold text-slate-400">Loading custom page...</p>
+      </div>
+    )
+  }
+
+  if (isExpired) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white p-6 text-center">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-full text-red-500 mb-4 animate-pulse">
+          <AlertTriangle className="h-10 w-10" />
+        </div>
+        <h2 className="text-xl font-bold mb-2">This Link Has Expired</h2>
+        <p className="text-sm text-slate-400 max-w-sm mb-6 leading-relaxed">
+          The temporary shortened URL you are trying to visit has expired. Shortened links are set to expire after 1 hour.
+        </p>
+        <button
+          onClick={() => router.push('/link-builder')}
+          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-lg cursor-pointer"
+        >
+          Build Your Own Link Tree
+        </button>
       </div>
     )
   }

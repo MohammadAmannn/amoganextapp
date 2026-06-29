@@ -27,7 +27,11 @@ const socialIcons: Record<string, any> = {
   phone: FaPhone
 }
 
-export function PhonePreview() {
+interface PhonePreviewProps {
+  compact?: boolean
+}
+
+export function PhonePreview({ compact = false }: PhonePreviewProps) {
   const { config } = useLinkBuilderStore()
   const { profile, links, socials, theme } = config
 
@@ -158,22 +162,25 @@ export function PhonePreview() {
   const enabledLinks = links.filter((l) => l.isEnabled)
   const enabledSocials = socials.filter((s) => s.isEnabled && s.url)
 
+  const shellWidth = compact ? 'w-[260px]' : 'w-[280px]'
+  const shellHeight = compact ? 'h-[520px]' : 'h-[560px]'
+
   return (
-    <div className="flex flex-col items-center justify-center py-4 w-full h-full">
+    <div className={`flex flex-col items-center w-full shrink-0 ${compact ? 'py-2' : 'py-4'}`}>
       <style>{animationStyles}</style>
 
       {/* iPhone Shell */}
-      <div className="relative w-[280px] h-[570px] rounded-[40px] border-[8px] border-slate-900 bg-black shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col shrink-0 ring-1 ring-slate-800">
+      <div className={`relative ${shellWidth} ${shellHeight} rounded-[40px] border-[8px] border-slate-900 bg-black shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col shrink-0 ring-1 ring-slate-800 mt-2`}>
         
         {/* Dynamic Island / Notch */}
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-28 h-4 bg-slate-900 rounded-full z-30 flex items-center justify-center">
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-28 h-4 bg-slate-900 rounded-full z-30 flex items-center justify-center">
           <div className="w-2.5 h-2.5 rounded-full bg-slate-800/80 mr-8" />
           <div className="w-1.5 h-1.5 rounded-full bg-slate-800/80" />
         </div>
 
         {/* Live Preview Content Canvas */}
         <div 
-          className={`flex-grow w-full h-full overflow-y-auto no-scrollbar flex flex-col p-5 pt-12 pb-6 items-center select-none relative ${getBgClass()} ${getFontClass()}`}
+          className={`flex-grow w-full h-full overflow-y-auto no-scrollbar flex flex-col p-5 pt-16 pb-6 items-center select-none relative ${getBgClass()} ${getFontClass()}`}
           style={getBgStyle()}
         >
           {/* Avatar Picture */}
@@ -263,9 +270,11 @@ export function PhonePreview() {
 
         </div>
       </div>
-      <p className="text-[10px] text-muted-foreground mt-3 text-center max-w-[200px]">
-        Interactive Live Simulation frame. Changes reflect dynamically.
-      </p>
+      {!compact && (
+        <p className="text-[10px] text-muted-foreground mt-4 text-center max-w-[200px]">
+          Interactive Live Simulation frame. Changes reflect dynamically.
+        </p>
+      )}
     </div>
   )
 }

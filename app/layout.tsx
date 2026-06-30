@@ -10,8 +10,8 @@ const openSans = Open_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Shadcn Admin',
-  description: 'A modern admin dashboard built with shadcn/ui',
+  title: 'Amoga App',
+  description: 'Demo Company',
 }
 
 export default function RootLayout({

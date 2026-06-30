@@ -4,9 +4,10 @@ import React, { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { decodeConfig } from '@/features/link-builder/components/share-tab'
 import { LinkTreeConfig } from '@/features/link-builder/types'
-import { THEME_PRESETS } from '@/features/link-builder/themes'
+import { colorThemes } from '@/context/color-theme-provider'
 import * as LucideIcons from 'lucide-react'
 import { HelpCircle, AlertTriangle, Sparkles } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { 
   FaGithub, 
   FaLinkedin, 
@@ -41,48 +42,28 @@ function LinkTreeViewer() {
   const [error, setError] = useState(false)
   const [isExpired, setIsExpired] = useState(false)
 
- useEffect(() => {
-  console.log("========== LINK TREE DEBUG ==========");
-  console.log("Query Param c:", c);
+  useEffect(() => {
+    if (c) {
+      const decoded = decodeConfig(c);
+      if (decoded) {
+        setConfig(decoded);
+        setError(false);
 
-  if (c) {
-    const decoded = decodeConfig(c);
-
-    console.log("Decoded Config:", decoded);
-
-    if (decoded) {
-      console.log("✅ decodeConfig SUCCESS");
-
-      setConfig(decoded);
-      setError(false);
-
-      const expParam = searchParams.get("exp");
-      console.log("Expiration:", expParam);
-
-      if (expParam) {
-        const expTime = parseInt(expParam, 10);
-
-        console.log("Current Time:", Date.now());
-        console.log("Expiry Time :", expTime);
-
-        if (!isNaN(expTime) && Date.now() > expTime) {
-          console.log("❌ Link Expired");
-          setIsExpired(true);
-        } else {
-          console.log("✅ Link Valid");
+        const expParam = searchParams.get("exp");
+        if (expParam) {
+          const expTime = parseInt(expParam, 10);
+          if (!isNaN(expTime) && Date.now() > expTime) {
+            setIsExpired(true);
+          }
         }
+      } else {
+        setError(true);
       }
+      setLoading(false);
     } else {
-      console.log("❌ decodeConfig FAILED");
-      setError(true);
+      router.replace("/link-builder");
     }
-
-    setLoading(false);
-  } else {
-    console.log("❌ No c parameter found");
-    router.replace("/link-builder");
-  }
-}, [c, searchParams, router]);
+  }, [c, searchParams, router]);
 
   if (loading) {
     return (
@@ -134,9 +115,28 @@ function LinkTreeViewer() {
   }
 
   const { profile, links, socials, theme } = config
-  const activeTheme = theme.preset !== 'custom' ? THEME_PRESETS[theme.preset] : null
 
-  // Styles Injection
+  // Resolve light/dark modes
+  let isDark = false
+  if (theme.appTheme === 'dark') {
+    isDark = true
+  } else if (theme.appTheme === 'light') {
+    isDark = false
+  } else if (typeof window !== 'undefined') {
+    isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  }
+
+  // Construct custom properties based on selected color theme
+  const colorThemeName = theme.appColorTheme || 'zinc'
+  const colorThemeObj = colorThemes.find(t => t.name === colorThemeName) || colorThemes[0]
+  const tokens = isDark ? colorThemeObj.tokens.dark : colorThemeObj.tokens.light
+
+  const styleObj: React.CSSProperties = {}
+  for (const [prop, value] of Object.entries(tokens)) {
+    (styleObj as any)[prop] = value
+  }
+
+  // Styles Injection for button micro-animations
   const animationStyles = `
     @keyframes p-bounce {
       0%, 100% { transform: translateY(0); }
@@ -166,87 +166,8 @@ function LinkTreeViewer() {
     .anim-wiggle { animation: p-wiggle 1.2s infinite ease-in-out; }
     .anim-glow { animation: p-glow 2s infinite ease-in-out; }
     .anim-shake { animation: p-shake 0.8s infinite ease-in-out; }
-
-    .font-sans { font-family: system-ui, -apple-system, sans-serif; }
-    .font-serif { font-family: Georgia, Cambria, serif; }
-    .font-mono { font-family: ui-monospace, monospace; }
-    .font-display { font-family: 'Outfit', 'Inter', system-ui, sans-serif; }
   `
 
-  // Get font family class name
-  const getFontClass = () => {
-    if (activeTheme) return activeTheme.fontFamily
-    return theme.fontFamily || 'font-sans'
-  }
-
-  // Get background style
-  const getBgStyle = (): React.CSSProperties => {
-    if (theme.preset === 'custom' && theme.customBg) {
-      if (theme.customBg.includes('gradient') || theme.customBg.includes('var(')) {
-        return { background: theme.customBg }
-      }
-      return { backgroundColor: theme.customBg }
-    }
-    return {}
-  }
-
-  // Get background CSS class
-  const getBgClass = () => {
-    if (theme.preset !== 'custom' && activeTheme) {
-      return activeTheme.classBg
-    }
-    return ''
-  }
-
-  // Get button CSS classes
-  const getButtonClass = (link: any) => {
-    let base = ''
-    
-    if (theme.preset !== 'custom' && activeTheme) {
-      base = activeTheme.classButton
-    } else {
-      // Build custom overrides
-      const shape = theme.buttonShape === 'pill' ? 'rounded-full' : theme.buttonShape === 'square' ? 'rounded-none' : 'rounded-xl'
-      
-      let style = 'bg-white text-black hover:bg-neutral-100 shadow-sm border border-transparent'
-      if (theme.buttonStyle === 'outline') {
-        style = 'bg-transparent border border-white text-white hover:bg-white/10'
-      } else if (theme.buttonStyle === 'glass') {
-        style = 'backdrop-blur-md bg-white/10 border border-white/20 text-white hover:bg-white/20'
-      } else if (theme.buttonStyle === 'neon') {
-        style = 'bg-black/80 border border-indigo-500 text-indigo-300 shadow-[0_0_10px_rgba(99,102,241,0.15)] hover:shadow-[0_0_15px_rgba(99,102,241,0.3)] hover:border-indigo-400'
-      } else if (theme.buttonStyle === 'brutalism') {
-        style = 'bg-white text-black border-2 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]'
-      }
-      
-      base = `${style} ${shape} transition-all duration-200`
-    }
-
-    // Apply animation wrapper class
-    if (link.animation && link.animation !== 'none') {
-      base += ` anim-${link.animation}`
-    }
-
-    return base
-  }
-
-  // Get social icon CSS classes
-  const getSocialIconClass = () => {
-    if (theme.preset !== 'custom' && activeTheme) {
-      return activeTheme.classIcon
-    }
-    
-    let style = 'bg-white/10 hover:bg-white/20 text-white border border-white/10 shadow-sm'
-    if (theme.buttonStyle === 'brutalism') {
-      style = 'bg-white text-black border border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:bg-neutral-100'
-    } else if (theme.buttonStyle === 'neon') {
-      style = 'bg-slate-900 border border-indigo-500/30 text-indigo-300 hover:border-indigo-400 hover:text-indigo-100'
-    }
-    
-    return `${style} transition-all duration-200`
-  }
-
-  // Get initials for profile picture fallback
   const getInitials = (fullName: string) => {
     return fullName
       .split(' ')
@@ -261,8 +182,11 @@ function LinkTreeViewer() {
 
   return (
     <div 
-      className={`min-h-screen w-full flex flex-col items-center justify-between p-6 md:p-12 relative overflow-hidden select-none ${getBgClass()} ${getFontClass()}`}
-      style={getBgStyle()}
+      style={styleObj}
+      className={cn(
+        "min-h-screen w-full flex flex-col items-center justify-between p-6 md:p-12 relative overflow-hidden select-none bg-background text-foreground transition-colors duration-300",
+        isDark ? "dark" : ""
+      )}
     >
       <style>{animationStyles}</style>
 
@@ -286,33 +210,23 @@ function LinkTreeViewer() {
         </div>
 
         {/* User Profile Title & Bio */}
-        <h1 className={`text-2xl font-black text-center w-full mb-2 shrink-0 px-2 leading-tight ${
-          theme.preset === 'minimal-silk' ? 'text-stone-900' : 'text-white'
-        }`}>
+        <h1 className="text-2xl font-black text-center w-full mb-2 shrink-0 px-2 leading-tight text-foreground">
           {profile.name || 'Your Name'}
         </h1>
         
-        <p className={`text-sm text-center w-full max-w-xs shrink-0 mb-10 leading-relaxed px-4 ${
-          theme.preset === 'minimal-silk' ? 'text-stone-600' : 'text-white/85'
-        }`}>
+        <p className="text-sm text-center w-full max-w-xs shrink-0 mb-10 leading-relaxed px-4 text-muted-foreground">
           {profile.bio || 'Digital Creator'}
         </p>
 
         {/* Links list rendering */}
         <div className="w-full flex flex-col gap-4 mb-10 max-w-sm">
           {enabledLinks.length === 0 ? (
-            <div className="flex-grow flex flex-col items-center justify-center text-center p-8 border border-dashed border-white/10 rounded-xl bg-white/5 text-sm text-white/40">
+            <div className="flex-grow flex flex-col items-center justify-center text-center p-8 border border-dashed border-border rounded-xl bg-card text-sm text-muted-foreground">
               No active links listed
             </div>
           ) : (
             enabledLinks.map((link) => {
               const LinkIcon = link.icon ? ((LucideIcons as any)[link.icon] || LucideIcons.Link2) : null
-              const customBtnStyle: React.CSSProperties = {}
-              
-              if (theme.preset === 'custom') {
-                if (link.bg) customBtnStyle.backgroundColor = link.bg
-                if (link.text) customBtnStyle.color = link.text
-              }
 
               return (
                 <a
@@ -320,8 +234,10 @@ function LinkTreeViewer() {
                   href={link.url}
                   target="_blank"
                   rel="noreferrer"
-                  className={`w-full py-4 px-6 flex items-center justify-center relative text-sm font-bold text-center select-none cursor-pointer ${getButtonClass(link)}`}
-                  style={customBtnStyle}
+                  className={cn(
+                    "w-full py-4 px-6 flex items-center justify-center relative text-sm font-bold text-center select-none cursor-pointer bg-primary text-primary-foreground hover:bg-primary/95 transition-all shadow-sm rounded-xl",
+                    link.animation && link.animation !== 'none' && `anim-${link.animation}`
+                  )}
                 >
                   {LinkIcon && (
                     <LinkIcon className="h-5 w-5 absolute left-5 shrink-0" />
@@ -335,7 +251,7 @@ function LinkTreeViewer() {
 
         {/* Social icons row */}
         {enabledSocials.length > 0 && (
-          <div className="w-full max-w-xs flex flex-wrap gap-4 items-center justify-center shrink-0 border-t border-white/10 pt-6 mt-auto">
+          <div className="w-full max-w-xs flex flex-wrap gap-4 items-center justify-center shrink-0 border-t border-border pt-6 mt-auto">
             {enabledSocials.map((social) => {
               const SocialIcon = socialIcons[social.platform] || HelpCircle
               return (
@@ -344,7 +260,7 @@ function LinkTreeViewer() {
                   href={social.url}
                   target="_blank"
                   rel="noreferrer"
-                  className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 shadow-md ${getSocialIconClass()}`}
+                  className="h-10 w-10 rounded-full flex items-center justify-center shrink-0 shadow-md bg-muted hover:bg-muted/80 text-muted-foreground transition-all border border-border/10"
                   title={social.platform}
                 >
                   <SocialIcon className="h-5 w-5 shrink-0" />
@@ -359,11 +275,7 @@ function LinkTreeViewer() {
       {/* Floating growth hacking branding badge */}
       <a
         href="/link-builder"
-        className={`mt-8 py-2 px-4 rounded-full flex items-center gap-1.5 text-[10px] font-bold shadow-md border hover:scale-105 transition-all select-none ${
-          theme.preset === 'minimal-silk' 
-            ? 'bg-stone-900 text-stone-100 border-stone-800' 
-            : 'bg-white text-stone-900 border-white/10'
-        }`}
+        className="mt-8 py-2 px-4 rounded-full flex items-center gap-1.5 text-[10px] font-bold shadow-md border hover:scale-105 transition-all select-none bg-muted text-muted-foreground border-border"
       >
         <Sparkles className="h-3 w-3 text-indigo-500 animate-spin-slow" />
         Create your own Link Tree

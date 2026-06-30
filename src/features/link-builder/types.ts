@@ -22,6 +22,8 @@ export interface ThemeConfig {
   fontFamily?: 'font-sans' | 'font-serif' | 'font-mono' | 'font-display'
   buttonStyle?: 'solid' | 'outline' | 'glass' | 'neon' | 'brutalism'
   buttonShape?: 'square' | 'rounded' | 'pill'
+  appTheme?: 'light' | 'dark' | 'system'
+  appColorTheme?: string
 }
 
 export interface ProfileConfig {

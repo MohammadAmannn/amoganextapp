@@ -39,7 +39,9 @@ export function encodeConfig(config: LinkTreeConfig): string {
         c: config.theme.customBg,
         f: config.theme.fontFamily,
         bs: config.theme.buttonStyle,
-        bh: config.theme.buttonShape
+        bh: config.theme.buttonShape,
+        at: config.theme.appTheme,
+        act: config.theme.appColorTheme
       }
     }
     const json = JSON.stringify(strippedConfig)
@@ -92,7 +94,9 @@ export function decodeConfig(encoded: string): LinkTreeConfig | null {
         customBg: data.t.c,
         fontFamily: data.t.f || 'font-sans',
         buttonStyle: data.t.bs || 'solid',
-        buttonShape: data.t.bh || 'rounded'
+        buttonShape: data.t.bh || 'rounded',
+        appTheme: data.t.at || 'system',
+        appColorTheme: data.t.act || 'zinc'
       }
     }
   } catch (e) {

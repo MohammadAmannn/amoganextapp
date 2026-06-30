@@ -39,10 +39,9 @@ const DEFAULT_CONFIG: LinkTreeConfig = {
   links: [],
   socials: [],
   theme: {
-    preset: 'aura-flow',
-    fontFamily: 'font-sans',
-    buttonStyle: 'glass',
-    buttonShape: 'rounded'
+    preset: 'custom',
+    appTheme: 'system',
+    appColorTheme: 'zinc'
   }
 }
 

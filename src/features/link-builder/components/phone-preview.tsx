@@ -1,8 +1,10 @@
 import React from 'react'
 import { useLinkBuilderStore } from '../store'
-import { THEME_PRESETS } from '../themes'
 import * as LucideIcons from 'lucide-react'
 import { HelpCircle } from 'lucide-react'
+import { useTheme } from '@/context/theme-provider'
+import { colorThemes } from '@/context/color-theme-provider'
+import { cn } from '@/lib/utils'
 import { 
   FaGithub, 
   FaLinkedin, 
@@ -34,10 +36,24 @@ interface PhonePreviewProps {
 export function PhonePreview({ compact = false }: PhonePreviewProps) {
   const { config } = useLinkBuilderStore()
   const { profile, links, socials, theme } = config
+  const { resolvedTheme } = useTheme()
 
-  const activeTheme = theme.preset !== 'custom' ? THEME_PRESETS[theme.preset] : null
+  // Determine whether preview should be dark or light
+  let isDark = resolvedTheme === 'dark'
+  if (theme.appTheme === 'dark') isDark = true
+  if (theme.appTheme === 'light') isDark = false
 
-  // Styles Injection
+  // Load custom color theme CSS variables to override locally inside the mockup
+  const colorThemeName = theme.appColorTheme || 'zinc'
+  const colorThemeObj = colorThemes.find(t => t.name === colorThemeName) || colorThemes[0]
+  const tokens = isDark ? colorThemeObj.tokens.dark : colorThemeObj.tokens.light
+
+  const styleObj: React.CSSProperties = {}
+  for (const [prop, value] of Object.entries(tokens)) {
+    (styleObj as any)[prop] = value
+  }
+
+  // Styles Injection for button micro-animations
   const animationStyles = `
     @keyframes p-bounce {
       0%, 100% { transform: translateY(0); }
@@ -67,87 +83,7 @@ export function PhonePreview({ compact = false }: PhonePreviewProps) {
     .anim-wiggle { animation: p-wiggle 1.2s infinite ease-in-out; }
     .anim-glow { animation: p-glow 2s infinite ease-in-out; }
     .anim-shake { animation: p-shake 0.8s infinite ease-in-out; }
-
-    /* Custom font classes styling */
-    .font-sans { font-family: var(--font-open-sans), sans-serif; }
-    .font-serif { font-family: Georgia, serif; }
-    .font-mono { font-family: monospace; }
-    .font-display { font-family: 'Outfit', 'Inter', sans-serif; }
   `
-
-  // Get font family class name
-  const getFontClass = () => {
-    if (activeTheme) return activeTheme.fontFamily
-    return theme.fontFamily || 'font-sans'
-  }
-
-  // Get background style
-  const getBgStyle = (): React.CSSProperties => {
-    if (theme.preset === 'custom' && theme.customBg) {
-      if (theme.customBg.includes('gradient') || theme.customBg.includes('var(')) {
-        return { background: theme.customBg }
-      }
-      return { backgroundColor: theme.customBg }
-    }
-    return {}
-  }
-
-  // Get background CSS class
-  const getBgClass = () => {
-    if (theme.preset !== 'custom' && activeTheme) {
-      return activeTheme.classBg
-    }
-    return ''
-  }
-
-  // Get button CSS classes
-  const getButtonClass = (link: any) => {
-    let base = ''
-    
-    if (theme.preset !== 'custom' && activeTheme) {
-      base = activeTheme.classButton
-    } else {
-      // Build custom overrides
-      const shape = theme.buttonShape === 'pill' ? 'rounded-full' : theme.buttonShape === 'square' ? 'rounded-none' : 'rounded-xl'
-      
-      let style = 'bg-white text-black hover:bg-neutral-100 shadow-sm border border-transparent'
-      if (theme.buttonStyle === 'outline') {
-        style = 'bg-transparent border border-white text-white hover:bg-white/10'
-      } else if (theme.buttonStyle === 'glass') {
-        style = 'backdrop-blur-md bg-white/10 border border-white/20 text-white hover:bg-white/20'
-      } else if (theme.buttonStyle === 'neon') {
-        style = 'bg-black/80 border border-indigo-500 text-indigo-300 shadow-[0_0_10px_rgba(99,102,241,0.15)] hover:shadow-[0_0_15px_rgba(99,102,241,0.3)] hover:border-indigo-400'
-      } else if (theme.buttonStyle === 'brutalism') {
-        style = 'bg-white text-black border-2 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]'
-      }
-      
-      base = `${style} ${shape} transition-all duration-200`
-    }
-
-    // Apply animation wrapper class
-    if (link.animation && link.animation !== 'none') {
-      base += ` anim-${link.animation}`
-    }
-
-    return base
-  }
-
-  // Get social icon CSS classes
-  const getSocialIconClass = () => {
-    if (theme.preset !== 'custom' && activeTheme) {
-      return activeTheme.classIcon
-    }
-    
-    // Default custom socials styling
-    let style = 'bg-white/10 hover:bg-white/20 text-white border border-white/10 shadow-sm'
-    if (theme.buttonStyle === 'brutalism') {
-      style = 'bg-white text-black border border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:bg-neutral-100'
-    } else if (theme.buttonStyle === 'neon') {
-      style = 'bg-slate-900 border border-indigo-500/30 text-indigo-300 hover:border-indigo-400 hover:text-indigo-100'
-    }
-    
-    return `${style} transition-all duration-200`
-  }
 
   // Get initials for profile picture fallback
   const getInitials = (fullName: string) => {
@@ -180,8 +116,11 @@ export function PhonePreview({ compact = false }: PhonePreviewProps) {
 
         {/* Live Preview Content Canvas */}
         <div 
-          className={`flex-grow w-full h-full overflow-y-auto no-scrollbar flex flex-col p-5 pt-16 pb-6 items-center select-none relative ${getBgClass()} ${getFontClass()}`}
-          style={getBgStyle()}
+          style={styleObj}
+          className={cn(
+            "flex-grow w-full h-full overflow-y-auto no-scrollbar flex flex-col p-5 pt-16 pb-6 items-center select-none relative bg-background text-foreground transition-colors duration-300",
+            isDark ? 'dark' : ''
+          )}
         >
           {/* Avatar Picture */}
           <div className="w-18 h-18 rounded-full border-2 border-white/20 shadow-md overflow-hidden shrink-0 flex items-center justify-center bg-gradient-to-tr from-indigo-500 to-fuchsia-500 text-white font-black text-xl mb-3">
@@ -200,33 +139,23 @@ export function PhonePreview({ compact = false }: PhonePreviewProps) {
           </div>
 
           {/* User Profile Title & Bio */}
-          <h3 className={`text-base font-bold text-center w-full mb-1 shrink-0 truncate ${
-            theme.preset === 'minimal-silk' ? 'text-stone-900' : 'text-white'
-          }`}>
+          <h3 className="text-base font-bold text-center w-full mb-1 shrink-0 truncate text-foreground">
             {profile.name || 'Your Name'}
           </h3>
           
-          <p className={`text-xs text-center w-full max-h-16 overflow-y-auto no-scrollbar shrink-0 mb-6 leading-relaxed px-1 ${
-            theme.preset === 'minimal-silk' ? 'text-stone-500' : 'text-white/80'
-          }`}>
+          <p className="text-xs text-center w-full max-h-16 overflow-y-auto no-scrollbar shrink-0 mb-6 leading-relaxed px-1 text-muted-foreground">
             {profile.bio || 'Add a bio to tell users who you are.'}
           </p>
 
           {/* Links rendering */}
           <div className="w-full flex-grow flex flex-col gap-3.5 mb-6 overflow-y-auto no-scrollbar">
             {enabledLinks.length === 0 ? (
-              <div className="flex-grow flex flex-col items-center justify-center text-center p-4 border border-dashed border-white/10 rounded-xl bg-white/5 text-xs text-white/40">
+              <div className="flex-grow flex flex-col items-center justify-center text-center p-4 border border-dashed border-border rounded-xl bg-card text-xs text-muted-foreground">
                 No active links shown
               </div>
             ) : (
               enabledLinks.map((link) => {
                 const LinkIcon = link.icon ? ((LucideIcons as any)[link.icon] || LucideIcons.Link2) : null
-                const customBtnStyle: React.CSSProperties = {}
-                
-                if (theme.preset === 'custom') {
-                  if (link.bg) customBtnStyle.backgroundColor = link.bg
-                  if (link.text) customBtnStyle.color = link.text
-                }
 
                 return (
                   <a
@@ -234,8 +163,10 @@ export function PhonePreview({ compact = false }: PhonePreviewProps) {
                     href={link.url}
                     target="_blank"
                     rel="noreferrer"
-                    className={`w-full py-3 px-4 flex items-center justify-center relative text-xs font-semibold text-center select-none cursor-pointer ${getButtonClass(link)}`}
-                    style={customBtnStyle}
+                    className={cn(
+                      "w-full py-3 px-4 flex items-center justify-center relative text-xs font-bold text-center select-none cursor-pointer bg-primary text-primary-foreground hover:bg-primary/95 transition-all shadow-sm rounded-xl",
+                      link.animation && link.animation !== 'none' && `anim-${link.animation}`
+                    )}
                   >
                     {LinkIcon && (
                       <LinkIcon className="h-4 w-4 absolute left-4 shrink-0" />
@@ -249,7 +180,7 @@ export function PhonePreview({ compact = false }: PhonePreviewProps) {
 
           {/* Social icons row */}
           {enabledSocials.length > 0 && (
-            <div className="w-full flex flex-wrap gap-2.5 items-center justify-center shrink-0 border-t border-white/10 pt-4 mt-auto">
+            <div className="w-full flex flex-wrap gap-2.5 items-center justify-center shrink-0 border-t border-border pt-4 mt-auto">
               {enabledSocials.map((social) => {
                 const SocialIcon = socialIcons[social.platform] || HelpCircle
                 return (
@@ -258,7 +189,7 @@ export function PhonePreview({ compact = false }: PhonePreviewProps) {
                     href={social.url}
                     target="_blank"
                     rel="noreferrer"
-                    className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${getSocialIconClass()}`}
+                    className="h-8 w-8 rounded-full flex items-center justify-center shrink-0 bg-muted hover:bg-muted/80 text-muted-foreground transition-all shadow-sm"
                     title={social.platform}
                   >
                     <SocialIcon className="h-4 w-4 shrink-0" />

@@ -24,7 +24,7 @@ export function buildSelfContainedShortUrl(
   const id = generateShortId()
   const encoded = toBase64Url(targetUrl)
   return {
-    shortUrl: `${origin}/s/${id}?r=${encoded}`,
+    shortUrl: `${origin}/l/s/${id}?r=${encoded}`,
     expiresAt: new Date(expiresAtMs).toISOString(),
   }
 }

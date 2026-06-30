@@ -40,28 +40,24 @@ export default function PublicLinkTreePage() {
   const [isExpired, setIsExpired] = useState(false)
 
   useEffect(() => {
-    if (params?.id) {
-      const decoded = decodeConfig(params.id as string)
-      if (decoded) {
-        setConfig(decoded)
-        setError(false)
+   if (params?.id) {
+  console.log("Received ID:", params.id)
 
-        // Validate expiration using the 'exp' query parameter
-        if (typeof window !== 'undefined') {
-          const searchParams = new URLSearchParams(window.location.search)
-          const expParam = searchParams.get('exp')
-          if (expParam) {
-            const expTime = parseInt(expParam, 10)
-            if (!isNaN(expTime) && Date.now() > expTime) {
-              setIsExpired(true)
-            }
-          }
-        }
-      } else {
-        setError(true)
-      }
-      setLoading(false)
-    }
+  const decoded = decodeConfig(params.id as string)
+
+  console.log("Decoded Config:", decoded)
+
+  if (decoded) {
+    setConfig(decoded)
+    setError(false)
+
+    // ...
+  } else {
+    setError(true)
+  }
+
+  setLoading(false)
+}
   }, [params])
 
   if (loading) {

@@ -120,15 +120,38 @@ export function ShareTab() {
 
     const origin = window.location.origin
     setIsShortening(true)
+    let apiSucceeded = false
 
-    // Always use the client-side self-contained approach as it works
-    // reliably on both local dev and production (Vercel).
-    // Server-side storage (in-memory/file) is lost between serverless
-    // cold starts, so server-generated short URLs break on production.
-    const result = buildSelfContainedShortUrl(origin, hash, expirationDuration)
-    setShortenedUrl(result.shortUrl)
-    setExpiresAt(result.expiresAt)
-    toast.success('Short link generated!')
+    try {
+      const response = await fetch('/api/shorten', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: shareUrl || `${origin}/l/${hash}`,
+          durationHours: expirationDuration,
+        }),
+      })
+
+      const data = await response.json()
+      if (response.ok && data.shortUrl) {
+        setShortenedUrl(data.shortUrl)
+        setExpiresAt(data.expiresAt)
+        apiSucceeded = true
+        toast.success('URL shortened successfully!')
+      }
+    } catch (error) {
+      console.error('API shorten failed, using client fallback:', error)
+    }
+
+    if (!apiSucceeded) {
+      // Self-contained fallback that encodes the state in the URL
+      const result = buildSelfContainedShortUrl(origin, hash, expirationDuration)
+      setShortenedUrl(result.shortUrl)
+      setExpiresAt(result.expiresAt)
+      toast.success('Short link generated!')
+    }
 
     setIsShortening(false)
 

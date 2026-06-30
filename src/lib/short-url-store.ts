@@ -36,8 +36,13 @@ function isKvConfigured(): boolean {
 async function kvGet(key: string): Promise<ShortUrlEntry | null> {
   if (!isKvConfigured()) return null
   try {
-    const res = await fetch(`${process.env.KV_REST_API_URL}/get/${key}`, {
-      headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}` },
+    const res = await fetch(process.env.KV_REST_API_URL!, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(['GET', key]),
       cache: 'no-store',
     })
     if (!res.ok) return null
@@ -52,14 +57,15 @@ async function kvGet(key: string): Promise<ShortUrlEntry | null> {
 async function kvSet(key: string, entry: ShortUrlEntry, ttlSeconds: number): Promise<boolean> {
   if (!isKvConfigured()) return false
   try {
-    const res = await fetch(
-      `${process.env.KV_REST_API_URL}/set/${key}/${encodeURIComponent(JSON.stringify(entry))}/EX/${ttlSeconds}`,
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}` },
-        cache: 'no-store',
-      }
-    )
+    const res = await fetch(process.env.KV_REST_API_URL!, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(['SET', key, JSON.stringify(entry), 'EX', ttlSeconds]),
+      cache: 'no-store',
+    })
     return res.ok
   } catch {
     return false

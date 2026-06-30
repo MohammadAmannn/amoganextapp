@@ -14,7 +14,6 @@ function getOrigin(request: NextRequest): string {
 function resolveRedirectUrl(urlStr: string, currentOrigin: string): string {
   try {
     const parsed = new URL(urlStr)
-    // If the path belongs to link builder or the redirect route, redirect using current request's origin
     if (parsed.pathname.startsWith('/l') || parsed.pathname.startsWith('/link-builder')) {
       return `${currentOrigin}${parsed.pathname}${parsed.search}`
     }
@@ -28,15 +27,13 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  console.log("🔥 SHORT ROUTE HIT");
   const { id } = await params
   const origin = getOrigin(request)
-
   if (!id) {
     return NextResponse.redirect(`${origin}/link-builder`)
   }
-
   const entry = await getShortUrl(id)
-
   if (entry) {
     const expiresAtMs = new Date(entry.expiresAt).getTime()
     if (!isNaN(expiresAtMs) && Date.now() > expiresAtMs) {
@@ -45,8 +42,6 @@ export async function GET(
     const finalUrl = resolveRedirectUrl(entry.targetUrl, origin)
     return NextResponse.redirect(finalUrl, { status: 302 })
   }
-
-  // Self-contained fallback when no persistent store is available (Vercel without KV)
   const encodedTarget = request.nextUrl.searchParams.get('r')
   if (encodedTarget) {
     try {
@@ -64,6 +59,5 @@ export async function GET(
       // fall through to not-found
     }
   }
-
   return NextResponse.redirect(`${origin}/link-builder?error=link-not-found`)
 }

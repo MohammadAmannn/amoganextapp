@@ -28,7 +28,6 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   console.log("🔥 SHORT ROUTE HIT");
-  return new Response("MY ROUTE IS WORKING");
   const { id } = await params
   const origin = getOrigin(request)
   if (!id) {

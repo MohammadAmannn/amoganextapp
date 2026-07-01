@@ -100,8 +100,8 @@ export const sidebarData: SidebarData = {
           icon: FileText
         },
         {
-          title:"Store Template",
-          url:"/store",
+          title: "My Order Template",
+          url: "/myordertemplate",
           icon: Store
         },
         {

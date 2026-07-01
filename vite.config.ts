@@ -92,9 +92,9 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-        'next/link': path.resolve(__dirname, './src/features/storetemplate/lib/next-link.tsx'),
-        'next/image': path.resolve(__dirname, './src/features/storetemplate/lib/next-image.tsx'),
-        'next/navigation': path.resolve(__dirname, './src/features/storetemplate/lib/next-navigation.tsx'),
+        'next/link': path.resolve(__dirname, './src/lib/next-mocks/next-link.tsx'),
+        'next/image': path.resolve(__dirname, './src/lib/next-mocks/next-image.tsx'),
+        'next/navigation': path.resolve(__dirname, './src/lib/next-mocks/next-navigation.tsx'),
       },
     },
   test: {

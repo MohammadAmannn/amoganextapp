@@ -1615,29 +1615,6 @@ const errorPageBlocks: BlockDefinition[] = [
 ];
 
 // ============================================
-// COMMERCE BLOCKS
-// ============================================
-const commerceBlocks: BlockDefinition[] = [
-    {
-        name: "woocommerce-products",
-        category: "commerce",
-        description: "Grid of active WooCommerce products fetched from the store api",
-        requiredComponents: ["WooCommerceProducts"],
-        template: {
-            id: "woo-products-root",
-            type: "WooCommerceProducts",
-            name: "WooCommerce Products",
-            props: {
-                limit: 8,
-                columns: "3",
-                className: "w-full py-6"
-            },
-            children: []
-        }
-    }
-];
-
-// ============================================
 // COMBINE ALL BLOCKS
 // ============================================
 const allBlocks: BlockDefinition[] = [
@@ -1658,7 +1635,6 @@ const allBlocks: BlockDefinition[] = [
     ...pricingBlocks,
     ...settingsBlocks,
     ...errorPageBlocks,
-    ...commerceBlocks,
 ];
 
 /**

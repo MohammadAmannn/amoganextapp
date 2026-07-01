@@ -1,7 +1,6 @@
 import type { ComponentRegistry } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
 import { Flexbox } from '@/components/ui/ui-builder/components/flexbox';
-import { WooCommerceProducts } from '@/components/ui/ui-builder/components/woo-products';
 import { Grid } from '@/components/ui/ui-builder/components/grid';
 import { CodePanel } from '@/components/ui/ui-builder/components/code-panel';
 import { Markdown } from "@/components/ui/ui-builder/components/markdown";
@@ -118,21 +117,6 @@ export const customComponentDefinitions: ComponentRegistry = {
         fieldOverrides: {
             className:(layer)=> classNameFieldOverrides(layer),
             iconName: (layer)=> iconNameFieldOverrides(layer)
-        }
-    },
-    WooCommerceProducts: {
-        component: WooCommerceProducts,
-        schema: z.object({
-            className: z.string().optional(),
-            limit: z.preprocess(
-                (val) => (typeof val === 'string' ? Number(val) : val),
-                z.number().default(8)
-            ),
-            columns: z.enum(["1", "2", "3", "4"]).default("3"),
-        }),
-        from: "@/components/ui/ui-builder/components/woo-products",
-        fieldOverrides: {
-            className: (layer) => classNameFieldOverrides(layer),
         }
     },
 };

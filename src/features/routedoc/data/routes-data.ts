@@ -133,12 +133,12 @@ export const ROUTES_DATA: RouteInfo[] = [
     priority: 0.5
   },
   {
-    path: '/store',
-    name: 'Store Template',
-    description: 'An online store template showing e-commerce grids, product details, and category listings.',
+    path: '/myordertemplate',
+    name: 'My Order Template',
+    description: 'A template showing order details.',
     category: 'General',
     folder: 'templates',
-    file: 'app/(dashboard)/store/page.tsx',
+    file: 'app/(dashboard)/myordertemplate/page.tsx',
     auth: 'Authenticated',
     status: 'Active',
     methods: ['PAGE'],

@@ -7,9 +7,9 @@ import { POSSystem } from './components/pos/pos-system'
 
 export default function MyOrderTemplate() {
   return (
-    <div className="flex flex-col h-[calc(100vh-56px)] w-full">
+    <div className="flex flex-col flex-1 h-full min-h-0 w-full">
       <AppHeader title="My Order Template" />
-      <Main fixed fluid className="pt-0 px-4 pb-4 flex-1 flex flex-col overflow-hidden bg-background text-foreground">
+      <Main fixed fluid className="pt-0 px-2 pb-2 md:px-4 md:pb-4 flex-1 flex flex-col overflow-hidden bg-background text-foreground">
         <Tabs defaultValue="new" className="flex-1 flex flex-col space-y-2 overflow-hidden">
           <div className="w-full overflow-x-auto pb-1 flex-shrink-0">
             <TabsList className="h-auto gap-6 border-b border-border bg-transparent p-0 shadow-none">

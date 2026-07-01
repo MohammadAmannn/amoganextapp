@@ -8,9 +8,15 @@ import type { Product } from './types'
 
 interface ProductCatalogProps {
   onAddToCart: (product: Product) => void
+  products: Product[]
+  categories: string[]
+  isLoading: boolean
+  isLoadingCategories: boolean
+  error: string | null
+  onRefresh: () => void
 }
 
-const SAMPLE_PRODUCTS: Product[] = [
+export const SAMPLE_PRODUCTS: Product[] = [
   {
     id: '1',
     name: '1-Ajax Rode Bloemen kofir',
@@ -73,93 +79,29 @@ const SAMPLE_PRODUCTS: Product[] = [
 
 const FILTER_OPTIONS = ['In Stock', 'Featured', 'On Sale', 'Category', 'Tag', 'Brand']
 
-export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
+import { X } from 'lucide-react'
+
+export function ProductCatalog({
+  onAddToCart,
+  products,
+  categories,
+  isLoading,
+  isLoadingCategories,
+  error,
+  onRefresh,
+}: ProductCatalogProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeFilters, setActiveFilters] = useState<string[]>(['In Stock'])
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [products, setProducts] = useState<Product[]>([])
-  const [categories, setCategories] = useState<string[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   
   const [showCategorySubmenu, setShowCategorySubmenu] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [isLoadingCategories, setIsLoadingCategories] = useState(false)
-
-  const fetchProducts = async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      const res = await fetch('/api/products?per_page=100')
-      if (!res.ok) {
-        throw new Error('Failed to fetch products from WooCommerce API')
-      }
-      const data = await res.json()
-      if (Array.isArray(data)) {
-        const mapped = data.map((wpProd: any): Product => {
-          const categoryName = wpProd.categories && wpProd.categories.length > 0
-            ? wpProd.categories[0].name
-            : 'Uncategorized'
-
-          const imageSrc = wpProd.images && wpProd.images.length > 0
-            ? wpProd.images[0].src
-            : '/placeholder/400x400.svg'
-
-          return {
-            id: String(wpProd.id),
-            name: wpProd.name || '',
-            price: parseFloat(wpProd.price) || 0.0,
-            originalPrice: parseFloat(wpProd.regular_price) > parseFloat(wpProd.price) ? parseFloat(wpProd.regular_price) : undefined,
-            image: imageSrc,
-            category: categoryName,
-            hasVariants: wpProd.variations && wpProd.variations.length > 0
-          }
-        })
-        setProducts(mapped)
-      } else {
-        setProducts(SAMPLE_PRODUCTS)
-      }
-    } catch (err: any) {
-      console.error('Error fetching WooCommerce products for POS:', err)
-      setError(err.message || 'Error fetching products')
-      setProducts(SAMPLE_PRODUCTS)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const fetchCategories = async () => {
-    try {
-      setIsLoadingCategories(true)
-      const res = await fetch('/api/products?endpoint=categories')
-      if (!res.ok) {
-        throw new Error('Failed to fetch categories')
-      }
-      const data = await res.json()
-      if (Array.isArray(data)) {
-        const names = data.map((cat: any) => cat.name || '')
-        setCategories(names.filter((name) => name !== ''))
-      }
-    } catch (err) {
-      console.error('Error fetching categories for POS:', err)
-    } finally {
-      setIsLoadingCategories(false)
-    }
-  }
-
-  const handleRefresh = () => {
-    fetchProducts()
-    fetchCategories()
-  }
-
-  useEffect(() => {
-    fetchProducts()
-    fetchCategories()
-  }, [])
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesSearch = 
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchQuery.toLowerCase())
       
       // Stock filter (mocked or custom logic)
       const matchesStock = !activeFilters.includes('In Stock') || true
@@ -211,8 +153,16 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
               placeholder="Search Products"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-input bg-background text-sm"
+              className="w-full pl-10 pr-10 py-2 rounded-lg border border-input bg-background text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
           <Button variant="ghost" size="icon" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
             {viewMode === 'grid' ? <List className="h-4 w-4" /> : <Layout className="h-4 w-4" />}
@@ -310,7 +260,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
         <div className="flex items-center justify-between pt-2 text-sm text-muted-foreground">
           <span>Showing {filteredProducts.length} of {products.length}</span>
           <button 
-            onClick={handleRefresh}
+            onClick={onRefresh}
             disabled={isLoading}
             className="text-blue-600 hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
           >

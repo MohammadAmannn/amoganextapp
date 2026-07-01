@@ -18,9 +18,14 @@ export function CartItemRow({
   const total = item.price * item.quantity
 
   return (
-    <div className="px-4 py-3 grid grid-cols-12 gap-2 items-center text-sm hover:bg-gray-50">
+    <div className="px-3 py-2 md:px-4 md:py-3 grid grid-cols-12 gap-2 items-center text-sm hover:bg-gray-50">
+      {/* Product Name */}
+      <div className="col-span-5 truncate">
+        <p className="font-medium truncate">{item.name}</p>
+      </div>
+
       {/* Quantity */}
-      <div className="col-span-1">
+      <div className="col-span-2 flex justify-center">
         <input
           type="number"
           min="1"
@@ -28,11 +33,6 @@ export function CartItemRow({
           onChange={(e) => onUpdateQuantity(item.id, parseInt(e.target.value) || 1)}
           className="w-12 px-2 py-1 border border-input rounded text-center text-sm"
         />
-      </div>
-
-      {/* Product Name */}
-      <div className="col-span-6 truncate">
-        <p className="font-medium truncate">{item.name}</p>
       </div>
 
       {/* Price */}
@@ -52,14 +52,7 @@ export function CartItemRow({
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 w-6 p-0"
-          >
-            <MoreVertical className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+            className="h-6 w-6 p-0 text-red-600 hover:text-red-700 cursor-pointer"
             onClick={() => onRemove(item.id)}
           >
             <X className="h-4 w-4" />

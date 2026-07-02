@@ -3,6 +3,9 @@ import { Open_Sans } from 'next/font/google'
 import { Providers } from '@/components/providers'
 import './globals.css'
 import { Analytics } from "@vercel/analytics/next"
+import { GoogleAnalytics } from '@next/third-parties/google'
+import { Suspense } from 'react'
+import { AnalyticsReporter } from '@/components/analytics-reporter'
 
 const openSans = Open_Sans({
   subsets: ['latin'],
@@ -24,9 +27,12 @@ export default function RootLayout({
     <html lang='en' suppressHydrationWarning className={openSans.variable}>
       <body className={openSans.className} suppressHydrationWarning>
         <Providers>
+          <Suspense fallback={null}>
+            <AnalyticsReporter />
+          </Suspense>
           {children}
           <Analytics />
-
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ''} />
         </Providers>
       </body>
     </html>

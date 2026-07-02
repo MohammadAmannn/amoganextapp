@@ -4,18 +4,21 @@ import { useState, useEffect } from 'react'
 import { ProductCatalog, SAMPLE_PRODUCTS } from './product-catalog'
 import { Cart } from './cart'
 import { OrderSuccessModal } from './order-success-modal'
-import type { CartItem, Product } from './types'
+import type { CartItem, Product, Customer } from './types'
 
 export function POSSystem() {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [customer, setCustomer] = useState('Guest')
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [activeMobileView, setActiveMobileView] = useState<'catalog' | 'cart'>('catalog')
   
   // Lifted WooCommerce products and categories state
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<string[]>([])
+  const [customers, setCustomers] = useState<Customer[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Order checkout states
@@ -84,14 +87,34 @@ export function POSSystem() {
     }
   }
 
+  const fetchCustomers = async () => {
+    try {
+      setIsLoadingCustomers(true)
+      const res = await fetch('/api/products?endpoint=customers&per_page=100')
+      if (!res.ok) {
+        throw new Error('Failed to fetch customers')
+      }
+      const data = await res.json()
+      if (Array.isArray(data)) {
+        setCustomers(data)
+      }
+    } catch (err) {
+      console.error('Error fetching customers for POS:', err)
+    } finally {
+      setIsLoadingCustomers(false)
+    }
+  }
+
   const handleRefresh = () => {
     fetchProducts()
     fetchCategories()
+    fetchCustomers()
   }
 
   useEffect(() => {
     fetchProducts()
     fetchCategories()
+    fetchCustomers()
   }, [])
 
   const addToCart = (product: Product) => {
@@ -126,6 +149,8 @@ export function POSSystem() {
 
   const clearCart = () => {
     setCartItems([])
+    setCustomer('Guest')
+    setSelectedCustomer(null)
   }
 
   const handleCheckout = async () => {
@@ -134,24 +159,62 @@ export function POSSystem() {
     try {
       setIsCheckoutLoading(true)
       
-      // Parse customer name into first/last name
-      const nameParts = customer.trim().split(/\s+/)
-      const firstName = nameParts[0] || 'Guest'
-      const lastName = nameParts.slice(1).join(' ')
+      // Prepare customer info for WooCommerce
+      let customerId = 0
+      let billingInfo: any = {
+        first_name: 'Guest',
+        last_name: '',
+        email: 'guest@example.com'
+      }
+      let shippingInfo: any = {}
 
-      const orderPayload = {
+      if (selectedCustomer) {
+        customerId = selectedCustomer.id
+        billingInfo = {
+          first_name: selectedCustomer.billing?.first_name || selectedCustomer.first_name || '',
+          last_name: selectedCustomer.billing?.last_name || selectedCustomer.last_name || '',
+          company: selectedCustomer.billing?.company || '',
+          address_1: selectedCustomer.billing?.address_1 || '',
+          address_2: selectedCustomer.billing?.address_2 || '',
+          city: selectedCustomer.billing?.city || '',
+          state: selectedCustomer.billing?.state || '',
+          postcode: selectedCustomer.billing?.postcode || '',
+          country: selectedCustomer.billing?.country || '',
+          email: selectedCustomer.billing?.email || selectedCustomer.email || '',
+          phone: selectedCustomer.billing?.phone || ''
+        }
+        shippingInfo = {
+          first_name: selectedCustomer.shipping?.first_name || selectedCustomer.first_name || '',
+          last_name: selectedCustomer.shipping?.last_name || selectedCustomer.last_name || '',
+          company: selectedCustomer.shipping?.company || '',
+          address_1: selectedCustomer.shipping?.address_1 || '',
+          address_2: selectedCustomer.shipping?.address_2 || '',
+          city: selectedCustomer.shipping?.city || '',
+          state: selectedCustomer.shipping?.state || '',
+          postcode: selectedCustomer.shipping?.postcode || '',
+          country: selectedCustomer.shipping?.country || '',
+          phone: selectedCustomer.shipping?.phone || ''
+        }
+      } else {
+        const nameParts = customer.trim().split(/\s+/)
+        billingInfo.first_name = nameParts[0] || 'Guest'
+        billingInfo.last_name = nameParts.slice(1).join(' ')
+      }
+
+      const orderPayload: any = {
         payment_method: 'cod',
         payment_method_title: 'Cash on Delivery',
         set_paid: true,
-        billing: {
-          first_name: firstName,
-          last_name: lastName,
-          email: 'guest@example.com' // Fallback WooCommerce customer email
-        },
+        customer_id: customerId,
+        billing: billingInfo,
         line_items: cartItems.map(item => ({
           product_id: parseInt(item.id),
           quantity: item.quantity
         }))
+      }
+
+      if (selectedCustomer) {
+        orderPayload.shipping = shippingInfo
       }
 
       const res = await fetch('/api/products?endpoint=orders', {
@@ -176,6 +239,7 @@ export function POSSystem() {
       // Clear cart and reset view/fields on success
       setCartItems([])
       setCustomer('Guest')
+      setSelectedCustomer(null)
       setActiveMobileView('catalog') // Redirect back to products view
     } catch (err: any) {
       console.error('Checkout failed:', err)
@@ -242,7 +306,9 @@ export function POSSystem() {
           <Cart
             items={cartItems}
             customer={customer}
+            selectedCustomer={selectedCustomer}
             onCustomerChange={setCustomer}
+            onCustomerSelect={setSelectedCustomer}
             onRemove={removeFromCart}
             onUpdateQuantity={updateQuantity}
             onClear={clearCart}
@@ -250,6 +316,8 @@ export function POSSystem() {
             isCheckoutLoading={isCheckoutLoading}
             allProducts={products}
             onAddToCart={addToCart}
+            allCustomers={customers}
+            isLoadingCustomers={isLoadingCustomers}
           />
         </div>
       </div>

@@ -157,6 +157,18 @@ export const ROUTES_DATA: RouteInfo[] = [
     priority: 0.7
   },
   {
+    path: '/calendartemplate',
+    name: 'Calendar Template',
+    description: 'An interactive full calendar template built with Radix UI and Tailwind, supporting Month, Week, and Day views with event scheduling.',
+    category: 'General',
+    folder: 'templates',
+    file: 'app/(dashboard)/calendartemplate/page.tsx',
+    auth: 'Authenticated',
+    status: 'Active',
+    methods: ['PAGE'],
+    priority: 0.6
+  },
+  {
     path: '/routedoc',
     name: 'Route Doc',
     description: 'Route documentation catalog that list routes and APIs configuration in this Next.js app.',

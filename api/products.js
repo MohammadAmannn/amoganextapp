@@ -52,6 +52,9 @@ export default async function handler(req, res) {
     } else if (endpoint === 'orders') {
       targetUrl = new URL(`${wooUrl}/wp-json/wc/v3/orders`)
       parsedUrl.searchParams.delete('endpoint')
+    } else if (endpoint === 'customers') {
+      targetUrl = new URL(`${wooUrl}/wp-json/wc/v3/customers`)
+      parsedUrl.searchParams.delete('endpoint')
     } else if (productId) {
       // Single product fetch using the correct REST endpoint
       targetUrl = new URL(`${wooUrl}/wp-json/wc/v3/products/${productId}`)

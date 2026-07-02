@@ -24,7 +24,8 @@ import {
   Kanban,
   Route,
   LayoutTemplate,
-  Link
+  Link,
+  CalendarDays
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -108,6 +109,11 @@ export const sidebarData: SidebarData = {
           title: 'Kanban Template',
           url: '/kanbantemplate',
           icon: Kanban,
+        },
+        {
+          title: 'Calendar Template',
+          url: '/calendartemplate',
+          icon: CalendarDays,
         },
         {
           title:"Route Doc",

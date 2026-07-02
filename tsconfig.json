@@ -47,7 +47,6 @@
     "knip.config.ts",
     "src/test-utils",
     "**/*.test.ts",
-    "**/*.test.tsx",
-    "vite.config.ts"
+    "**/*.test.tsx"
   ]
 }

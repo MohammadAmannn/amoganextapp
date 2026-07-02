@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Open_Sans } from 'next/font/google'
 import { Providers } from '@/components/providers'
 import './globals.css'
+import { Analytics } from "@vercel/analytics/next"
 
 const openSans = Open_Sans({
   subsets: ['latin'],
@@ -22,7 +23,11 @@ export default function RootLayout({
   return (
     <html lang='en' suppressHydrationWarning className={openSans.variable}>
       <body className={openSans.className} suppressHydrationWarning>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <Analytics />
+
+        </Providers>
       </body>
     </html>
   )

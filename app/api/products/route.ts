@@ -85,6 +85,10 @@ async function handleRequest(request: NextRequest, method: string) {
       // Create/fetch WooCommerce orders
       targetUrl = new URL(`${wooUrl}/wp-json/wc/v3/orders`)
       searchParams.delete('endpoint')
+    } else if (endpoint === 'customers') {
+      // Fetch WooCommerce customers
+      targetUrl = new URL(`${wooUrl}/wp-json/wc/v3/customers`)
+      searchParams.delete('endpoint')
     } else if (productId) {
       // Fetch a single product by ID using the correct REST endpoint /products/{id}
       targetUrl = new URL(`${wooUrl}/wp-json/wc/v3/products/${productId}`)

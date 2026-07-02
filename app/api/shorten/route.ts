@@ -40,29 +40,8 @@ export async function POST(request: NextRequest) {
     }
 
     const origin = getOrigin(request)
-    let shortUrl = ''
-
-    // Attempt to shorten using TinyURL for a truly short link
-    try {
-      const tinyRes = await fetch(
-        `https://tinyurl.com/api-create.php?url=${encodeURIComponent(urlWithExpiration)}`,
-        { signal: AbortSignal.timeout(4000) }
-      )
-      if (tinyRes.ok) {
-        const text = await tinyRes.text()
-        if (text && text.startsWith('http')) {
-          shortUrl = text
-        }
-      }
-    } catch (e) {
-      console.warn('TinyURL API shortening failed, using fallback:', e)
-    }
-
-    // Fallback to our own self-contained /l/s/ link if TinyURL is offline or fails
-    if (!shortUrl) {
-      const { shortUrlSuffix } = await saveShortUrl(urlWithExpiration, expiresAtMs)
-      shortUrl = `${origin}/l/s/${shortUrlSuffix}`
-    }
+    const { shortUrlSuffix } = await saveShortUrl(urlWithExpiration, expiresAtMs)
+    const shortUrl = `${origin}/go/${shortUrlSuffix}`
 
     return NextResponse.json(
       { shortUrl, expiresAt },

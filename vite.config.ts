@@ -67,7 +67,7 @@ export default defineConfig(({ mode }) => {
 
               try {
                 // Dynamically load the correct API handler
-                const apiPath = isChat ? './api/chat.js' : './api/products.js'
+                const apiPath = isChat ? './api-legacy/chat.js' : './api-legacy/products.js'
                 const module = await server.ssrLoadModule(
                   path.resolve(__dirname, apiPath)
                 )

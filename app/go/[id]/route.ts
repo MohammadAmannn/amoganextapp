@@ -27,7 +27,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  console.log("🔥 SHORT ROUTE HIT");
+  console.log("🔥 SHORT RESOLVER ROUTE HIT (/go)");
   const { id } = await params
   const origin = getOrigin(request)
   if (!id) {

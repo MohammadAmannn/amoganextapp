@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs'
 import path from 'path'
+import { createClient } from '@supabase/supabase-js'
 
 export interface ShortUrlEntry {
   id: string
@@ -7,6 +8,13 @@ export interface ShortUrlEntry {
   createdAt: string
   expiresAt: string
 }
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+
+const supabase = supabaseUrl && supabaseAnonKey
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null
 
 const URLS_FILE = path.join(process.cwd(), 'src/features/link-builder/data/urls.json')
 const ID_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
@@ -112,9 +120,30 @@ export async function saveShortUrl(
   existing.push(entry)
   const fileSaved = await writeFileStore(existing)
 
-  // When no persistent store is available (typical on Vercel without KV),
+  let supabaseSaved = false
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from('short_urls')
+        .insert({
+          id,
+          target_url: targetUrl,
+          expires_at: new Date(expiresAtMs).toISOString()
+        })
+      if (error) {
+        console.error('Supabase saveShortUrl error:', error)
+      } else {
+        supabaseSaved = true
+        console.log('Supabase saveShortUrl success:', id)
+      }
+    } catch (e) {
+      console.error('Supabase saveShortUrl exception:', e)
+    }
+  }
+
+  // When no persistent store is available (typical on Vercel without KV or Supabase),
   // embed the redirect target so the link survives cold starts.
-  const needsFallback = !kvSaved && !fileSaved
+  const needsFallback = !kvSaved && !fileSaved && !supabaseSaved
   const shortUrlSuffix = needsFallback
     ? `${id}?r=${Buffer.from(targetUrl).toString('base64url')}`
     : id
@@ -140,6 +169,30 @@ export async function getShortUrl(id: string): Promise<ShortUrlEntry | null> {
   const memory = getMemoryStore()
   const cached = memory.get(id)
   if (cached) return cached
+
+  // Check Supabase first as it is our primary persistent store on production
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('short_urls')
+        .select('*')
+        .eq('id', id)
+        .single()
+      
+      if (!error && data) {
+        const entry: ShortUrlEntry = {
+          id: data.id,
+          targetUrl: data.target_url,
+          createdAt: data.created_at,
+          expiresAt: data.expires_at,
+        }
+        memory.set(id, entry)
+        return entry
+      }
+    } catch (e) {
+      console.error('Supabase getShortUrl exception:', e)
+    }
+  }
 
   const fromKv = await kvGet(`short:${id}`)
   if (fromKv) {

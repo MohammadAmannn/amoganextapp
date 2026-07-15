@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import { Contact } from '../types/contact.types'
+import { triggerContactAlert } from '@/services/db-alert.service'
 
 export async function getUserContacts(userId: string): Promise<Contact[]> {
   const supabase = createClient()
@@ -164,6 +165,11 @@ export async function createContact(
       return { success: false, error: 'Failed to add contact.' }
     }
 
+    // Trigger DB Alert
+    triggerContactAlert('create', ownerId, contactUserId).catch((err) =>
+      console.error('[DB Alerts] Error sending contact created alert:', err)
+    )
+
     return { success: true }
   } catch (err) {
     console.error('Failed to create contact:', err)
@@ -178,6 +184,13 @@ export async function updateContactNickname(
 ): Promise<boolean> {
   const supabase = createClient()
   try {
+    // Fetch contact details to resolve contactUserId for alert
+    const { data: contactData } = await supabase
+      .from('contacts')
+      .select('contact_user_id')
+      .eq('id', contactId)
+      .maybeSingle()
+
     const { error } = await supabase
       .from('contacts')
       .update({ nickname: nickname.trim() || null })
@@ -185,6 +198,13 @@ export async function updateContactNickname(
       .eq('owner_id', ownerId)
 
     if (error) throw error
+
+    if (contactData) {
+      triggerContactAlert('update', ownerId, contactData.contact_user_id).catch((err) =>
+        console.error('[DB Alerts] Error sending contact updated alert:', err)
+      )
+    }
+
     return true
   } catch (err) {
     console.error('Failed to update contact nickname:', err)
@@ -195,6 +215,13 @@ export async function updateContactNickname(
 export async function deleteContact(contactId: string, ownerId: string): Promise<boolean> {
   const supabase = createClient()
   try {
+    // Fetch contact details to resolve contactUserId for alert
+    const { data: contactData } = await supabase
+      .from('contacts')
+      .select('contact_user_id')
+      .eq('id', contactId)
+      .maybeSingle()
+
     const { error } = await supabase
       .from('contacts')
       .delete()
@@ -202,6 +229,13 @@ export async function deleteContact(contactId: string, ownerId: string): Promise
       .eq('owner_id', ownerId)
 
     if (error) throw error
+
+    if (contactData) {
+      triggerContactAlert('delete', ownerId, contactData.contact_user_id).catch((err) =>
+        console.error('[DB Alerts] Error sending contact deleted alert:', err)
+      )
+    }
+
     return true
   } catch (err) {
     console.error('Failed to delete contact:', err)

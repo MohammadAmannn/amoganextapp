@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import { Group } from '../types/group.types'
+import { triggerGroupAlert } from '@/services/db-alert.service'
 
 export async function getGroups(): Promise<Group[]> {
   const supabase = createClient()
@@ -103,6 +104,21 @@ export async function getGroups(): Promise<Group[]> {
     updated_at: now
   }
 
+  // Check if group exists to determine create vs update
+  let isNew = true
+  try {
+    const { data: existingGroup } = await supabase
+      .from('chat_group')
+      .select('id')
+      .eq('id', id)
+      .maybeSingle()
+    if (existingGroup) {
+      isNew = false
+    }
+  } catch (err) {
+    // Ignore and assume new if check fails
+  }
+
   try {
     const { error } = await supabase
       .from('chat_group')
@@ -110,6 +126,11 @@ export async function getGroups(): Promise<Group[]> {
     
     if (error) throw error
     
+    // Trigger Group Alert
+    triggerGroupAlert(isNew ? 'create' : 'update', userUuid || '', group.groupName).catch((err) =>
+      console.error('[DB Alerts] Error sending group saved alert:', err)
+    )
+
     return {
       id,
       groupName: group.groupName,
@@ -131,11 +152,37 @@ export async function getGroups(): Promise<Group[]> {
 export async function deleteGroup(id: string): Promise<boolean> {
   const supabase = createClient()
   try {
+    // Fetch group details before deleting to resolve name for alert
+    const { data: groupData } = await supabase
+      .from('chat_group')
+      .select('name, user_uuid')
+      .eq('id', id)
+      .maybeSingle()
+
     const { error } = await supabase
       .from('chat_group')
       .delete()
       .eq('id', id)
+    
     if (error) throw error
+
+    // Fetch current user details to determine actorId
+    let actorId = groupData?.user_uuid || ''
+    try {
+      const { data: authData } = await supabase.auth.getUser()
+      if (authData?.user) {
+        actorId = authData.user.id
+      }
+    } catch {
+      // Ignore
+    }
+
+    if (groupData) {
+      triggerGroupAlert('delete', actorId, groupData.name).catch((err) =>
+        console.error('[DB Alerts] Error sending group deleted alert:', err)
+      )
+    }
+
     return true
   } catch (e) {
     console.error('Supabase deleteGroup error:', e)

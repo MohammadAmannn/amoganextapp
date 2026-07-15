@@ -104,9 +104,12 @@ export function ChatLayout() {
   // Ensure current user profile is in the public profiles table
   useEffect(() => {
     if (currentUser) {
-      ensureProfileExists(currentUser)
+      ensureProfileExists(currentUser).then(() => {
+        // Reload conversations to reflect any auto-subscriptions (like DB Alerts group)
+        loadConversations(currentUser.accountNo)
+      })
     }
-  }, [currentUser])
+  }, [currentUser, loadConversations])
 
   // Load conversations list on mount or when user changes
   useEffect(() => {

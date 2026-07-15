@@ -66,3 +66,45 @@ This document tracks the technical implementation, phase-by-phase objectives, an
 * **Next.js Serverless Route (`/api/geocode`)**: Middleware serverless endpoint querying OpenStreetMap's Nominatim geocoding engine without exposing client secrets.
 * **MapLibre GL & CARTO Tiles**: Dynamic client-side interactive map using the [Map] component, utilizing **CARTO Positron** (light mode) and **CARTO Dark Matter** (dark mode) tile sheets.
 * **LeafletMap Component**: Client-side React lazy-loaded wrapper components ensuring Server-Side Rendering (SSR) safety.
+
+---
+
+## Phase 5: DB Alerts & Event Monitoring
+
+### Objectives & Architecture
+* **DB Alerts Conversation**: Creation and configuration of a dedicated group conversation named `DB Alerts` reserved for admins/selected users.
+* **Auto-Subscription Onboarding**: Automatic mapping and joining of administrators (matching configuration email filters) when they authenticate.
+* **Event Interceptors**: Safe integration inside repository managers (`contact-repository.ts`, `group-repository.ts`) to capture create, update, and delete actions.
+* **Multi-Copy Delivery**: Formatted system alerts generated and distributed securely to all members through the existing realtime architecture.
+
+### Technologies & Purpose
+* **Clean Architecture Services**: Modular and reusable service definitions inside `db-alert.service.ts` decoupling event formats from core repository files.
+* **Supabase Multi-Copy Distribution**: Automatic database insertion of dedicated message copies (`owner_user_id`) to comply with existing Row-Level Security (RLS) policies.
+* **Whitespace Pre-wrap Rendering**: Dynamic layout support for system messages rendering formatted line breaks.
+* **Vitest Test Suite**: Mocks for database connections verifying 0 duplicate messages and correct structural schemas.
+
+---
+
+## Phase 6: Bell Notifications & Inbox Redesign
+
+### Objectives & Architecture
+* **Realtime Notification Dispatching**: Automatic generation of database-level notifications triggered by new message insertions.
+* **Global Badge Counter**: Dynamic badge counter on the header's Bell icon, incrementing in real-time and limiting view to `5+`.
+* **Redesigned Inbox Feed**: Redesigned master-detail inbox layout replacing email mockups with live chat notifications.
+* **Message Previewer & Close Action**: Preview pane allowing user to view the full message body on the same page, equipped with a close cross icon to reset selection.
+
+### Notification Workflow & Trigger Events
+1. **The Event (Message Insertion)**: A user sends a message, inserting a row in the `chat_messages` table with `direction = 'Received'` for the recipient.
+2. **Database Trigger Interception**: The `on_chat_message_inserted_notification` Postgres trigger intercepts the insert. It filters for `NEW.direction = 'Received'` and ensures the message is not a `system` message (`NEW.message_type != 'system'`).
+3. **Notification Logging**: The trigger function resolves the sender's profile name and inserts a notification row in `public.notifications` for the recipient (`NEW.owner_user_id`) containing the text: `[Sender Name] send you a msg click to see`.
+4. **Realtime Sync**: The insertion triggers a Supabase Realtime broadcast event on the `notifications` table publication channel.
+5. **Zustand State Update**: The React client’s `useNotificationStore` state manager receives the payload over WebSocket, updates the local array, and increments the badge counts dynamically in both the header (`AppHeader`) and sidebar (`AppSidebar`).
+6. **Inbox Detail Resolution**: Clicking a notification item in `/inbox` triggers an update query setting `read = true`, fetches the corresponding message text details from `chat_messages`, and displays it in the full-page view container.
+
+### Technologies & Purpose
+* **PostgreSQL Triggers & Functions**: Automated database trigger (`public.create_message_notification()`) running after inserts on `chat_messages` to log unread notifications.
+* **Zustand Notification Store**: State manager (`notification-store.ts`) tracking unread notifications, handling real-time payload syncing, and marking items as read.
+* **Next.js Router Navigation**: Routing user from the header's Bell icon directly to `/inbox` on click.
+* **Lucide React Icons & Tailwind/CSS**: Implementation of badge indicator overlays, close cross buttons, and responsive side-by-side preview panels.
+
+

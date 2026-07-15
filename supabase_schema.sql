@@ -543,3 +543,66 @@ $$;
 -- Grant execute to authenticated users (RPC called with user session)
 GRANT EXECUTE ON FUNCTION public.get_shared_file_metadata(uuid, uuid) TO authenticated;
 
+-- Create public.notifications table
+CREATE TABLE IF NOT EXISTS public.notifications (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+    sender_id uuid REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE SET NULL,
+    message_id uuid REFERENCES public.chat_messages(id) ON DELETE CASCADE,
+    message_text text NOT NULL,
+    read boolean DEFAULT false NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+-- Enable Row-Level Security
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS Policies
+CREATE POLICY "Users can view their own notifications" ON public.notifications
+    FOR SELECT TO authenticated USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own notifications" ON public.notifications
+    FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own notifications" ON public.notifications
+    FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+-- Create trigger to automatically insert a notification on new received messages
+CREATE OR REPLACE FUNCTION public.create_message_notification()
+RETURNS trigger AS $$
+DECLARE
+  v_sender_name text;
+BEGIN
+  IF NEW.direction = 'Received' AND NEW.message_type != 'system' THEN
+    SELECT COALESCE(name, email) INTO v_sender_name FROM public.profiles WHERE id = NEW.sender_user_id;
+    
+    INSERT INTO public.notifications (user_id, sender_id, message_id, message_text, read, created_at)
+    VALUES (
+      NEW.owner_user_id,
+      NEW.sender_user_id,
+      NEW.id,
+      COALESCE(v_sender_name, 'Someone') || ' send you a msg click to see',
+      false,
+      NEW.created_at
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_chat_message_inserted_notification
+  AFTER INSERT ON public.chat_messages
+  FOR EACH ROW EXECUTE FUNCTION public.create_message_notification();
+
+-- Add notifications to Supabase Realtime publication if not already present
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'notifications'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+  END IF;
+END $$;
+
+

@@ -1,7 +1,23 @@
 import { createClient } from '@/lib/supabase/client'
 import { Profile } from '../types/chat.types'
+import { autoSubscribeAdmin } from '@/services/db-alert.service'
 
 export async function ensureProfileExists(user: {
+  accountNo: string
+  email: string
+  name?: string
+  picture?: string
+}): Promise<Profile | null> {
+  const profile = await ensureProfileExistsInternal(user)
+  if (profile) {
+    autoSubscribeAdmin(profile.id, profile.email).catch((err) =>
+      console.error('[DB Alerts] Error checking admin auto-subscribe:', err)
+    )
+  }
+  return profile
+}
+
+async function ensureProfileExistsInternal(user: {
   accountNo: string
   email: string
   name?: string

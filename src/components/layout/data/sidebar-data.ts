@@ -25,7 +25,8 @@ import {
   Route,
   LayoutTemplate,
   Link,
-  CalendarDays
+  CalendarDays,
+  Bell
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -140,6 +141,11 @@ export const sidebarData: SidebarData = {
           title: "Chat Template",
           url: "/chattemplate",
           icon: MessagesSquare,
+        },
+        {
+          title: "Notification",
+          url: "/notification",
+          icon: Bell,
         },
 
         

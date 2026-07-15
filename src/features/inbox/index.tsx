@@ -38,8 +38,9 @@ export function Inbox() {
           onValueChange={setActiveMenuTab}
           className='flex flex-1 flex-col overflow-hidden space-y-4'
         >
-          <div className='w-full overflow-x-auto pb-2 shrink-0'>
-            <TabsList className='h-auto gap-6 border-b border-border bg-transparent p-0 shadow-none w-full justify-start rounded-none'>
+          {/* Aligned Tabs Left with full border-b line */}
+          <div className='w-full overflow-x-auto pb-2 shrink-0 border-b border-border px-4 sm:px-0'>
+            <TabsList className='h-auto gap-6 border-0 bg-transparent p-0 shadow-none rounded-none'>
               <TabsTrigger
                 value='new'
                 className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none'
@@ -91,7 +92,7 @@ export function Inbox() {
                       Clear
                     </button>
                   )}
-                  <Badge variant='outline' className='hidden sm:flex text-xs px-2 py-0.5'>
+                  <Badge variant='outline' className='hidden sm:flex text-xs px-2 py-0.5 bg-muted/20'>
                     {filteredEmails.length} {filteredEmails.length === 1 ? 'result' : 'results'}
                   </Badge>
                 </div>
@@ -108,7 +109,7 @@ export function Inbox() {
                   </span>
                 </div>
                 {unreadCount > 0 && (
-                  <Badge variant='default' className='rounded-full px-3 py-1 text-xs font-medium'>
+                  <Badge variant='default' className='rounded-full px-3 py-1 text-xs font-medium bg-primary hover:bg-primary'>
                     {unreadCount} unread
                   </Badge>
                 )}
@@ -126,7 +127,7 @@ export function Inbox() {
                   </TabsList>
                 </Tabs>
                 
-                <button className='hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-background hover:bg-muted transition-colors text-xs font-medium'>
+                <button className='hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-background hover:bg-muted transition-colors text-xs font-medium shadow-xs'>
                   <Filter className='h-3.5 w-3.5' />
                   Filter
                 </button>

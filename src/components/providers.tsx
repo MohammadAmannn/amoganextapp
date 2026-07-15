@@ -16,7 +16,7 @@ import { useAuthStore } from '@/stores/auth-store'
 import { handleServerError } from '@/lib/handle-server-error'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/client'
-import { ensureProfileExists } from '@/features/chattemplate/services/profile.service'
+import { ensureProfileExists } from '@/features/chattemplate/chat/repositories/profile-repository'
 import { handleAuthRedirect } from '@/services/auth-redirect.service'
 
 function QueryProviderWrapper({ children }: { children: React.ReactNode }) {

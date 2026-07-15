@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getConversationMessages, createMessage } from '@/features/chattemplate/services/message.service'
-import { getOrCreateDirectConversation } from '@/features/chattemplate/services/conversation.service'
+import { getConversationMessages, createMessage } from '@/features/chattemplate/chat/repositories/message-repository'
+import { getOrCreateDirectConversation } from '@/features/chattemplate/chat/repositories/conversation-repository'
 
 export const runtime = 'nodejs'
 

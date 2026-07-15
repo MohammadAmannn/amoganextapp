@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { saveGroup } from '@/lib/contact-group-store'
+import { saveGroup } from '@/features/chattemplate/groups/repositories/group-repository'
 import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
@@ -35,6 +35,8 @@ export async function GET(request: NextRequest) {
       groupImage: d.image_url || '',
       users: Array.isArray(d.users) ? d.users : [],
       status: d.status as 'Active' | 'Inactive',
+      email: d.email || undefined,           // ✅ Include email
+      userUuid: d.user_uuid || undefined,    // ✅ Include user_uuid
       createdAt: d.created_at,
       updatedAt: d.updated_at,
     }))
@@ -59,7 +61,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const saved = await saveGroup(body)
+    // ✅ Get user_uuid from either userUuid or user_uuid
+    const userUuid = body.userUuid || body.user_uuid || null
+
+    // ✅ Prepare data for saveGroup
+    const groupData = {
+      ...body,
+      email: body.email.trim().toLowerCase(),
+      userUuid: userUuid,  // Pass as userUuid (camelCase)
+    }
+
+    const saved = await saveGroup(groupData)
     if (!saved) {
       return NextResponse.json({ error: 'Failed to save group' }, { status: 500 })
     }

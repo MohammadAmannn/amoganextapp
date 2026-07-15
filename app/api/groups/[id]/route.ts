@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { saveGroup, deleteGroup } from '@/lib/contact-group-store'
+import { saveGroup, deleteGroup } from '@/features/chattemplate/groups/repositories/group-repository'
 
 export const runtime = 'nodejs'
 
@@ -17,7 +17,14 @@ export async function PUT(
       )
     }
 
-    const updated = await saveGroup({ ...body, id })
+    // ✅ Include email and user_uuid in update
+    const updated = await saveGroup({ 
+      ...body, 
+      id,
+      email: body.email?.trim().toLowerCase() || undefined,
+      userUuid: body.user_uuid || body.userUuid || undefined
+    })
+    
     if (!updated) {
       return NextResponse.json({ error: 'Failed to update group' }, { status: 500 })
     }

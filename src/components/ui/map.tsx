@@ -392,6 +392,7 @@ function MapMarker({
   ...markerOptions
 }: MapMarkerProps) {
   const { map } = useMap();
+  const [isAddedToMap, setIsAddedToMap] = useState(false);
 
   const callbacksRef = useRef({
     onClick,
@@ -457,9 +458,11 @@ function MapMarker({
     if (!map) return;
 
     marker.addTo(map);
+    setIsAddedToMap(true);
 
     return () => {
       marker.remove();
+      setIsAddedToMap(false);
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -508,7 +511,7 @@ function MapMarker({
 
   return (
     <MarkerContext.Provider value={{ marker, map }}>
-      {children}
+      {isAddedToMap && children}
     </MarkerContext.Provider>
   );
 }

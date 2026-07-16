@@ -1,10 +1,31 @@
 import React, { useState } from 'react'
-import { Search, X, PanelLeft } from 'lucide-react'
+import {
+  Search,
+  X,
+  PanelLeft,
+  MoreHorizontal,
+  CornerUpLeft,
+  CornerUpRight,
+  Pin,
+  Star,
+  Heart,
+  Flag,
+  Archive,
+  Bell,
+  Trash2,
+  ChevronRight,
+} from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { Email } from '../data/emails'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface EmailListProps {
   emails: Email[]
@@ -234,6 +255,64 @@ export function EmailList({
                         <span className='text-[11px] text-muted-foreground whitespace-nowrap'>
                           {formatDistanceToNow(email.date, { addSuffix: true })}
                         </span>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                              }}
+                              className='p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground opacity-100 md:opacity-0 group-hover:opacity-100 transition-all cursor-pointer flex items-center justify-center h-6 w-6'
+                              title='More actions'
+                            >
+                              <MoreHorizontal className='h-3.5 w-3.5' />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end' className='w-[160px] bg-background border border-border p-1 shadow-md rounded-lg'>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }} className='cursor-pointer text-xs gap-2 py-1.5'>
+                              <CornerUpLeft className='h-3.5 w-3.5 text-blue-500 shrink-0' />
+                              <span>Reply</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }} className='cursor-pointer text-xs gap-2 py-1.5'>
+                              <CornerUpRight className='h-3.5 w-3.5 text-blue-500 shrink-0' />
+                              <span>Forward</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }} className='cursor-pointer text-xs gap-2 py-1.5'>
+                              <Pin className='h-3.5 w-3.5 text-purple-500 shrink-0' />
+                              <span>Pin Message</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }} className='cursor-pointer text-xs gap-2 py-1.5'>
+                              <Star className='h-3.5 w-3.5 text-amber-500 shrink-0' />
+                              <span>Star</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }} className='cursor-pointer text-xs gap-2 py-1.5'>
+                              <Heart className='h-3.5 w-3.5 text-pink-500 shrink-0' />
+                              <span>Favorite</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }} className='cursor-pointer text-xs gap-2 py-1.5'>
+                              <Flag className='h-3.5 w-3.5 text-red-500 shrink-0' />
+                              <span>Flag</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }} className='cursor-pointer text-xs gap-2 py-1.5'>
+                              <Archive className='h-3.5 w-3.5 text-indigo-500 shrink-0' />
+                              <span>Archive</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }} className='cursor-pointer text-xs gap-2 py-1.5 justify-between'>
+                              <div className='flex items-center gap-2'>
+                                <Bell className='h-3.5 w-3.5 text-orange-500 shrink-0' />
+                                <span>Action This</span>
+                              </div>
+                              <ChevronRight className='h-3 w-3 text-muted-foreground' />
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }} className='cursor-pointer text-xs gap-2 py-1.5 justify-between text-red-500 focus:bg-red-500/10 focus:text-red-500'>
+                              <div className='flex items-center gap-2'>
+                                <Trash2 className='h-3.5 w-3.5 text-red-500 shrink-0' />
+                                <span>Delete</span>
+                              </div>
+                              <ChevronRight className='h-3 w-3 text-red-500' />
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   )}

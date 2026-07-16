@@ -14,6 +14,11 @@ export type Email = {
   labels: string[]
   avatarInitials: string
   done?: boolean
+  attachments?: { name: string; type: string; size: string }[]
+  cc?: { name: string; email: string }[]
+  bcc?: { name: string; email: string }[]
+  important?: boolean
+  actionItem?: boolean
 }
 
 export const emails: Email[] = [

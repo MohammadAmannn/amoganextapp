@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 
 import { emails as initialEmails, Email } from './data/emails'
 import { EmailList } from './components/email-list'
-import { EmailDetail } from './components/email-detail'
+import { EmailView } from './components/email-view'
 import { NewEmail } from './components/new-email'
 
 export default function EmailFeature() {
@@ -72,17 +72,6 @@ export default function EmailFeature() {
         >
           {/* Custom Tabs Navigation (matches notifications and inbox tabs style) */}
           <div className='w-full overflow-x-auto pb-2 shrink-0 border-b border-border px-4 sm:px-0 sticky top-0 bg-background z-10 flex items-center gap-4'>
-            {/* Compose/New Email Button */}
-            <button
-              onClick={() => setIsComposing(true)}
-              className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-sm border border-transparent'
-              title='Compose New Email'
-            >
-              <Mail className='h-3.5 w-3.5' />
-              <span>New</span>
-              <Plus className='h-3 w-3' />
-            </button>
-
             <TabsList className='h-auto gap-6 border-0 bg-transparent p-0 shadow-none rounded-none'>
               <TabsTrigger
                 value='inbox'
@@ -109,6 +98,17 @@ export default function EmailFeature() {
                 History
               </TabsTrigger>
             </TabsList>
+
+            {/* Compose/New Email Button */}
+            <button
+              onClick={() => setIsComposing(true)}
+              className='ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white  hover:text-black font-semibold text-xs transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-sm border border-transparent'
+              title='Compose New Email'
+            >
+              <Mail className='h-3.5 w-3.5' />
+              <span>New</span>
+              <Plus className='h-3 w-3' />
+            </button>
           </div>
 
           {isComposing ? (
@@ -188,12 +188,17 @@ export default function EmailFeature() {
                       </button>
                     )}
 
-                    <EmailDetail
-                      email={selectedEmail}
-                      onSendReply={handleSendReply}
-                      onDelete={handleDelete}
-                      onArchive={handleArchive}
-                    />
+                    {selectedEmail ? (
+                      <EmailView
+                        email={selectedEmail}
+                        onBack={() => setSelectedEmail(null)}
+                        onDelete={handleDelete}
+                      />
+                    ) : (
+                      <div className='flex h-full flex-col items-center justify-center bg-background text-muted-foreground p-8'>
+                        <p className='text-sm'>Select an email to view its content</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </TabsContent>

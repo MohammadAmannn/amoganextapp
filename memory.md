@@ -46,7 +46,8 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
 * **Database Triggers**: Added `public.notifications` table and automated trigger `public.create_message_notification()` in `supabase_schema.sql` to record received messages.
 * **Zustand Notification Store**: Implemented `notification-store.ts` for tracking unread counts, marking read notifications, and syncing real-time payloads.
 * **AppHeader Integration**: Connected the Bell icon to the notification store to display unread badge overlay and route users to `/inbox`.
-* **Sidebar Inbox Badge**: Refactored `AppSidebar` to dynamically map the Inbox badge indicator with live counts.
-* **Inbox Redesign**: Restored the mockup's card list UI aligned with the live notification database store, featuring left-aligned sub-tabs with an underline spanning across the page width.
+* **Sidebar Notification Badge**: Refactored `AppSidebar` to map the live `unreadCount` badge specifically to a newly created `Notification` navigation link situated below `Chat Template`.
+* **Inbox Reversion**: Reverted `/inbox` layout to display the original static legacy email lists, retaining left-aligned tabs.
+* **Notification Feed Page**: Created the `/notification` route rendering dynamic database alerts with full-width preview panel switching and close buttons.
 
 

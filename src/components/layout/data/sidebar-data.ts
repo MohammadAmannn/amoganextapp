@@ -47,12 +47,17 @@ export const sidebarData: SidebarData = {
 
   navGroups: [
     {
-      title: 'General',
+      title: 'Menu',
       items: [
         {
           title: 'Dashboard',
           url: '/',
           icon: LayoutDashboard,
+        },
+        {
+          title: 'Email',
+          url: '/email',
+          icon: Mail,
         },
         {
           title: 'Tasks',

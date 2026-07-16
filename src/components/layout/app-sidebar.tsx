@@ -48,7 +48,7 @@ export function AppSidebar() {
     // Sidebar ko fixed "sidebar" variant par lock kiya gaya hai (floating remove).
     <Sidebar collapsible={collapsible} variant='sidebar'>
       {/* Logo */}
-      <SidebarHeader>
+      <SidebarHeader className='pb-0'>
         <TeamSwitcher teams={dynamicSidebarData.teams} />
       </SidebarHeader>
 

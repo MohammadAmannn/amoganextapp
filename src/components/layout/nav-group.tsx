@@ -37,22 +37,26 @@ import {
   type NavGroup as NavGroupProps,
 } from './types'
 
+import { cn } from '@/lib/utils'
+
 export function NavGroup({ title, items }: NavGroupProps) {
   const { state, isMobile, openMobile, setOpenMobile } = useSidebar()
   const href = usePathname()
 
   return (
-    <SidebarGroup>
-      {/* ✅ UPDATED: Added flex layout for title + trigger */}
-      {/* ==========================================
-    UPDATED: Desktop + Mobile Layout
-========================================== */}
-      <SidebarGroupLabel className='flex items-center justify-between'>
+    <SidebarGroup className={cn(title === 'Menu' && 'pt-0')}>
+      {/* Label and Toggle: Sticky at the top */}
+      <SidebarGroupLabel
+        className={cn(
+          'flex items-center justify-between',
+          title === 'Menu' && state !== 'collapsed' && 'sticky top-0 z-20 bg-sidebar py-1.5'
+        )}
+      >
         {/* Left Side */}
         <span>{title}</span>
 
         {/* Desktop: Toggle on far right */}
-        {title === 'General' && !isMobile && (
+        {title === 'Menu' && !isMobile && (
           <SidebarTrigger
             variant='ghost'
             className='h-5 w-5'
@@ -61,7 +65,7 @@ export function NavGroup({ title, items }: NavGroupProps) {
         )}
 
         {/* Mobile: Close button */}
-        {title === 'General' && isMobile && openMobile && (
+        {title === 'Menu' && isMobile && openMobile && (
           <Button
             type='button'
             variant='ghost'

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Mail, Plus } from 'lucide-react'
 import { Main } from '@/components/layout/main'
 import { AppHeader } from '@/components/layout/app-header'
 import { ComingSoon } from '@/components/coming-soon'
@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import { emails as initialEmails, Email } from './data/emails'
 import { EmailList } from './components/email-list'
 import { EmailDetail } from './components/email-detail'
+import { NewEmail } from './components/new-email'
 
 export default function EmailFeature() {
   const [emails, setEmails] = useState<Email[]>(initialEmails)
@@ -22,6 +23,7 @@ export default function EmailFeature() {
   const [mode, setMode] = useState<'inbox' | 'done'>('inbox')
   const [activeTab, setActiveTab] = useState('inbox')
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isComposing, setIsComposing] = useState(false)
 
   // Action handlers
   const handleSelectEmail = (email: Email) => {
@@ -69,7 +71,18 @@ export default function EmailFeature() {
           className='flex flex-1 flex-col overflow-hidden space-y-4 min-h-0'
         >
           {/* Custom Tabs Navigation (matches notifications and inbox tabs style) */}
-          <div className='w-full overflow-x-auto pb-2 shrink-0 border-b border-border px-4 sm:px-0 sticky top-0 bg-background z-10'>
+          <div className='w-full overflow-x-auto pb-2 shrink-0 border-b border-border px-4 sm:px-0 sticky top-0 bg-background z-10 flex items-center gap-4'>
+            {/* Compose/New Email Button */}
+            <button
+              onClick={() => setIsComposing(true)}
+              className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-sm border border-transparent'
+              title='Compose New Email'
+            >
+              <Mail className='h-3.5 w-3.5' />
+              <span>New</span>
+              <Plus className='h-3 w-3' />
+            </button>
+
             <TabsList className='h-auto gap-6 border-0 bg-transparent p-0 shadow-none rounded-none'>
               <TabsTrigger
                 value='inbox'
@@ -98,81 +111,116 @@ export default function EmailFeature() {
             </TabsList>
           </div>
 
-          <TabsContent
-            value='inbox'
-            className='flex-1 overflow-hidden flex flex-row mt-0 focus-visible:outline-none border border-border rounded-xl bg-background shadow-xs'
-          >
-            {/* Responsive split screen */}
-            <div className='flex flex-1 h-full overflow-hidden w-full'>
-              {/* Left Column: Email List */}
-              <div
-                className={cn(
-                  'shrink-0 h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out',
-                  selectedEmail && 'hidden md:block',
-                  isSidebarCollapsed ? 'w-20' : 'w-full md:w-[350px] lg:w-[400px]'
-                )}
-              >
-                <EmailList
-                  emails={emails}
-                  selectedEmailId={selectedEmail?.id ?? null}
-                  onSelectEmail={handleSelectEmail}
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  mode={mode}
-                  setMode={setMode}
-                  isCollapsed={isSidebarCollapsed}
-                  onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                />
-              </div>
-
-              {/* Right Column: Email Detail */}
-              <div
-                className={cn(
-                  'flex-grow flex flex-col h-full overflow-hidden relative',
-                  !selectedEmail && 'hidden md:block'
-                )}
-              >
-                {/* Back button visible only on mobile when email is selected */}
-                {selectedEmail && (
-                  <button
-                    onClick={() => setSelectedEmail(null)}
-                    className='md:hidden absolute left-4 top-3 z-50 p-1.5 rounded-full hover:bg-muted text-muted-foreground transition-colors border bg-background shrink-0'
-                  >
-                    <ArrowLeft className='h-4 w-4' />
-                  </button>
-                )}
-
-                <EmailDetail
-                  email={selectedEmail}
-                  onSendReply={handleSendReply}
-                  onDelete={handleDelete}
-                  onArchive={handleArchive}
-                />
-              </div>
+          {isComposing ? (
+            <div className='flex-grow flex flex-col h-full overflow-hidden border border-border rounded-xl bg-background shadow-xs mt-0'>
+              <NewEmail
+                onCancel={() => setIsComposing(false)}
+                onSend={(emailData) => {
+                  toast.success("Email sent successfully!")
+                  // Optionally add to emails list
+                  const newEmail: Email = {
+                    id: String(Date.now()),
+                    from: undefined,
+                    name: "Main Account",
+                    email: "user@example.com",
+                    replyTo: "user@example.com",
+                    subject: emailData.subject || "(No Subject)",
+                    preview: emailData.body ? emailData.body.replace(/<[^>]*>/g, '').substring(0, 100) : "(No Content)",
+                    body: emailData.body || "",
+                    date: new Date(),
+                    read: true,
+                    labels: ['sent'],
+                    avatarInitials: "MA",
+                    done: true
+                  }
+                  setEmails((prev) => [newEmail, ...prev])
+                  setIsComposing(false)
+                }}
+                onSaveDraft={(emailData) => {
+                  toast.success("Draft saved successfully!")
+                  setIsComposing(false)
+                }}
+              />
             </div>
-          </TabsContent>
+          ) : (
+            <>
+              <TabsContent
+                value='inbox'
+                className='flex-1 overflow-hidden flex flex-row mt-0 focus-visible:outline-none border border-border rounded-xl bg-background shadow-xs'
+              >
+                {/* Responsive split screen */}
+                <div className='flex flex-1 h-full overflow-hidden w-full'>
+                  {/* Left Column: Email List */}
+                  <div
+                    className={cn(
+                      'shrink-0 h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out',
+                      selectedEmail && 'hidden md:block',
+                      isSidebarCollapsed ? 'w-20' : 'w-full md:w-[350px] lg:w-[400px]'
+                    )}
+                  >
+                    <EmailList
+                      emails={emails}
+                      selectedEmailId={selectedEmail?.id ?? null}
+                      onSelectEmail={handleSelectEmail}
+                      searchQuery={searchQuery}
+                      setSearchQuery={setSearchQuery}
+                      mode={mode}
+                      setMode={setMode}
+                      isCollapsed={isSidebarCollapsed}
+                      onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                    />
+                  </div>
 
-          {/* Other Tabs content */}
-          <TabsContent
-            value='favourite'
-            className='flex-1 flex items-center justify-center border border-dashed rounded-xl focus-visible:outline-none bg-muted/5 min-h-[400px] mt-0'
-          >
-            <ComingSoon />
-          </TabsContent>
+                  {/* Right Column: Email Detail */}
+                  <div
+                    className={cn(
+                      'flex-grow flex flex-col h-full overflow-hidden relative',
+                      !selectedEmail && 'hidden md:block'
+                    )}
+                  >
+                    {/* Back button visible only on mobile when email is selected */}
+                    {selectedEmail && (
+                      <button
+                        onClick={() => setSelectedEmail(null)}
+                        className='md:hidden absolute left-4 top-3 z-50 p-1.5 rounded-full hover:bg-muted text-muted-foreground transition-colors border bg-background shrink-0'
+                      >
+                        <ArrowLeft className='h-4 w-4' />
+                      </button>
+                    )}
 
-          <TabsContent
-            value='archive'
-            className='flex-1 flex items-center justify-center border border-dashed rounded-xl focus-visible:outline-none bg-muted/5 min-h-[400px] mt-0'
-          >
-            <ComingSoon />
-          </TabsContent>
+                    <EmailDetail
+                      email={selectedEmail}
+                      onSendReply={handleSendReply}
+                      onDelete={handleDelete}
+                      onArchive={handleArchive}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
 
-          <TabsContent
-            value='history'
-            className='flex-1 flex items-center justify-center border border-dashed rounded-xl focus-visible:outline-none bg-muted/5 min-h-[400px] mt-0'
-          >
-            <ComingSoon />
-          </TabsContent>
+              {/* Other Tabs content */}
+              <TabsContent
+                value='favourite'
+                className='flex-1 flex items-center justify-center border border-dashed rounded-xl focus-visible:outline-none bg-muted/5 min-h-[400px] mt-0'
+              >
+                <ComingSoon />
+              </TabsContent>
+
+              <TabsContent
+                value='archive'
+                className='flex-1 flex items-center justify-center border border-dashed rounded-xl focus-visible:outline-none bg-muted/5 min-h-[400px] mt-0'
+              >
+                <ComingSoon />
+              </TabsContent>
+
+              <TabsContent
+                value='history'
+                className='flex-1 flex items-center justify-center border border-dashed rounded-xl focus-visible:outline-none bg-muted/5 min-h-[400px] mt-0'
+              >
+                <ComingSoon />
+              </TabsContent>
+            </>
+          )}
         </Tabs>
       </Main>
     </>

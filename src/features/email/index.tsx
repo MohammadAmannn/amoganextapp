@@ -21,6 +21,7 @@ export default function EmailFeature() {
   const [searchQuery, setSearchQuery] = useState('')
   const [mode, setMode] = useState<'inbox' | 'done'>('inbox')
   const [activeTab, setActiveTab] = useState('inbox')
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   // Action handlers
   const handleSelectEmail = (email: Email) => {
@@ -106,8 +107,9 @@ export default function EmailFeature() {
               {/* Left Column: Email List */}
               <div
                 className={cn(
-                  'w-full md:w-[350px] lg:w-[400px] shrink-0 h-full flex flex-col overflow-hidden',
-                  selectedEmail && 'hidden md:block'
+                  'shrink-0 h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out',
+                  selectedEmail && 'hidden md:block',
+                  isSidebarCollapsed ? 'w-20' : 'w-full md:w-[350px] lg:w-[400px]'
                 )}
               >
                 <EmailList
@@ -118,6 +120,8 @@ export default function EmailFeature() {
                   setSearchQuery={setSearchQuery}
                   mode={mode}
                   setMode={setMode}
+                  isCollapsed={isSidebarCollapsed}
+                  onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                 />
               </div>
 

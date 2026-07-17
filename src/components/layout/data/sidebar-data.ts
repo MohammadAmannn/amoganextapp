@@ -60,6 +60,11 @@ export const sidebarData: SidebarData = {
           icon: Mail,
         },
         {
+          title: 'Email Settings',
+          url: '/email-settings',
+          icon: Settings,
+        },
+        {
           title: 'Tasks',
           url: '/tasks',
           icon: ListTodo,

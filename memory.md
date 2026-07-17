@@ -50,4 +50,14 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
 * **Inbox Reversion**: Reverted `/inbox` layout to display the original static legacy email lists, retaining left-aligned tabs.
 * **Notification Feed Page**: Created the `/notification` route rendering dynamic database alerts with full-width preview panel switching and close buttons.
 
+---
+
+## 7. Supabase PostgREST Refactoring
+* **Decoupled API Core**: Built a native `fetch`-based request engine under `src/features/chattemplate/shared/api/` featuring automatic header resolution (token/key auth), error parsing, and a chainable query builder (`apiClient.ts`, `queryBuilder.ts`, `headers.ts`, `errorHandler.ts`, `auth.ts`).
+* **Contacts & Groups Migration**: Migrated contacts and groups database actions (including checks, profile lookups, updates, deletions, and group upserts with `resolution=merge-duplicates`) to PostgREST APIs.
+* **Chat & Profile Layers Migration**: Migrated conversations, messages, user records, profiles, and receipt delivery states to standard `apiClient` requests, including nested resource selection parameters and bulk message copying.
+* **Compatibility Layer**: Rewrote all seven repositories (e.g. `contact-repository.ts`, `group-repository.ts`, `message-repository.ts`, `conversation-repository.ts`, etc.) to delegate directly to the new PostgREST API modules, ensuring zero regression across the application.
+
+
+
 

@@ -107,4 +107,20 @@ This document tracks the technical implementation, phase-by-phase objectives, an
 * **Next.js Router Navigation**: Routing user from the header's Bell icon directly to `/inbox` on click.
 * **Lucide React Icons & Tailwind/CSS**: Implementation of badge indicator overlays, close cross buttons, and responsive side-by-side preview panels.
 
+---
+
+## Phase 7: PostgREST CRUD Refactoring
+
+### Objectives & Architecture
+* **Decoupled API Modules**: Separate the database logic for Contacts, Groups, Conversations, Messages, Profiles, Users, and Message Delivery into dedicated, type-safe PostgREST API modules (`contacts.api.ts`, `groups.api.ts`, `conversations.api.ts`, `messages.api.ts`, `profiles.api.ts`, `users.api.ts`, `delivery.api.ts`).
+* **HTTP Native Fetch Queries**: Eliminate the Supabase SDK query builder client inside the `chattemplate` feature, shifting all database operations to native HTTP requests targeting the REST API endpoints.
+* **Compatibility Layer Repositories**: Update all existing repository interfaces (`contact-repository.ts`, etc.) to delegate directly to these API endpoints, maintaining zero regression.
+
+### Technologies & Purpose
+* **PostgREST REST API**: Standard, high-performance database REST API provided natively by Supabase to interact with tables.
+* **Supabase Custom Headers**: Leverage `Prefer: return=representation` for obtaining modified objects and `Prefer: resolution=merge-duplicates` for conflict-free database upserts.
+* **Typescript QueryBuilder**: Reusable utility class creating URL parameter filter queries programmatically (supporting `select`, `eq`, `ilike`, `or`, `order`, `limit`, `offset`, and `in` operations).
+
+
+
 

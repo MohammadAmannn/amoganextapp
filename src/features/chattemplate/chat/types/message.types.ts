@@ -66,4 +66,12 @@ export interface Message {
   // UI extended fields
   sender?: Profile
   replyto_message?: Message
+  replyMetadata?: {
+    replyemoji: string | null
+    replyto_message_id: string
+    replyto_user_id: string | null
+    parent_message_id: string | null
+    replyMessageText: string
+    replySenderName: string
+  }
 }

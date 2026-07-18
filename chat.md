@@ -53,6 +53,15 @@ This document provides a comprehensive overview of the database tables, constrai
 | `/api/upload` | `POST` | ✅ Done | Upload file to Supabase Storage (multipart/form-data) |
 | `/api/upload` | `DELETE` | ✅ Done | Delete file from Supabase Storage |
 
+### Notifications
+| Endpoint | Method | Status | Description |
+|---|---|---|---|
+| `/api/notifications` | `GET` | ✅ Done | List notifications for a user |
+| `/api/notifications` | `POST` | ✅ Done | Create a notification |
+| `/api/notifications/[id]` | `PATCH` | ✅ Done | Mark notification as read |
+| `/api/notifications/[id]` | `DELETE` | ✅ Done | Delete a notification |
+| `/api/notifications/read-all` | `PATCH` | ✅ Done | Mark all notifications as read |
+
 ---
 
 ## 🧪 Postman Test Checklist
@@ -98,6 +107,11 @@ Use this table to verify every API operation step-by-step. Replace placeholder U
 | ✅ 35 | List profiles | `GET /api/profiles` | All profiles returned |
 | ✅ 36 | Get profile by ID | `GET /api/profiles/:id` | Profile details returned |
 | ✅ 37 | Delete uploaded file | `DELETE /api/upload?path=...` | File removed from storage |
+| ✅ 38 | List notifications | `GET /api/notifications?userId=...` | Notifications returned |
+| ✅ 39 | Create notification | `POST /api/notifications` | Notification created |
+| ✅ 40 | Mark notification read | `PATCH /api/notifications/:id` | Read status updated |
+| ✅ 41 | Mark all read | `PATCH /api/notifications/read-all` | All unread → read |
+| ✅ 42 | Delete notification | `DELETE /api/notifications/:id` | Notification removed |
 
 ---
 
@@ -619,6 +633,84 @@ DELETE http://localhost:3000/api/upload?path=images/uuid-filename.jpg
 ```
 
 > Use the `storagePath` value from the upload response.
+
+---
+
+### 31. List Notifications
+
+```
+GET http://localhost:3000/api/notifications?userId=238d94d2-cfd3-4c47-9bbf-1c43f206d998
+```
+
+Optional filters:
+```
+GET http://localhost:3000/api/notifications?userId=238d94d2-cfd3-4c47-9bbf-1c43f206d998&read=false
+GET http://localhost:3000/api/notifications?userId=238d94d2-cfd3-4c47-9bbf-1c43f206d998&limit=10
+```
+
+---
+
+### 32. Create a Notification
+
+```
+POST http://localhost:3000/api/notifications
+```
+
+**Body (JSON):**
+```json
+{
+  "userId": "238d94d2-cfd3-4c47-9bbf-1c43f206d998",
+  "senderId": "386ebb5b-0bf1-4b82-b4b7-4eb73bab7d4a",
+  "messageId": "MSG_UUID_HERE",
+  "messageText": "John send you a msg"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "GENERATED_UUID",
+  "user_id": "238d94d2-cfd3-4c47-9bbf-1c43f206d998",
+  "sender_id": "386ebb5b-0bf1-4b82-b4b7-4eb73bab7d4a",
+  "message_id": "MSG_UUID_HERE",
+  "message_text": "John send you a msg",
+  "read": false,
+  "created_at": "2026-07-18T12:00:00.000Z"
+}
+```
+
+---
+
+### 33. Mark Notification as Read
+
+```
+PATCH http://localhost:3000/api/notifications/NOTIFICATION_UUID
+```
+
+No body needed — automatically marks `read: true`.
+
+---
+
+### 34. Mark ALL Notifications as Read
+
+```
+PATCH http://localhost:3000/api/notifications/read-all
+```
+
+**Body (JSON):**
+```json
+{
+  "userId": "238d94d2-cfd3-4c47-9bbf-1c43f206d998"
+}
+```
+
+---
+
+### 35. Delete a Notification
+
+```
+DELETE http://localhost:3000/api/notifications/NOTIFICATION_UUID
+```
 
 ---
 
@@ -1198,6 +1290,70 @@ POST https://abxwugpdvhmuxoesmumq.supabase.co/storage/v1/object/list/chat-files
 
 ---
 
+### 4.9. Notifications
+
+#### Fetch All Notifications for a User
+```
+GET https://abxwugpdvhmuxoesmumq.supabase.co/rest/v1/notifications?user_id=eq.238d94d2-cfd3-4c47-9bbf-1c43f206d998&order=created_at.desc
+```
+
+#### Fetch Only Unread Notifications
+```
+GET https://abxwugpdvhmuxoesmumq.supabase.co/rest/v1/notifications?user_id=eq.238d94d2-cfd3-4c47-9bbf-1c43f206d998&read=eq.false&order=created_at.desc
+```
+
+#### Create a Notification
+```
+POST https://abxwugpdvhmuxoesmumq.supabase.co/rest/v1/notifications
+```
+**Header:** Add `Prefer: return=representation`
+
+**Body:**
+```json
+{
+  "user_id": "238d94d2-cfd3-4c47-9bbf-1c43f206d998",
+  "sender_id": "386ebb5b-0bf1-4b82-b4b7-4eb73bab7d4a",
+  "message_id": "MSG_UUID_HERE",
+  "message_text": "John send you a msg",
+  "read": false
+}
+```
+
+#### Mark Single Notification as Read
+```
+PATCH https://abxwugpdvhmuxoesmumq.supabase.co/rest/v1/notifications?id=eq.NOTIFICATION_UUID
+```
+**Body:**
+```json
+{
+  "read": true
+}
+```
+
+#### Mark All Notifications as Read
+```
+PATCH https://abxwugpdvhmuxoesmumq.supabase.co/rest/v1/notifications?user_id=eq.238d94d2-cfd3-4c47-9bbf-1c43f206d998&read=eq.false
+```
+**Body:**
+```json
+{
+  "read": true
+}
+```
+
+#### Delete a Notification
+```
+DELETE https://abxwugpdvhmuxoesmumq.supabase.co/rest/v1/notifications?id=eq.NOTIFICATION_UUID
+```
+
+#### Get Unread Count
+```
+GET https://abxwugpdvhmuxoesmumq.supabase.co/rest/v1/notifications?user_id=eq.238d94d2-cfd3-4c47-9bbf-1c43f206d998&read=eq.false&select=id
+```
+> Count the array length in the response to get the unread count.
+
+---
+
 ### Quick Reference: localhost vs Supabase URL
 
 | What You Want | localhost Route | Direct Supabase |
@@ -1226,4 +1382,8 @@ POST https://abxwugpdvhmuxoesmumq.supabase.co/storage/v1/object/list/chat-files
 | List profiles | `GET /api/profiles` | `GET .../rest/v1/profiles?order=name.asc` |
 | Get profile | `GET /api/profiles/ID` | `GET .../rest/v1/profiles?id=eq.ID` |
 | Mark read | `PATCH /api/messages/delivery` | `PATCH .../rest/v1/chat_messages?...` |
-
+| **List notifications** | `GET /api/notifications?userId=...` | `GET .../rest/v1/notifications?user_id=eq...` |
+| **Create notification** | `POST /api/notifications` | `POST .../rest/v1/notifications` |
+| **Mark notif. read** | `PATCH /api/notifications/ID` | `PATCH .../rest/v1/notifications?id=eq.ID` |
+| **Mark all read** | `PATCH /api/notifications/read-all` | `PATCH .../rest/v1/notifications?user_id=eq...&read=eq.false` |
+| **Delete notification** | `DELETE /api/notifications/ID` | `DELETE .../rest/v1/notifications?id=eq.ID` |

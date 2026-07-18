@@ -70,3 +70,16 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
 * **37-Step Postman Test Checklist**: Created a comprehensive step-by-step verification table in `chat.md` covering send text, send image/video/document/audio (2-step upload+send flow), star/pin/flag/favorite/thumb/archive, reply, forward, delete for me/everyone, delivery receipts, contacts CRUD, conversations, groups, profiles, and file deletion.
 * **Dual Testing Documentation**: Added both `localhost` route examples (for testing through Next.js app) and direct Supabase PostgREST/Storage URL examples (for testing against hosted production database). Includes Quick Reference comparison table mapping every operation to both URL formats.
 * **Build Verified**: All 13 new routes compiled successfully with `next build` — zero errors, all routes registered in the production build output.
+
+---
+
+## 9. Notifications REST API
+* **5 New Notification API Routes**: Created REST API routes for the notification page under `app/api/notifications/`:
+  - `GET /api/notifications` — List notifications for a user (with optional `read` and `limit` filters)
+  - `POST /api/notifications` — Create a notification manually (for testing or external triggers)
+  - `PATCH /api/notifications/[id]` — Mark a single notification as read
+  - `DELETE /api/notifications/[id]` — Delete a single notification
+  - `PATCH /api/notifications/read-all` — Mark all unread notifications as read for a user
+* **Database Table**: Uses `public.notifications` table with columns: `id`, `user_id`, `sender_id`, `message_id`, `message_text`, `read`, `created_at`
+* **42-Step Postman Test Checklist**: Expanded the test checklist in `chat.md` with 5 notification steps (#38-#42)
+* **Dual Documentation**: Added both localhost Postman examples (#31-#35) and direct Supabase PostgREST examples (section 4.9) for all notification operations including unread count retrieval

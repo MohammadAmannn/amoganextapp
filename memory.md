@@ -58,6 +58,15 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
 * **Chat & Profile Layers Migration**: Migrated conversations, messages, user records, profiles, and receipt delivery states to standard `apiClient` requests, including nested resource selection parameters and bulk message copying.
 * **Compatibility Layer**: Rewrote all seven repositories (e.g. `contact-repository.ts`, `group-repository.ts`, `message-repository.ts`, `conversation-repository.ts`, etc.) to delegate directly to the new PostgREST API modules, ensuring zero regression across the application.
 
+---
 
-
-
+## 8. REST API Route Conversion (Postman-Testable)
+* **13 New Next.js API Routes**: Created server-side REST API route handlers under `app/api/` for every database operation, enabling full Postman testing without browser authentication:
+  - **Messages**: `GET/POST /api/messages`, `PATCH/DELETE /api/messages/[id]`, `DELETE /api/messages/[id]/everyone`, `POST /api/messages/[id]/forward`, `PATCH /api/messages/delivery`
+  - **Contacts**: `GET/POST /api/contacts`, `PATCH/DELETE /api/contacts/[id]`
+  - **Conversations**: `GET /api/conversations`, `POST /api/conversations/direct`, `POST /api/conversations/group`, `PATCH /api/conversations/[id]/read`
+  - **Profiles**: `GET /api/profiles`, `GET /api/profiles/[id]`
+* **File Upload REST API**: Built `POST/DELETE /api/upload` route supporting multipart/form-data file uploads to Supabase Storage bucket `chat-files` with folder routing (`images/`, `videos/`, `documents/`, `audio/`).
+* **37-Step Postman Test Checklist**: Created a comprehensive step-by-step verification table in `chat.md` covering send text, send image/video/document/audio (2-step upload+send flow), star/pin/flag/favorite/thumb/archive, reply, forward, delete for me/everyone, delivery receipts, contacts CRUD, conversations, groups, profiles, and file deletion.
+* **Dual Testing Documentation**: Added both `localhost` route examples (for testing through Next.js app) and direct Supabase PostgREST/Storage URL examples (for testing against hosted production database). Includes Quick Reference comparison table mapping every operation to both URL formats.
+* **Build Verified**: All 13 new routes compiled successfully with `next build` — zero errors, all routes registered in the production build output.

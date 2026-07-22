@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Search, Loader2, MessageSquare, PanelLeft, Check, CheckCheck, Clock } from 'lucide-react'
+import { Search, Loader2, MessageSquare, PanelLeft, Check, CheckCheck, Clock, Mic } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { getDisplayNameInitials } from '@/lib/utils'
 import { Conversation } from '../types/chat.types'
+import { UserTypingState } from '../types/typing.types'
 
 import { Button } from '@/components/ui/button'
 
@@ -19,6 +20,7 @@ interface ChatSidebarProps {
   onToggleCollapse: () => void
   onlineUserIds?: Set<string>
   currentUserId?: string
+  conversationTypingMap?: Record<string, UserTypingState[]>
 }
 
 export function ChatSidebar({
@@ -31,6 +33,7 @@ export function ChatSidebar({
   onToggleCollapse,
   onlineUserIds,
   currentUserId,
+  conversationTypingMap = {},
 }: ChatSidebarProps) {
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -188,33 +191,60 @@ export function ChatSidebar({
                     </div>
 
                     <div className='flex items-center justify-between gap-2 min-w-0'>
-                      <div className="flex items-center gap-1 min-w-0 flex-1">
-                        {convo.lastMessage && convo.lastMessage.sender_user_id === currentUserId && (
-                          <span className="shrink-0 flex items-center">
-                            {convo.lastMessage.message_status === 'pending' && (
-                              <Clock className="h-3 w-3 text-muted-foreground/60 animate-pulse" />
+                      {(() => {
+                        const typingUsers = conversationTypingMap[convo.id] || []
+                        if (typingUsers.length > 0) {
+                          const isRecording = typingUsers.some(u => u.status === 'recording')
+                          return (
+                            <div className='flex items-center gap-1 min-w-0 flex-1'>
+                              {isRecording ? (
+                                <span className='text-[10px] text-red-500 font-bold truncate leading-normal flex items-center gap-1 animate-pulse'>
+                                  <Mic className='h-3 w-3 animate-pulse shrink-0' />
+                                  {convo.type === 'direct'
+                                    ? 'recording audio...'
+                                    : `${typingUsers[0].userName}: recording audio...`}
+                                </span>
+                              ) : (
+                                <span className='text-[10px] text-emerald-500 font-bold truncate leading-normal flex items-center gap-1 animate-pulse'>
+                                  {convo.type === 'direct'
+                                    ? 'typing...'
+                                    : `${typingUsers[0].userName}: typing...`}
+                                </span>
+                              )}
+                            </div>
+                          )
+                        }
+
+                        return (
+                          <div className="flex items-center gap-1 min-w-0 flex-1">
+                            {convo.lastMessage && convo.lastMessage.sender_user_id === currentUserId && (
+                              <span className="shrink-0 flex items-center">
+                                {convo.lastMessage.message_status === 'pending' && (
+                                  <Clock className="h-3 w-3 text-muted-foreground/60 animate-pulse" />
+                                )}
+                                {convo.lastMessage.message_status === 'sent' && (
+                                  <Check className="h-3 w-3 text-muted-foreground/70" />
+                                )}
+                                {convo.lastMessage.message_status === 'delivered' && (
+                                  <CheckCheck className="h-3 w-3 text-muted-foreground/70" />
+                                )}
+                                {convo.lastMessage.message_status === 'read' && (
+                                  <CheckCheck className="h-3 w-3 text-sky-500" />
+                                )}
+                                {!convo.lastMessage.message_status && (
+                                  <CheckCheck className="h-3 w-3 text-muted-foreground/70" />
+                                )}
+                              </span>
                             )}
-                            {convo.lastMessage.message_status === 'sent' && (
-                              <Check className="h-3 w-3 text-muted-foreground/70" />
-                            )}
-                            {convo.lastMessage.message_status === 'delivered' && (
-                              <CheckCheck className="h-3 w-3 text-muted-foreground/70" />
-                            )}
-                            {convo.lastMessage.message_status === 'read' && (
-                              <CheckCheck className="h-3 w-3 text-sky-500" />
-                            )}
-                            {!convo.lastMessage.message_status && (
-                              <CheckCheck className="h-3 w-3 text-muted-foreground/70" />
-                            )}
-                          </span>
-                        )}
-                        <p className={cn(
-                          'text-[10px] truncate leading-normal flex-1',
-                          convo.unreadCount && convo.unreadCount > 0 ? 'text-foreground font-extrabold' : 'text-muted-foreground font-semibold'
-                        )}>
-                          {getLastMessageText(convo)}
-                        </p>
-                      </div>
+                            <p className={cn(
+                              'text-[10px] truncate leading-normal flex-1',
+                              convo.unreadCount && convo.unreadCount > 0 ? 'text-foreground font-extrabold' : 'text-muted-foreground font-semibold'
+                            )}>
+                              {getLastMessageText(convo)}
+                            </p>
+                          </div>
+                        )
+                      })()}
                       {convo.unreadCount && convo.unreadCount > 0 ? (
                         <span className='h-4 min-w-4 px-1 rounded-full bg-emerald-500 text-white text-[8px] font-extrabold flex items-center justify-center shrink-0 animate-in zoom-in-50 duration-150 leading-none'>
                           {convo.unreadCount > 99 ? '99+' : convo.unreadCount}

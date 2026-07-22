@@ -83,3 +83,29 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
 * **Database Table**: Uses `public.notifications` table with columns: `id`, `user_id`, `sender_id`, `message_id`, `message_text`, `read`, `created_at`
 * **42-Step Postman Test Checklist**: Expanded the test checklist in `chat.md` with 5 notification steps (#38-#42)
 * **Dual Documentation**: Added both localhost Postman examples (#31-#35) and direct Supabase PostgREST examples (section 4.9) for all notification operations including unread count retrieval
+
+---
+
+## 10. Presence & Profile REST API Migration
+* **Profile PATCH Route**: Created `PATCH /api/profiles/[id]` to support updating user profile details and real-time presence status.
+* **Refactored Frontend Hooks & Managers**: Migrated database interactions from direct Supabase query builder and direct PostgREST calls on the client side to the relative local REST API:
+  - `presence-manager.ts`: Updates presence via `PATCH /api/profiles/[id]` instead of direct Supabase client updates.
+  - `use-presence.ts`: Fires beacon/unload patches using `/api/profiles/[id]` instead of querying direct PostgREST `/rest/v1/profiles` URIs.
+  - `use-realtime.ts`: Resolves sender profile info via `GET /api/profiles/[id]` instead of direct client-side database select.
+* **Database Layer Wrapper**: Added `updateProfile` function inside `profiles.api.ts` and wrapped it inside `profile-repository.ts` to execute database patch operations securely on the server side.
+* **Admin Emails Config & Subscription Fix**: Added `'itsaman00786@gmail.com'` and `'amanmicropay@gmail.com'` to `adminEmails` configuration list in `db-alert.ts` and subscribed their existing profiles to the `DB Alerts` conversation, allowing them to receive database alerts successfully.
+
+---
+
+## 11. Real-Time Typing & Voice Note Recording Broadcast
+* **Ephemeral Real-Time Engine**: Built `use-typing-broadcast.ts` leveraging Supabase Realtime Broadcast (`chat-typing-room` channel). Transmits ephemeral `typing_status` payloads (`idle` | `typing` | `recording`) across clients without mutating the Postgres database.
+* **Auto-Debounce & Idle Expiration**: Implemented auto-throttling (1.5s interval) and periodic cleanup timers (4s expiration) to gracefully clear stale indicators if a user stops typing or disconnects.
+* **WhatsApp/Telegram Indicator UI**:
+  - **Header Subtitle**: Dynamically displays animated `User A is typing...` or `User A is recording audio...` (with pulsing mic icon) in `chat-window.tsx` header.
+  - **In-Stream Glassmorphic Bubble**: Created `typing-indicator.tsx` rendering animated 3-dot bounces for text typing and soundwave animations for voice notes in the chat window scroll container.
+  - **Sidebar Conversation List**: Configured `chat-sidebar.tsx` to render real-time emerald `typing...` or red `recording audio...` subtitle previews for any active conversation in the sidebar list.
+* **Clean Architecture & Types**: Created `src/features/chattemplate/chat/types/typing.types.ts` and modularized components for clean code organization and ease of maintainability.
+* **TDZ ReferenceError Fix**: Hoisted `DynamicDocViewer` and `DocPreviewViewer` component declarations above `ChatWindow` in `chat-window.tsx`, resolving Next.js bundled `Uncaught ReferenceError: Cannot access 'F' before initialization` runtime errors.
+* **Complete Documentation**: Created `typing.md` detailing implementation steps, folder structure breakdown, and technical references.
+
+

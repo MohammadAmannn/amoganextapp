@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { apiClient } from '@/features/chattemplate/shared/api/apiClient'
 import { createQuery } from '@/features/chattemplate/shared/api/queryBuilder'
+import { updateProfile } from '@/features/chattemplate/chat/repositories/profile-repository'
 
 export const runtime = 'nodejs'
 
@@ -44,3 +45,31 @@ export async function GET(
     )
   }
 }
+
+/**
+ * PATCH /api/profiles/[id]
+ * Updates profile details or presence.
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const body = await request.json()
+
+    const success = await updateProfile(id, body)
+    if (!success) {
+      return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, id })
+  } catch (err) {
+    console.error('PATCH profile error:', err)
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Internal Server Error' },
+      { status: 500 }
+    )
+  }
+}
+

@@ -46,6 +46,7 @@ This document provides a comprehensive overview of the database tables, constrai
 |---|---|---|---|
 | `/api/profiles` | `GET` | ✅ Done | List all profiles (or by email) |
 | `/api/profiles/[id]` | `GET` | ✅ Done | Get profile by ID |
+| `/api/profiles/[id]` | `PATCH` | ✅ Done | Update profile details / presence status |
 
 ### Storage / File Upload
 | Endpoint | Method | Status | Description |
@@ -112,6 +113,7 @@ Use this table to verify every API operation step-by-step. Replace placeholder U
 | ✅ 40 | Mark notification read | `PATCH /api/notifications/:id` | Read status updated |
 | ✅ 41 | Mark all read | `PATCH /api/notifications/read-all` | All unread → read |
 | ✅ 42 | Delete notification | `DELETE /api/notifications/:id` | Notification removed |
+| ✅ 43 | Update profile status | `PATCH /api/profiles/:id` | Profile / presence updated |
 
 ---
 
@@ -710,6 +712,25 @@ PATCH http://localhost:3000/api/notifications/read-all
 
 ```
 DELETE http://localhost:3000/api/notifications/NOTIFICATION_UUID
+```
+
+---
+
+### 36. Update Profile Status / Presence
+
+```
+PATCH http://localhost:3000/api/profiles/USER_UUID
+```
+
+**Body (JSON):**
+```json
+{
+  "status": "offline",
+  "online": false,
+  "offline": true,
+  "last_seen": "2026-07-20T10:00:00.000Z",
+  "updated_at": "2026-07-20T10:00:00.000Z"
+}
 ```
 
 ---

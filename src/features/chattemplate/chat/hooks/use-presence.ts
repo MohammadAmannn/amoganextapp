@@ -50,33 +50,27 @@ export function usePresence(userId: string | undefined) {
 
     // 4. Handle tab close/browser unload
     const handleUnload = () => {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-      if (supabaseUrl && supabaseKey) {
-        const url = `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}`
-        const body = JSON.stringify({
-          status: 'offline',
-          online: false,
-          offline: true,
-          last_seen: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        
-        if (navigator.sendBeacon) {
-          const blob = new Blob([body], { type: 'application/json' })
-          navigator.sendBeacon(url, blob)
-        } else {
-          fetch(url, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${supabaseKey}`,
-              'apikey': supabaseKey,
-            },
-            body,
-            keepalive: true
-          }).catch(() => {})
-        }
+      const url = `/api/profiles/${userId}`
+      const body = JSON.stringify({
+        status: 'offline',
+        online: false,
+        offline: true,
+        last_seen: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      
+      if (navigator.sendBeacon) {
+        const blob = new Blob([body], { type: 'application/json' })
+        navigator.sendBeacon(url, blob)
+      } else {
+        fetch(url, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body,
+          keepalive: true
+        }).catch(() => {})
       }
     }
 

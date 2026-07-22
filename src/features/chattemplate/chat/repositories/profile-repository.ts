@@ -21,3 +21,11 @@ export async function getAllProfiles(): Promise<Profile[]> {
 export async function getOrCreateProfileForContact(email: string, name: string): Promise<Profile | null> {
   return profilesApi.getOrCreateProfileForContact(email, name)
 }
+
+export async function updateProfile(
+  id: string,
+  updates: Parameters<typeof profilesApi.updateProfile>[1]
+): Promise<boolean> {
+  return profilesApi.updateProfile(id, updates)
+}
+

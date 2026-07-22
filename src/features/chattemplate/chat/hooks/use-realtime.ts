@@ -37,13 +37,9 @@ export function useRealtime(
           let senderProfile = undefined
           if (newMsg.sender_user_id) {
             try {
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('id, name, email, avatar')
-                .eq('id', newMsg.sender_user_id)
-                .maybeSingle()
-              
-              if (profile) {
+              const res = await fetch(`/api/profiles/${newMsg.sender_user_id}`)
+              if (res.ok) {
+                const profile = await res.json()
                 senderProfile = {
                   id: profile.id,
                   name: profile.name,

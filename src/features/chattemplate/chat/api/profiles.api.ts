@@ -196,3 +196,31 @@ export async function getOrCreateProfileForContact(email: string, name: string):
   }
   return null
 }
+
+/**
+ * Update a profile's details or presence status.
+ */
+export async function updateProfile(
+  id: string,
+  updates: {
+    status?: 'online' | 'offline'
+    online?: boolean
+    offline?: boolean
+    last_seen?: string
+    updated_at?: string
+    name?: string
+    avatar?: string | null
+    company?: string | null
+    mobile?: string | null
+  }
+): Promise<boolean> {
+  try {
+    const query = createQuery().eq('id', id)
+    await apiClient.patch(`/rest/v1/profiles${query.toString()}`, updates)
+    return true
+  } catch (err) {
+    console.error('[profiles.api] Failed to update profile:', err)
+    return false
+  }
+}
+

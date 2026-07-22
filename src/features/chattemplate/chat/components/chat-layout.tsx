@@ -30,6 +30,7 @@ import { Message } from '../types/chat.types'
 import { useOnlineStatus } from '../hooks/use-online-status'
 import { usePresence } from '../hooks/use-presence'
 import { useMessageQueue } from '../hooks/use-message-queue'
+import { useTypingBroadcast } from '../hooks/use-typing-broadcast'
 import { markMessagesAsRead, markMessagesAsDelivered } from '../repositories/delivery-repository'
 import { isBrowserOnline } from '../utils/network'
 import { toast } from 'sonner'
@@ -66,6 +67,13 @@ export function ChatLayout() {
   const isOnline = useOnlineStatus()
   const { onlineUserIds } = usePresence(currentUser?.accountNo)
 
+  // Realtime Supabase Broadcast Typing & Voice Recording Indicators
+  const {
+    sendTypingStatus,
+    getTypingUsersForConversation,
+    conversationTypingMap,
+  } = useTypingBroadcast(currentUser?.accountNo, currentUser?.name || currentUser?.email)
+
   const {
     conversations,
     setConversations,
@@ -75,6 +83,8 @@ export function ChatLayout() {
     loadConversations,
     startDirectConversation,
   } = useConversation()
+
+  const activeTypingUsers = getTypingUsersForConversation(activeConversation?.id)
 
   const {
     messages,
@@ -609,6 +619,7 @@ export function ChatLayout() {
                 onToggleCollapse={handleToggleLeftSidebar}
                 onlineUserIds={onlineUserIds}
                 currentUserId={currentUser?.accountNo}
+                conversationTypingMap={conversationTypingMap}
               />
             </div>
 
@@ -631,6 +642,8 @@ export function ChatLayout() {
                     isLeftSidebarCollapsed={isLeftSidebarCollapsed}
                     onToggleLeftSidebar={handleToggleLeftSidebar}
                     onlineUserIds={onlineUserIds}
+                    typingUsers={activeTypingUsers}
+                    onSendTypingStatus={(status) => sendTypingStatus(activeConversation.id, status)}
                   />
                 ) : (
                   <ChatWelcome />

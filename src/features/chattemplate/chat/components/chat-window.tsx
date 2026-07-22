@@ -42,10 +42,68 @@ import { getUserConversations } from '../repositories/conversation-repository'
 import { LocationPicker } from '../components/locationpicker' // Make sure this is the correct path
 import { useLocation } from '../hooks/use-location'
 import { LocationData } from '../types/location.types'
+import { TypingIndicator } from './typing-indicator'
+import { UserTypingState, TypingStatus } from '../types/typing.types'
 
 // FEATURE 1: Emoji Picker (Lazy loaded to optimize bundle size)
 const EmojiPicker = dynamic(() => import('./emoji-picker'), { ssr: false })
 const LeafletMap = dynamic(() => import('@/components/ui/leaflet-map'), { ssr: false })
+
+// Custom inline PDF & Document Viewer components powered by @cyntler/react-doc-viewer
+const DynamicDocViewer = dynamic(
+  () => import('@cyntler/react-doc-viewer').then((mod) => {
+    return function WrappedDocViewer({ documents }: { documents: any[] }) {
+      return (
+        <mod.default
+          documents={documents}
+          pluginRenderers={mod.DocViewerRenderers}
+          theme={{
+            primary: '#10b981', // Emerald primary to match application theme
+            secondary: '#ffffff',
+            tertiary: '#f3f4f6',
+            textPrimary: '#1f2937',
+            textSecondary: '#6b7280',
+          }}
+          config={{
+            header: {
+              disableHeader: true,
+              disableFileName: true,
+              retainURLParams: false,
+            }
+          }}
+          style={{ height: '100%' }}
+        />
+      )
+    }
+  }),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex flex-col items-center justify-center h-full w-full space-y-3 bg-background animate-in fade-in duration-200">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <p className="text-xs font-semibold text-muted-foreground animate-pulse">Loading document preview...</p>
+      </div>
+    )
+  }
+)
+
+function getFileTypeFromFileName(fileName: string): string | undefined {
+  const parts = fileName.split('.')
+  if (parts.length > 1) {
+    return parts[parts.length - 1].toLowerCase()
+  }
+  return undefined
+}
+
+function DocPreviewViewer({ url, name }: { url: string; name: string }) {
+  const fileType = getFileTypeFromFileName(name)
+  const docs = [{ uri: url, fileName: name, fileType: fileType }]
+  return (
+    <div className="doc-viewer-wrapper h-full w-full">
+      <DynamicDocViewer documents={docs} />
+    </div>
+  )
+}
 
 interface ChatWindowProps {
   selectedTarget: Conversation
@@ -78,6 +136,8 @@ interface ChatWindowProps {
   isRightSidebarOpen?: boolean
   onToggleRightSidebar?: () => void
   onlineUserIds?: Set<string>
+  typingUsers?: UserTypingState[]
+  onSendTypingStatus?: (status: TypingStatus) => void
 }
 
 interface UploadState {
@@ -100,6 +160,8 @@ export function ChatWindow({
   isRightSidebarOpen,
   onToggleRightSidebar,
   onlineUserIds,
+  typingUsers = [],
+  onSendTypingStatus,
 }: ChatWindowProps) {
   const [inputText, setInputText] = useState('')
   const { uploads, startUpload, cancelUpload } = useAttachments()
@@ -202,9 +264,48 @@ export function ChatWindow({
     scrollToBottom()
   }, [messages, isTyping])
 
+  // Real-time Supabase Broadcast Typing & Recording References
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastTypingBroadcastRef = useRef<number>(0)
+  const recordingBroadcastIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Clean up typing timers and recording broadcast intervals on conversation switch or unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+      if (recordingBroadcastIntervalRef.current) clearInterval(recordingBroadcastIntervalRef.current)
+    }
+  }, [selectedTarget.id])
+
+  const handleInputChange = (val: string) => {
+    setInputText(val)
+
+    if (!onSendTypingStatus) return
+
+    if (val.trim().length > 0) {
+      const now = Date.now()
+      if (now - lastTypingBroadcastRef.current > 1500) {
+        onSendTypingStatus('typing')
+        lastTypingBroadcastRef.current = now
+      }
+
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+      typingTimeoutRef.current = setTimeout(() => {
+        onSendTypingStatus('idle')
+      }, 3000)
+    } else {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+      onSendTypingStatus('idle')
+    }
+  }
+
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
     if (!inputText.trim()) return
+    if (onSendTypingStatus) {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+      onSendTypingStatus('idle')
+    }
     onSendMessage(
       inputText.trim(),
       undefined,
@@ -662,6 +763,16 @@ export function ChatWindow({
       setIsRecording(true)
       setRecordDuration(0)
 
+      if (onSendTypingStatus) {
+        onSendTypingStatus('recording')
+      }
+      if (recordingBroadcastIntervalRef.current) clearInterval(recordingBroadcastIntervalRef.current)
+      recordingBroadcastIntervalRef.current = setInterval(() => {
+        if (onSendTypingStatus && isRecordingRef.current) {
+          onSendTypingStatus('recording')
+        }
+      }, 1500)
+
       timerRef.current = setInterval(() => {
         setRecordDuration(prev => prev + 1)
       }, 1000)
@@ -676,6 +787,14 @@ export function ChatWindow({
     isRecordingRef.current = false
     setIsRecording(false)
     setSlideX(0)
+
+    if (recordingBroadcastIntervalRef.current) {
+      clearInterval(recordingBroadcastIntervalRef.current)
+      recordingBroadcastIntervalRef.current = null
+    }
+    if (onSendTypingStatus) {
+      onSendTypingStatus('idle')
+    }
 
     if (timerRef.current) {
       clearInterval(timerRef.current)
@@ -761,6 +880,14 @@ export function ChatWindow({
     isRecordingRef.current = false
     setIsRecording(false)
     setSlideX(0)
+
+    if (recordingBroadcastIntervalRef.current) {
+      clearInterval(recordingBroadcastIntervalRef.current)
+      recordingBroadcastIntervalRef.current = null
+    }
+    if (onSendTypingStatus) {
+      onSendTypingStatus('idle')
+    }
 
     if (timerRef.current) {
       clearInterval(timerRef.current)
@@ -973,6 +1100,29 @@ export function ChatWindow({
                 {selectedTarget.name}
               </span>
               {(() => {
+                if (typingUsers && typingUsers.length > 0) {
+                  const isRecording = typingUsers.some(u => u.status === 'recording')
+                  return (
+                    <div className='flex items-center gap-1.5 mt-0.5 select-none'>
+                      {isRecording ? (
+                        <span className='text-[11px] text-red-500 font-bold leading-none animate-pulse flex items-center gap-1'>
+                          <Mic className='h-3 w-3 animate-pulse shrink-0' />
+                          {typingUsers.length === 1
+                            ? `${typingUsers[0].userName} is recording audio...`
+                            : `${typingUsers[0].userName} and others are recording audio...`}
+                        </span>
+                      ) : (
+                        <span className='text-[11px] text-emerald-500 font-bold leading-none animate-pulse flex items-center gap-1'>
+                          <span className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping shrink-0' />
+                          {typingUsers.length === 1
+                            ? `${typingUsers[0].userName} is typing...`
+                            : `${typingUsers[0].userName} and others are typing...`}
+                        </span>
+                      )}
+                    </div>
+                  )
+                }
+
                 if (selectedTarget.type !== 'direct') {
                   const totalMembers = selectedTarget.members?.length || 0
                   const onlineCount = selectedTarget.members?.filter(m => onlineUserIds?.has(m.id)).length || 0
@@ -998,41 +1148,41 @@ export function ChatWindow({
                       </div>
                     </div>
                   )
-                } else {
-                  const recipient = selectedTarget.members?.find(m => m.id !== currentUser?.accountNo)
-                  const isOnline = recipient ? onlineUserIds?.has(recipient.id) : false
-
-                  const formatLastSeen = (lastSeenStr?: string): string => {
-                    if (!lastSeenStr) return 'Offline'
-                    const date = new Date(lastSeenStr)
-                    const now = new Date()
-
-                    const isToday = date.toDateString() === now.toDateString()
-                    const yesterday = new Date(now)
-                    yesterday.setDate(now.getDate() - 1)
-                    const isYesterday = date.toDateString() === yesterday.toDateString()
-
-                    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-
-                    if (isToday) {
-                      return `Last seen today at ${timeStr}`
-                    } else if (isYesterday) {
-                      return `Last seen yesterday at ${timeStr}`
-                    } else {
-                      const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric' })
-                      return `Last seen on ${dateStr} at ${timeStr}`
-                    }
-                  }
-
-                  return (
-                    <span className={cn(
-                      'text-[10px] truncate block leading-normal font-semibold',
-                      isOnline ? 'text-emerald-500 font-extrabold' : 'text-muted-foreground'
-                    )}>
-                      {isOnline ? '🟢 Online' : formatLastSeen(recipient?.last_seen)}
-                    </span>
-                  )
                 }
+
+                const recipient = selectedTarget.members?.find(m => m.id !== currentUser?.accountNo)
+                const isOnline = recipient ? onlineUserIds?.has(recipient.id) : false
+
+                const formatLastSeen = (lastSeenStr?: string): string => {
+                  if (!lastSeenStr) return 'Offline'
+                  const date = new Date(lastSeenStr)
+                  const now = new Date()
+
+                  const isToday = date.toDateString() === now.toDateString()
+                  const yesterday = new Date(now)
+                  yesterday.setDate(now.getDate() - 1)
+                  const isYesterday = date.toDateString() === yesterday.toDateString()
+
+                  const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+                  if (isToday) {
+                    return `Last seen today at ${timeStr}`
+                  } else if (isYesterday) {
+                    return `Last seen yesterday at ${timeStr}`
+                  } else {
+                    const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric' })
+                    return `Last seen on ${dateStr} at ${timeStr}`
+                  }
+                }
+
+                return (
+                  <span className={cn(
+                    'text-[10px] truncate block leading-normal font-semibold',
+                    isOnline ? 'text-emerald-500' : 'text-muted-foreground'
+                  )}>
+                    {isOnline ? ' Online' : formatLastSeen(recipient?.last_seen)}
+                  </span>
+                )
               })()}
             </div>
           </div>
@@ -1116,8 +1266,11 @@ export function ChatWindow({
             ))
           )}
 
+          {/* Typing & Voice Recording Indicator Bubble */}
+          <TypingIndicator typingUsers={typingUsers} />
+
           {/* Typing Indicator */}
-          {isTyping && (
+          {isTyping && typingUsers.length === 0 && (
             <div className='flex items-end gap-2.5 max-w-[75%]'>
               <div className='bg-card border border-border/50 rounded-2xl rounded-tl-none px-4 py-3 flex items-center gap-1 shadow-xs'>
                 <Loader2 className='h-3 w-3 text-muted-foreground animate-spin' />
@@ -1239,7 +1392,7 @@ export function ChatWindow({
               <input
                 ref={inputRef}
                 value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
+                onChange={(e) => handleInputChange(e.target.value)}
                 placeholder={isTyping ? `Recording in progress...` : 'Message'}
                 className='flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground focus:ring-0 focus:outline-none focus:border-0 min-w-0'
                 disabled={isTyping}
@@ -1453,64 +1606,6 @@ export function ChatWindow({
         onSendLocation={handleSendLocation}
         isLiveEnabled={true} // Enable live location sharing for both direct and group chats
       />
-    </div>
-  )
-}
-
-// ----------------------------------------------------------------------------
-// Custom inline PDF & Document Viewer components powered by @cyntler/react-doc-viewer
-// ----------------------------------------------------------------------------
-const DynamicDocViewer = dynamic(
-  () => import('@cyntler/react-doc-viewer').then((mod) => {
-    return function WrappedDocViewer({ documents }: { documents: any[] }) {
-      return (
-        <mod.default
-          documents={documents}
-          pluginRenderers={mod.DocViewerRenderers}
-          theme={{
-            primary: '#10b981', // Emerald primary to match application theme
-            secondary: '#ffffff',
-            tertiary: '#f3f4f6',
-            textPrimary: '#1f2937',
-            textSecondary: '#6b7280',
-          }}
-          config={{
-            header: {
-              disableHeader: true,
-              disableFileName: true,
-              retainURLParams: false,
-            }
-          }}
-          style={{ height: '100%' }}
-        />
-      )
-    }
-  }),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex flex-col items-center justify-center h-full w-full space-y-3 bg-background animate-in fade-in duration-200">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        <p className="text-xs font-semibold text-muted-foreground animate-pulse">Loading document preview...</p>
-      </div>
-    )
-  }
-)
-
-function getFileTypeFromFileName(fileName: string): string | undefined {
-  const parts = fileName.split('.')
-  if (parts.length > 1) {
-    return parts[parts.length - 1].toLowerCase()
-  }
-  return undefined
-}
-
-function DocPreviewViewer({ url, name }: { url: string; name: string }) {
-  const fileType = getFileTypeFromFileName(name)
-  const docs = [{ uri: url, fileName: name, fileType: fileType }]
-  return (
-    <div className="doc-viewer-wrapper h-full w-full">
-      <DynamicDocViewer documents={docs} />
     </div>
   )
 }

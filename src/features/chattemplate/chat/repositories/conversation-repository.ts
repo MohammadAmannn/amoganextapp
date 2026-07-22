@@ -22,3 +22,11 @@ export async function createGroupConversation(
 export async function clearConversationUnreadCount(conversationId: string, userId: string): Promise<boolean> {
   return conversationsApi.clearConversationUnreadCount(conversationId, userId)
 }
+
+export async function removeGroupMember(conversationId: string, memberId: string): Promise<boolean> {
+  return conversationsApi.removeGroupMember(conversationId, memberId)
+}
+
+export async function deleteConversation(conversationId: string, userId: string): Promise<boolean> {
+  return conversationsApi.deleteConversation(conversationId, userId)
+}

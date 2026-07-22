@@ -32,6 +32,8 @@ This document provides a comprehensive overview of the database tables, constrai
 | `/api/conversations/direct` | `POST` | ✅ Done | Get or create a direct conversation |
 | `/api/conversations/group` | `POST` | ✅ Done | Create a group conversation |
 | `/api/conversations/[id]/read` | `PATCH` | ✅ Done | Clear unread count |
+| `/api/conversations/[id]` | `DELETE` | ✅ Done | Delete conversation for user |
+| `/api/conversations/[id]/members/[memberId]` | `DELETE` | ✅ Done | Remove group member (Admin only) |
 
 ### Groups Tab (chat_group)
 | Endpoint | Method | Status | Description |

@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/client'
 import { ensureProfileExists } from '@/features/chattemplate/chat/repositories/profile-repository'
 import { handleAuthRedirect } from '@/services/auth-redirect.service'
+import { initializeCapacitorHandlers } from '@/lib/capacitor-init'
 
 function QueryProviderWrapper({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -84,6 +85,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const { auth } = useAuthStore()
   const oauthRedirectHandled = useRef(false)
+
+  useEffect(() => {
+    initializeCapacitorHandlers(router)
+  }, [router])
 
   useEffect(() => {
     const supabase = createClient()

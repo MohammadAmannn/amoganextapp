@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Loader2, MessageSquare, PanelLeft, Check, CheckCheck, Clock, Mic } from 'lucide-react'
+import { Search, Loader2, MessageSquare, PanelLeft, Check, CheckCheck, Clock, Mic, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -21,6 +21,7 @@ interface ChatSidebarProps {
   onlineUserIds?: Set<string>
   currentUserId?: string
   conversationTypingMap?: Record<string, UserTypingState[]>
+  onDeleteConversation?: (conversationId: string) => void
 }
 
 export function ChatSidebar({
@@ -34,6 +35,7 @@ export function ChatSidebar({
   onlineUserIds,
   currentUserId,
   conversationTypingMap = {},
+  onDeleteConversation,
 }: ChatSidebarProps) {
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -139,7 +141,7 @@ export function ChatSidebar({
                   type='button'
                   onClick={() => onSelectConversation(convo)}
                   className={cn(
-                    'w-full flex items-center transition-all duration-200 cursor-pointer relative',
+                    'w-full flex items-center transition-all duration-200 cursor-pointer relative group',
                     isCollapsed 
                       ? 'p-3 gap-3 text-left lg:p-2 lg:py-3.5 lg:justify-center lg:gap-0 lg:group/item' 
                       : 'gap-3 p-3 text-left',
@@ -178,16 +180,35 @@ export function ChatSidebar({
                     'flex-grow min-w-0 flex flex-col gap-0.5 animate-in fade-in duration-200',
                     isCollapsed ? 'block lg:hidden' : 'block'
                   )}>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-xs font-bold text-foreground truncate block max-w-[70%]'>
+                    <div className='flex items-center justify-between gap-1'>
+                      <span className='text-xs font-bold text-foreground truncate block max-w-[65%]'>
                         {convo.name}
                       </span>
-                      <span className={cn(
-                        'text-[9px] tabular-nums shrink-0',
-                        convo.unreadCount && convo.unreadCount > 0 ? 'text-emerald-500 font-extrabold' : 'text-muted-foreground/80 font-bold'
-                      )}>
-                        {formatTime(lastMsgTime)}
-                      </span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className={cn(
+                          'text-[9px] tabular-nums shrink-0',
+                          convo.unreadCount && convo.unreadCount > 0 ? 'text-emerald-500 font-extrabold' : 'text-muted-foreground/80 font-bold'
+                        )}>
+                          {formatTime(lastMsgTime)}
+                        </span>
+                        {onDeleteConversation && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (confirm(`Delete conversation "${convo.name}"?`)) {
+                                onDeleteConversation(convo.id)
+                              }
+                            }}
+                            className="h-5 w-5 rounded-md opacity-0 group-hover:opacity-100 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 transition-all shrink-0 cursor-pointer"
+                            title="Delete conversation"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
 
                     <div className='flex items-center justify-between gap-2 min-w-0'>

@@ -17,9 +17,10 @@ interface ChatProfilePageProps {
   onBack: () => void
   currentUser: { accountNo: string; name?: string; email?: string } | null
   onViewDocument?: (url: string, name: string) => void
+  onRemoveMember?: (conversationId: string, memberId: string) => void
 }
 
-export function ChatProfilePage({ conversation, messages, onBack, currentUser, onViewDocument }: ChatProfilePageProps) {
+export function ChatProfilePage({ conversation, messages, onBack, currentUser, onViewDocument, onRemoveMember }: ChatProfilePageProps) {
   const [activeTab, setActiveTab] = useState('contact')
   const [fileSearchQuery, setFileSearchQuery] = useState('')
   const [selectedPreviewImage, setSelectedPreviewImage] = useState<string | null>(null)
@@ -214,26 +215,47 @@ export function ChatProfilePage({ conversation, messages, onBack, currentUser, o
                     <div className="space-y-3">
                       <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground px-1">Members ({conversation.members?.length || 0})</span>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        {conversation.members?.map(m => (
-                          <div key={m.id} className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:bg-muted/10 transition-colors">
-                            <Avatar className="h-8 w-8 rounded-lg shrink-0">
-                              <AvatarImage src={m.avatar_url} />
-                              <AvatarFallback className="rounded-lg bg-primary/15 text-primary text-[10px] font-bold">
-                                {m.name.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col min-w-0 flex-1">
-                              <span className="text-xs font-bold text-foreground truncate">{m.name}</span>
-                              <span className="text-[9px] text-muted-foreground truncate leading-normal">{m.email}</span>
+                        {(() => {
+                          const isAdmin = conversation.created_by
+                            ? currentUser?.accountNo === conversation.created_by
+                            : true
+
+                          return conversation.members?.map(m => (
+                            <div key={m.id} className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:bg-muted/10 transition-colors relative group/member">
+                              <Avatar className="h-8 w-8 rounded-lg shrink-0">
+                                <AvatarImage src={m.avatar_url} />
+                                <AvatarFallback className="rounded-lg bg-primary/15 text-primary text-[10px] font-bold">
+                                  {m.name.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex flex-col min-w-0 flex-1">
+                                <span className="text-xs font-bold text-foreground truncate">{m.name}</span>
+                                <span className="text-[9px] text-muted-foreground truncate leading-normal">{m.email}</span>
+                              </div>
+                              {m.id === conversation.created_by && (
+                                <span className="text-[8px] bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 select-none shrink-0 border border-primary/10">
+                                  <ShieldCheck className="h-2.5 w-2.5" />
+                                  Admin
+                                </span>
+                              )}
+                              {isAdmin && m.id !== currentUser?.accountNo && (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    if (confirm(`Remove ${m.name} from group?`)) {
+                                      onRemoveMember?.(conversation.id, m.id)
+                                    }
+                                  }}
+                                  className="h-7 w-7 rounded-lg text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 shrink-0 ml-1 cursor-pointer transition-colors"
+                                  title={`Remove ${m.name} from group`}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              )}
                             </div>
-                            {m.id === conversation.created_by && (
-                              <span className="text-[8px] bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 select-none shrink-0 border border-primary/10">
-                                <ShieldCheck className="h-2.5 w-2.5" />
-                                Admin
-                              </span>
-                            )}
-                          </div>
-                        ))}
+                          ))
+                        })()}
                       </div>
                     </div>
                   </div>

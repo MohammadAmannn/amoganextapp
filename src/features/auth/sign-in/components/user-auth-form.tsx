@@ -9,7 +9,8 @@ import { toast } from 'sonner'
 import { FcGoogle } from 'react-icons/fc'
 import { useAuthStore } from '@/stores/auth-store'
 import { sleep, cn } from '@/lib/utils'
-import { createClient } from '@/lib/client'
+import { isCapacitor } from '@/lib/platform'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { handleAuthRedirect } from '@/services/auth-redirect.service'
 import {
@@ -68,19 +69,52 @@ export function UserAuthForm({
       }
 
       const supabase = createClient()
-      const callbackUrl = new URL('/auth/callback', window.location.origin)
-      if (redirectValue !== '/') {
-        callbackUrl.searchParams.set('next', redirectValue)
+
+      if (isCapacitor()) {
+        // Native Capacitor Android / iOS OAuth Flow (Implicit flow to prevent PKCE verifier mismatch)
+        const { createClient: createSupabaseJSClient } = await import('@supabase/supabase-js')
+        const mobileSupabase = createSupabaseJSClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+          {
+            auth: {
+              flowType: 'implicit',
+              detectSessionInUrl: true,
+              persistSession: true,
+            },
+          }
+        )
+
+        const mobileRedirectUrl = `com.aman.amoganextapp://auth/callback`
+        const { data, error } = await mobileSupabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: mobileRedirectUrl,
+            skipBrowserRedirect: true,
+          },
+        })
+        if (error) throw error
+
+        if (data?.url) {
+          const { Browser } = await (import('@capacitor/browser' as any) as Promise<any>)
+          await Browser.open({ url: data.url, windowName: '_self' })
+        }
+      } else {
+        // Standard Web Browser OAuth Flow (100% Preserved)
+        const callbackUrl = new URL('/auth/callback', window.location.origin)
+        if (redirectValue !== '/') {
+          callbackUrl.searchParams.set('next', redirectValue)
+        }
+        console.log('[DEBUG client] signInWithOAuth callbackUrl (redirectTo option):', callbackUrl.toString())
+        
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: callbackUrl.toString(),
+          },
+        })
+        if (error) throw error
       }
-      console.log('[DEBUG client] signInWithOAuth callbackUrl (redirectTo option):', callbackUrl.toString())
-      
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: callbackUrl.toString(),
-        },
-      })
-      if (error) throw error
     } catch (err: any) {
       console.error('[DEBUG client] handleGoogleLogin failed with error:', err)
       toast.error(err.message || 'Google sign in failed. Please try again.')

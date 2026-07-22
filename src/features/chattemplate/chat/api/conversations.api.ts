@@ -314,3 +314,46 @@ export async function clearConversationUnreadCount(conversationId: string, userI
     return false
   }
 }
+
+/**
+ * Removes a member from a group conversation.
+ */
+export async function removeGroupMember(conversationId: string, memberId: string): Promise<boolean> {
+  try {
+    const query = createQuery()
+      .eq('conversation_id', conversationId)
+      .eq('user_id', memberId)
+
+    await apiClient.delete(`/rest/v1/conversation_members${query.toString()}`)
+    return true
+  } catch (err) {
+    console.error('[Conversations API] Failed to remove group member:', err)
+    return false
+  }
+}
+
+/**
+ * Deletes a conversation for a specific user (removes membership and local message copies).
+ */
+export async function deleteConversation(conversationId: string, userId: string): Promise<boolean> {
+  try {
+    // 1. Remove user from conversation_members
+    const memberQuery = createQuery()
+      .eq('conversation_id', conversationId)
+      .eq('user_id', userId)
+
+    await apiClient.delete(`/rest/v1/conversation_members${memberQuery.toString()}`)
+
+    // 2. Delete message copies owned by this user for this conversation
+    const msgQuery = createQuery()
+      .eq('conversation_id', conversationId)
+      .eq('owner_user_id', userId)
+
+    await apiClient.delete(`/rest/v1/chat_messages${msgQuery.toString()}`)
+    return true
+  } catch (err) {
+    console.error('[Conversations API] Failed to delete conversation:', err)
+    return false
+  }
+}
+

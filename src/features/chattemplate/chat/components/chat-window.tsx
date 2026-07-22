@@ -138,6 +138,7 @@ interface ChatWindowProps {
   onlineUserIds?: Set<string>
   typingUsers?: UserTypingState[]
   onSendTypingStatus?: (status: TypingStatus) => void
+  onRemoveMember?: (conversationId: string, memberId: string) => void
 }
 
 interface UploadState {
@@ -162,6 +163,7 @@ export function ChatWindow({
   onlineUserIds,
   typingUsers = [],
   onSendTypingStatus,
+  onRemoveMember,
 }: ChatWindowProps) {
   const [inputText, setInputText] = useState('')
   const { uploads, startUpload, cancelUpload } = useAttachments()
@@ -1008,6 +1010,7 @@ export function ChatWindow({
             setShowProfile(false)
             setPreviewDoc({ url, name })
           }}
+          onRemoveMember={onRemoveMember}
         />
       </div>
     )

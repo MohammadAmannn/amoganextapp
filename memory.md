@@ -108,4 +108,18 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
 * **TDZ ReferenceError Fix**: Hoisted `DynamicDocViewer` and `DocPreviewViewer` component declarations above `ChatWindow` in `chat-window.tsx`, resolving Next.js bundled `Uncaught ReferenceError: Cannot access 'F' before initialization` runtime errors.
 * **Complete Documentation**: Created `typing.md` detailing implementation steps, folder structure breakdown, and technical references.
 
+---
+
+## 12. Group Member Removal & Conversation Deletion
+* **Admin Member Removal**:
+  - Rendered a red hover cross (`X`) button on the right side of member cards inside `chat-profile-drawer.tsx` for Group Admins (`created_by === currentUser.accountNo`).
+  - Added `removeGroupMember` function in `conversations.api.ts` and `conversation-repository.ts` to delete `conversation_members` records.
+  - Built REST API route `DELETE /api/conversations/[id]/members/[memberId]`.
+* **Sidebar Conversation Deletion**:
+  - Added an action trash icon button (`Trash2`) on hover next to timestamps for each conversation item in `chat-sidebar.tsx`.
+  - Added `deleteConversation` function in `conversations.api.ts` and `conversation-repository.ts` to delete user membership and user message copies.
+  - Built REST API route `DELETE /api/conversations/[id]`.
+* **State Synchronization**: Integrated handlers in `chat-layout.tsx` to automatically update React state, clear active chat if deleted, and notify users via toast messages.
+
+
 

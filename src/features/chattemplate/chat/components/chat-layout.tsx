@@ -23,7 +23,7 @@ import { useRealtime } from '../hooks/use-realtime'
 import { useSendMessage } from '../hooks/use-send-message'
 import { getUserContacts } from '@/features/chattemplate/contacts/repositories/contact-repository'
 import { ensureProfileExists, getProfileByEmail, getOrCreateProfileForContact } from '../repositories/profile-repository'
-import { createGroupConversation, clearConversationUnreadCount, getUserConversations } from '../repositories/conversation-repository'
+import { createGroupConversation, clearConversationUnreadCount, getUserConversations, removeGroupMember, deleteConversation } from '../repositories/conversation-repository'
 import { Message } from '../types/chat.types'
 
 // Realtime Presence and Offline Messaging Imports
@@ -546,6 +546,52 @@ export function ChatLayout() {
     }
   }
 
+  const handleRemoveMember = async (conversationId: string, memberId: string) => {
+    try {
+      const ok = await removeGroupMember(conversationId, memberId)
+      if (ok) {
+        if (activeConversation && activeConversation.id === conversationId) {
+          const updatedMembers = activeConversation.members?.filter(m => m.id !== memberId) || []
+          setActiveConversation({ ...activeConversation, members: updatedMembers })
+        }
+        setConversations(prev => prev.map(c => {
+          if (c.id === conversationId) {
+            const updatedMembers = c.members?.filter(m => m.id !== memberId) || []
+            return { ...c, members: updatedMembers }
+          }
+          return c
+        }))
+        toast.success('Member removed from group')
+      } else {
+        toast.error('Failed to remove member')
+      }
+    } catch (e) {
+      console.error('Failed to remove member:', e)
+      toast.error('Error removing member from group')
+    }
+  }
+
+  const handleDeleteConversation = async (conversationId: string) => {
+    if (!currentUser) return
+    try {
+      const ok = await deleteConversation(conversationId, currentUser.accountNo)
+      if (ok) {
+        setConversations(prev => prev.filter(c => c.id !== conversationId))
+        if (activeConversation?.id === conversationId) {
+          setActiveConversation(null)
+          setMessages([])
+          setMobileView('sidebar')
+        }
+        toast.success('Conversation deleted')
+      } else {
+        toast.error('Failed to delete conversation')
+      }
+    } catch (e) {
+      console.error('Failed to delete conversation:', e)
+      toast.error('Error deleting conversation')
+    }
+  }
+
   return (
     <>
       <AppHeader title='Chat Template' />
@@ -620,6 +666,7 @@ export function ChatLayout() {
                 onlineUserIds={onlineUserIds}
                 currentUserId={currentUser?.accountNo}
                 conversationTypingMap={conversationTypingMap}
+                onDeleteConversation={handleDeleteConversation}
               />
             </div>
 
@@ -644,6 +691,7 @@ export function ChatLayout() {
                     onlineUserIds={onlineUserIds}
                     typingUsers={activeTypingUsers}
                     onSendTypingStatus={(status) => sendTypingStatus(activeConversation.id, status)}
+                    onRemoveMember={handleRemoveMember}
                   />
                 ) : (
                   <ChatWelcome />

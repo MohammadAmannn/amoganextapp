@@ -165,13 +165,29 @@ export function ChatLayout() {
     (newMsg: Message) => {
       if (activeConversation && newMsg.conversation_id === activeConversation.id) {
         setMessages(prev => {
-          if (prev.some(m => m.id === newMsg.id || (m.client_message_id && m.client_message_id === newMsg.client_message_id))) return prev
-          let resolvedMsg = newMsg
-          if (newMsg.replyto_message_id && !newMsg.replyto_message) {
-            const parent = prev.find(m => m.id === newMsg.replyto_message_id || m.sender_message_id === newMsg.replyto_message_id)
-            if (parent) {
-              resolvedMsg = { ...newMsg, replyto_message: parent }
+          const existingIndex = prev.findIndex(
+            m => m.id === newMsg.id || (m.client_message_id && m.client_message_id === newMsg.client_message_id)
+          )
+
+          let parent = newMsg.replyto_message
+          if (!parent && newMsg.replyto_message_id) {
+            parent = prev.find(
+              m => m.id === newMsg.replyto_message_id || m.sender_message_id === newMsg.replyto_message_id
+            )
+          }
+
+          if (existingIndex !== -1) {
+            const updated = [...prev]
+            updated[existingIndex] = {
+              ...newMsg,
+              replyto_message: parent || prev[existingIndex].replyto_message,
             }
+            return updated
+          }
+
+          const resolvedMsg = {
+            ...newMsg,
+            replyto_message: parent,
           }
           return [...prev, resolvedMsg]
         })
@@ -215,7 +231,21 @@ export function ChatLayout() {
           if (isDeletedForMe) {
             return prev.filter(m => m.id !== updatedMsg.id)
           }
-          return prev.map(m => m.id === updatedMsg.id || (m.client_message_id && m.client_message_id === updatedMsg.client_message_id) ? updatedMsg : m)
+          return prev.map(m => {
+            if (m.id === updatedMsg.id || (m.client_message_id && m.client_message_id === updatedMsg.client_message_id)) {
+              let parent = updatedMsg.replyto_message || m.replyto_message
+              if (!parent && updatedMsg.replyto_message_id) {
+                parent = prev.find(
+                  p => p.id === updatedMsg.replyto_message_id || p.sender_message_id === updatedMsg.replyto_message_id
+                )
+              }
+              return {
+                ...updatedMsg,
+                replyto_message: parent,
+              }
+            }
+            return m
+          })
         })
       }
 

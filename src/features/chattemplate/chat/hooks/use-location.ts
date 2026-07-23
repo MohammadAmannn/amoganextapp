@@ -1,6 +1,7 @@
 // hooks/use-location.ts
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { toast } from 'sonner'
+import { isCapacitor } from '@/lib/platform'
 
 interface LocationState {
     latitude: number | null
@@ -24,8 +25,40 @@ export function useLocation() {
     const watchIdRef = useRef<number | null>(null)
 
     const getCurrentLocation = useCallback((options?: PositionOptions) => {
-        return new Promise<{ lat: number; lng: number; accuracy: number }>((resolve, reject) => {
+        return new Promise<{ lat: number; lng: number; accuracy: number }>(async (resolve, reject) => {
             setState(prev => ({ ...prev, isLoading: true, error: null }))
+
+            if (isCapacitor()) {
+                try {
+                    const { Geolocation } = await import('@capacitor/geolocation')
+                    const permResult = await Geolocation.requestPermissions()
+                    if (permResult.location === 'denied' || permResult.coarseLocation === 'denied') {
+                        throw new Error('Location permission denied on device')
+                    }
+                    const position = await Geolocation.getCurrentPosition({
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000,
+                    })
+                    const data = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                        accuracy: position.coords.accuracy
+                    }
+                    setState(prev => ({
+                        ...prev,
+                        latitude: data.lat,
+                        longitude: data.lng,
+                        accuracy: data.accuracy,
+                        isLoading: false,
+                        error: null
+                    }))
+                    resolve(data)
+                    return
+                } catch (err: any) {
+                    console.warn('[useLocation] Native geolocation request failed, attempting browser fallback:', err)
+                }
+            }
 
             if (!navigator.geolocation) {
                 const error = 'Geolocation not supported'
@@ -67,7 +100,7 @@ export function useLocation() {
                 }
             )
         })
-    }, [state])
+    }, [])
 
     const startLiveTracking = useCallback((callback: (data: { lat: number; lng: number; accuracy: number }) => void) => {
         if (!navigator.geolocation) {

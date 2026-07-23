@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { motion, useMotionValue, useTransform } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { Check, CheckCheck, Clock, CornerUpLeft, MapPin } from 'lucide-react'
 import { Message } from '../types/chat.types'
@@ -50,6 +51,11 @@ export function MessageBubble({
   const isMe = message.sender_user_id === currentUserId
   const [showMobileToolbar, setShowMobileToolbar] = useState(false)
   const longPressTimer = useRef<NodeJS.Timeout | null>(null)
+
+  // Framer-motion slide-to-reply gesture values
+  const dragX = useMotionValue(0)
+  const replyIconOpacity = useTransform(dragX, [0, 20, 45], [0, 0.5, 1])
+  const replyIconScale = useTransform(dragX, [0, 20, 45], [0.5, 0.8, 1.1])
 
   const messageTime = new Date(message.created_at).toLocaleTimeString([], {
     hour: '2-digit',
@@ -131,6 +137,13 @@ export function MessageBubble({
     setShowMobileToolbar(false)
   }
 
+  // Resolved reply message reference or metadata fallback
+  const replyMessageToRender = message.replyto_message || (message.replyMetadata ? ({
+    id: message.replyMetadata.replyto_message_id,
+    message: message.replyMetadata.replyMessageText || '',
+    sender: { name: message.replyMetadata.replySenderName || 'User' }
+  } as any) : undefined)
+
   return (
     <div
       id={`msg-${message.id}`}
@@ -148,33 +161,58 @@ export function MessageBubble({
         </span>
       )}
 
-      {/* Bubble Container */}
-      <div
-        onClick={handleBubbleClick}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        className={cn(
-          'rounded-2xl px-4 py-2.5 text-sm leading-relaxed border transition-all duration-200 shadow-xs max-w-full relative group/bubble select-text',
-          {
-            'bg-emerald-100 dark:bg-emerald-950/40 text-foreground border-emerald-200/50 dark:border-emerald-900/30 rounded-tr-none':
-              isMe && !message.deleted,
-            'bg-card text-foreground rounded-tl-none border-border/50': !isMe && !message.deleted,
-            'bg-muted/30 text-muted-foreground border-muted rounded-2xl italic': message.deleted,
-          }
-        )}
-      >
-        {/* Forwarded Tag */}
-        {message.forward && !message.deleted && (
-          <span className="text-[10px] text-muted-foreground font-extrabold flex items-center gap-1 mb-1 leading-none opacity-80 select-none">
-            <CornerUpLeft className="h-2.5 w-2.5 scale-x-[-1] text-sky-500" />
-            Forwarded message
-          </span>
+      {/* Slide-to-reply relative wrapper */}
+      <div className="relative max-w-full">
+        {/* Animated reply indicator icon popping up on drag */}
+        {!message.deleted && (
+          <motion.div
+            style={{ opacity: replyIconOpacity, scale: replyIconScale }}
+            className="absolute -left-9 top-1/2 -translate-y-1/2 p-2 rounded-full bg-primary/10 text-primary shadow-xs pointer-events-none z-10"
+          >
+            <CornerUpLeft className="h-4 w-4" />
+          </motion.div>
         )}
 
-        {/* Reply Message Preview inside the bubble */}
-        {message.reply && message.replyto_message && !message.deleted && (
-          <ReplyPreview message={message.replyto_message} />
-        )}
+        {/* Bubble Container with framer-motion slide-to-reply gesture */}
+        <motion.div
+          drag={!message.deleted ? 'x' : false}
+          dragConstraints={{ left: 0, right: 65 }}
+          dragElastic={{ left: 0, right: 0.4 }}
+          dragSnapToOrigin={true}
+          style={{ x: dragX }}
+          onDragEnd={(_, info) => {
+            if (info.offset.x > 40 || info.velocity.x > 180) {
+              if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                navigator.vibrate(35)
+              }
+              handleReply()
+            }
+          }}
+          onClick={handleBubbleClick}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          className={cn(
+            'rounded-2xl px-4 py-2.5 text-sm leading-relaxed border transition-colors duration-200 shadow-xs max-w-full relative group/bubble select-text touch-pan-y cursor-grab active:cursor-grabbing',
+            {
+              'bg-emerald-100 dark:bg-emerald-950/40 text-foreground border-emerald-200/50 dark:border-emerald-900/30 rounded-tr-none':
+                isMe && !message.deleted,
+              'bg-card text-foreground rounded-tl-none border-border/50': !isMe && !message.deleted,
+              'bg-muted/30 text-muted-foreground border-muted rounded-2xl italic': message.deleted,
+            }
+          )}
+        >
+          {/* Forwarded Tag */}
+          {message.forward && !message.deleted && (
+            <span className="text-[10px] text-muted-foreground font-extrabold flex items-center gap-1 mb-1 leading-none opacity-80 select-none">
+              <CornerUpLeft className="h-2.5 w-2.5 scale-x-[-1] text-sky-500" />
+              Forwarded message
+            </span>
+          )}
+
+          {/* Reply Message Preview inside the bubble */}
+          {message.reply && replyMessageToRender && !message.deleted && (
+            <ReplyPreview message={replyMessageToRender} />
+          )}
 
         {/* Attachments Renderer */}
         {!message.deleted && message.message_type !== 'location' && (
@@ -259,7 +297,8 @@ export function MessageBubble({
             archive={message.archive}
           />
         )}
-      </div>
+      </motion.div>
+    </div>
 
       {/* Floating Toolbar (CSS hover on desktop, click/long press state on mobile) */}
       {!message.deleted && (

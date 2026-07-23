@@ -121,5 +121,17 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
   - Built REST API route `DELETE /api/conversations/[id]`.
 * **State Synchronization**: Integrated handlers in `chat-layout.tsx` to automatically update React state, clear active chat if deleted, and notify users via toast messages.
 
+---
 
-
+## 13. Android Permissions, Reply Preview Persistence Fix & Slide-to-Reply Gesture
+* **Android APK Location & Microphone Permissions**:
+  - Added `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `RECORD_AUDIO`, and `MODIFY_AUDIO_SETTINGS` permissions to `android/app/src/main/AndroidManifest.xml`.
+  - Added optional hardware feature declarations (`android.hardware.location.gps`, `android.hardware.microphone`, `android.hardware.camera`) to support Capacitor Android WebView runtime permission dialogs.
+  - Updated developer documentation in `android.md`.
+* **Reply Preview Disappearing Bug Fix**:
+  - **Root Cause**: When Supabase Realtime broadcast emitted `UPDATE` events (e.g., delivery status transitions from `sent` -> `delivered` -> `read`), the incoming message update object lacked the populated `replyto_message` object, stripping `message.replyto_message` to `undefined` in state and causing the preview to disappear after 1-2 seconds.
+  - **Fix**: Updated `chat-layout.tsx` real-time `INSERT` and `UPDATE` handlers to preserve existing `replyto_message` references and resolve `replyto_message_id` against active message state. Enhanced `messages.api.ts` `getConversationMessages()` to resolve parent message references from in-memory messages list as well as DB queries. Added fallback rendering in `message-bubble.tsx` using `message.replyMetadata`.
+* **Slide Text Message to Reply Gesture**:
+  - Integrated `framer-motion` horizontal drag gesture (`drag="x"`, `dragConstraints={{ left: 0, right: 65 }}`) into `MessageBubble` (`message-bubble.tsx`).
+  - Added a springy glowing `CornerUpLeft` reply icon indicator that scales and fades in on drag.
+  - Swiping a message bubble > 40px right triggers light haptic feedback (`navigator.vibrate(35)`) and automatically sets `replyingTo` state to display the input box reply preview, snapping the bubble smoothly back to origin position.

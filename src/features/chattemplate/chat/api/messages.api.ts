@@ -86,18 +86,39 @@ export async function getConversationMessages(conversationId: string, userId: st
       location_type: d.location_type || undefined,
     }))
 
-    // Load reply references for UI display if needed
+    // Load reply references for UI display
     for (const msg of messages) {
       if (msg.reply && msg.replyto_message_id) {
+        // 1. Try finding parent message directly from loaded messages list in memory
+        const parentInList = messages.find(
+          (m) => m.id === msg.replyto_message_id || m.sender_message_id === msg.replyto_message_id || (m.client_message_id && m.client_message_id === msg.replyto_message_id)
+        )
+
+        if (parentInList) {
+          msg.replyto_message = parentInList
+          msg.replyMetadata = {
+            replyemoji: msg.replyemoji || null,
+            replyto_message_id: msg.replyto_message_id,
+            replyto_user_id: msg.replyto_user_id || null,
+            parent_message_id: msg.parent_message_id || null,
+            replyMessageText: parentInList.message_type === 'text' ? (parentInList.message || '') : `Attachment: ${parentInList.file_name || 'File'}`,
+            replySenderName: parentInList.sender?.name || 'User',
+          }
+          continue
+        }
+
+        // 2. Fallback: Query database for parent message details
         const replyQuery = createQuery()
           .select(`
             id,
             message,
             message_type,
             file_name,
-            sender:profiles!sender_user_id(name)
+            sender_user_id,
+            deleted,
+            sender:profiles!sender_user_id(id, name, email, avatar)
           `)
-          .eq('id', msg.replyto_message_id)
+          .or(`id.eq.${msg.replyto_message_id},sender_message_id.eq.${msg.replyto_message_id}`)
           .limit(1)
 
         try {
@@ -105,13 +126,36 @@ export async function getConversationMessages(conversationId: string, userId: st
           const replyMsg = replyMsgs[0] || null
 
           if (replyMsg) {
+            const replySender = replyMsg.sender ? {
+              id: replyMsg.sender.id,
+              name: replyMsg.sender.name,
+              email: replyMsg.sender.email,
+              avatar_url: replyMsg.sender.avatar || undefined,
+            } : undefined
+
+            msg.replyto_message = {
+              id: replyMsg.id,
+              conversation_id: msg.conversation_id,
+              owner_user_id: msg.owner_user_id,
+              sender_user_id: replyMsg.sender_user_id,
+              message: replyMsg.message,
+              message_type: replyMsg.message_type,
+              direction: 'Received',
+              sent: true,
+              received: true,
+              created_at: msg.created_at,
+              file_name: replyMsg.file_name,
+              sender: replySender,
+              deleted: !!replyMsg.deleted,
+            }
+
             msg.replyMetadata = {
               replyemoji: msg.replyemoji || null,
               replyto_message_id: msg.replyto_message_id,
               replyto_user_id: msg.replyto_user_id || null,
               parent_message_id: msg.parent_message_id || null,
               replyMessageText: replyMsg.message_type === 'text' ? replyMsg.message : `Attachment: ${replyMsg.file_name || 'File'}`,
-              replySenderName: replyMsg.sender?.name || 'User',
+              replySenderName: replySender?.name || 'User',
             }
           }
         } catch (e) {

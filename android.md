@@ -286,7 +286,16 @@ Added Intent Filters for both custom scheme (`com.aman.amoganextapp://auth/callb
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Hardware Features -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 </manifest>
 ```
 
@@ -324,4 +333,14 @@ npx cap open android
 | `src/lib/capacitor-init.ts` | **NEW** | Deep link listener (`appUrlOpen`), Android back button listener, and session auto-restoration. |
 | `src/features/auth/sign-in/components/user-auth-form.tsx` | **MODIFIED** | Platform-aware Google OAuth (Implicit flow for Mobile, PKCE for Web). |
 | `src/components/providers.tsx` | **MODIFIED** | Initialized `initializeCapacitorHandlers(router)` on mount. |
-| `android.md` | **NEW** | Full step-by-step developer documentation. |
+| `android.md` | **NEW** | Full step-by-step developer documentation.   
+
+
+
+
+# 1. Sync latest assets and native plugins
+npx cap sync android
+
+# 2. Build the release APK package
+cd android
+.\gradlew.bat assembleRelease

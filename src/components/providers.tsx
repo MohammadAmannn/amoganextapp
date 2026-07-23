@@ -19,6 +19,7 @@ import { createClient } from '@/lib/client'
 import { ensureProfileExists } from '@/features/chattemplate/chat/repositories/profile-repository'
 import { handleAuthRedirect } from '@/services/auth-redirect.service'
 import { initializeCapacitorHandlers } from '@/lib/capacitor-init'
+import { MobileContainer } from '@/mobile/components/MobileContainer'
 
 function QueryProviderWrapper({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -233,7 +234,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <FontProvider>
               <DirectionProvider>
                 <NavigationProgress />
-                {children}
+                <MobileContainer>{children}</MobileContainer>
                 <Toaster duration={5000} />
               </DirectionProvider>
             </FontProvider>

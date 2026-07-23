@@ -1,7 +1,9 @@
-import { LogOut } from 'lucide-react'
+import { useState } from 'react'
+import { LogOut, User } from 'lucide-react'
 import useDialogState from '@/hooks/use-dialog-state'
 import { useAuthStore } from '@/stores/auth-store'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { MyProfileDialog } from '@/features/chattemplate/chat/components/my-profile-dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +31,7 @@ type NavUserProps = {
 export function NavUser({ user: fallbackUser }: NavUserProps) {
   const { isMobile } = useSidebar()
   const [open, setOpen] = useDialogState()
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
   const { auth } = useAuthStore()
 
   const userName = auth.user?.name || auth.user?.email?.split('@')[0] || fallbackUser.name
@@ -80,17 +83,27 @@ export function NavUser({ user: fallbackUser }: NavUserProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setIsProfileDialogOpen(true)}>
+                <User className='mr-2 h-4 w-4' />
+                My Profile
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant='destructive'
                 onClick={() => setOpen(true)}
               >
-                <LogOut />
+                <LogOut className='mr-2 h-4 w-4' />
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>
       </SidebarMenu>
+
+      <MyProfileDialog
+        open={isProfileDialogOpen}
+        onOpenChange={setIsProfileDialogOpen}
+      />
 
       <SignOutDialog open={!!open} onOpenChange={setOpen} />
     </>

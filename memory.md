@@ -123,15 +123,38 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
 
 ---
 
-## 13. Android Permissions, Reply Preview Persistence Fix & Slide-to-Reply Gesture
-* **Android APK Location & Microphone Permissions**:
-  - Added `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `RECORD_AUDIO`, and `MODIFY_AUDIO_SETTINGS` permissions to `android/app/src/main/AndroidManifest.xml`.
-  - Added optional hardware feature declarations (`android.hardware.location.gps`, `android.hardware.microphone`, `android.hardware.camera`) to support Capacitor Android WebView runtime permission dialogs.
-  - Updated developer documentation in `android.md`.
-* **Reply Preview Disappearing Bug Fix**:
-  - **Root Cause**: When Supabase Realtime broadcast emitted `UPDATE` events (e.g., delivery status transitions from `sent` -> `delivered` -> `read`), the incoming message update object lacked the populated `replyto_message` object, stripping `message.replyto_message` to `undefined` in state and causing the preview to disappear after 1-2 seconds.
-  - **Fix**: Updated `chat-layout.tsx` real-time `INSERT` and `UPDATE` handlers to preserve existing `replyto_message` references and resolve `replyto_message_id` against active message state. Enhanced `messages.api.ts` `getConversationMessages()` to resolve parent message references from in-memory messages list as well as DB queries. Added fallback rendering in `message-bubble.tsx` using `message.replyMetadata`.
-* **Slide Text Message to Reply Gesture**:
-  - Integrated `framer-motion` horizontal drag gesture (`drag="x"`, `dragConstraints={{ left: 0, right: 65 }}`) into `MessageBubble` (`message-bubble.tsx`).
-  - Added a springy glowing `CornerUpLeft` reply icon indicator that scales and fades in on drag.
-  - Swiping a message bubble > 40px right triggers light haptic feedback (`navigator.vibrate(35)`) and automatically sets `replyingTo` state to display the input box reply preview, snapping the bubble smoothly back to origin position.
+---
+
+## 14. Mobile-First Hybrid Architecture Migration & Offline SQLite Engine
+* **Platform Isolation Architecture (`isCapacitor()`)**:
+  - Implemented mobile hybrid architecture under modular `src/mobile/` directory.
+  - Built `MobileContainer.tsx` to handle platform isolation: on Web browsers (`isCapacitor() === false`), immediately renders standard web routes with 100% Zero Web Regression. On native Capacitor Android/iOS shells, intercepts and renders dedicated mobile screen experiences.
+* **Offline SQLite Local Database (`@capacitor-community/sqlite`)**:
+  - Built SQLite database engine (`src/mobile/database/sqlite/`) creating 8 required offline tables (`users`, `profiles`, `conversations`, `messages`, `contacts`, `pending_messages`, `pending_uploads`, `settings`).
+  - Implemented Repository Pattern (`user.repository`, `profile.repository`, `chat.repository`, `pending.repository`, `settings.repository`).
+* **Automatic Synchronization Engine (`SyncService`)**:
+  - Monitors network status with `@capacitor/network`.
+  - Automatically uploads pending messages & pending media files when network returns online.
+  - Downloads server deltas and synchronizes read/delivery receipts.
+* **Native Mobile Screens & Features**:
+  - **Auth**: Built Splash, Login, Signup, Forgot Password screens.
+  - **Profile**: Native profile view & edit screen with `@capacitor/camera` photo capture & upload.
+  - **Chat**: Offline-first conversation list & chat screen reading/writing to local SQLite database with pending status badges.
+  - **Push Notifications**: Integrated `@capacitor/push-notifications` with device token registration & tap routing.
+* **Documentation**: Created `native.md` detailing folder structure, schemas, sync flow, API usage matrix, testing steps, and command references.
+
+---
+
+## 15. Profile Page & Amoga Native Branding Migration
+* **Full Profile & Settings Page Build (`/settings`)**:
+  - Replaced the 404 `NotFoundError` page in `src/features/settings/index.tsx` with a full-featured Profile & Settings Manager page.
+  - Enables viewing & editing user Display Name, Phone Number, Bio/Status, and Avatar Photo upload (`/api/upload`).
+  - Updates Supabase database (`public.profiles`), `useAuthStore` global state, and SQLite local database (`ProfileRepository.upsertProfile`).
+  - Updated all user profile dropdowns (`ProfileDropdown`, `NavUser`) across web and mobile to navigate cleanly to `/settings`.
+* **Amoga Native Branding & App Logo**:
+  - **App Name**: Renamed application to **`amoganative`** in `capacitor.config.ts` and `android/app/src/main/res/values/strings.xml`.
+  - **App Logo & Launcher Icons**: Created `scripts/generate-assets.js` using `sharp` to render the official Amoga Native logo.
+  - **Capacitor Assets**: Executed `npx @capacitor/assets generate --android` generating 148 branded launcher icons (`ic_launcher.png`, `ic_launcher_round.png`, `ic_launcher_foreground.png`) and splash screen images across all Android resolutions (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`).
+  - **Rebuilt Signed Debug APK**: Executed `npx cap sync android` and `gradlew assembleDebug` to produce updated [app-debug.apk](file:///e:/morrai/shadcn-admin-main/android/app/build/outputs/apk/debug/app-debug.apk).
+
+

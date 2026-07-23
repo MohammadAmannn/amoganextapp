@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">amoganextapp</string>
-    <string name="title_activity_main">amoganextapp</string>
+    <string name="app_name">amoganative</string>
+    <string name="title_activity_main">amoganative</string>
     <string name="package_name">com.aman.amoganextapp</string>
     <string name="custom_url_scheme">com.aman.amoganextapp</string>
 </resources>

@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import useDialogState from '@/hooks/use-dialog-state'
 import { useAuthStore } from '@/stores/auth-store'
-// ✅ ADD THIS IMPORT
 import { useLayout } from '@/context/layout-provider'
+import { MyProfileDialog } from '@/features/chattemplate/chat/components/my-profile-dialog'
 
 import {
   User,
@@ -31,12 +32,12 @@ import { SignOutDialog } from '@/components/sign-out-dialog'
 
 export function ProfileDropdown() {
   const [open, setOpen] = useDialogState()
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
   const { auth } = useAuthStore()
 
   const userName = auth.user?.name || auth.user?.email?.split('@')[0] || 'User'
   const userEmail = auth.user?.email || 'user@example.com'
   const userAvatar = auth.user?.picture || '/avatars/01.png'
-  // ✅ ADD THIS
   const { setShowInlineNotFound } = useLayout()
 
   const userInitials = userName
@@ -66,9 +67,7 @@ export function ProfileDropdown() {
           align='end'
           forceMount
         >
-          {/* ==========================================
-              USER INFO
-          ========================================== */}
+          {/* USER INFO */}
           <DropdownMenuLabel className='font-normal'>
             <div className='flex flex-col gap-1.5'>
               <p className='text-sm leading-none font-medium'>
@@ -83,16 +82,18 @@ export function ProfileDropdown() {
 
           <DropdownMenuSeparator />
 
-          {/* My Profile */}
-          <DropdownMenuItem onClick={() => setShowInlineNotFound(true)}>
+          {/* My Profile - Opens dialog directly without changing route */}
+          <DropdownMenuItem onClick={() => setIsProfileDialogOpen(true)}>
             <User className='mr-2 h-4 w-4' />
             My Profile
           </DropdownMenuItem>
 
           {/* Notifications */}
-          <DropdownMenuItem onClick={() => setShowInlineNotFound(true)}>
-            <Bell className='mr-2 h-4 w-4' />
-            Notifications
+          <DropdownMenuItem asChild>
+            <Link href='/notification'>
+              <Bell className='mr-2 h-4 w-4' />
+              Notifications
+            </Link>
           </DropdownMenuItem>
 
           {/* Help */}
@@ -110,10 +111,6 @@ export function ProfileDropdown() {
           </DropdownMenuItem>
 
           {/* Buy Apps */}
-          {/* ==========================================
-    Buy Apps
-    Navigate to Apps Page
-========================================== */}
           <DropdownMenuItem asChild>
             <Link href='/apps'>
               <ShoppingBag className='mr-2 h-4 w-4' />
@@ -121,12 +118,6 @@ export function ProfileDropdown() {
             </Link>
           </DropdownMenuItem>
 
-
-
-
-          {/* ==========================================
-    ADDED: Theme Settings
-========================================== */}
           {/* Theme Settings */}
           <ConfigDrawer
             trigger={
@@ -138,9 +129,11 @@ export function ProfileDropdown() {
           />
 
           {/* Settings */}
-          <DropdownMenuItem onClick={() => setShowInlineNotFound(true)}>
-            <Settings className='mr-2 h-4 w-4' />
-            Settings
+          <DropdownMenuItem asChild>
+            <Link href='/settings'>
+              <Settings className='mr-2 h-4 w-4' />
+              Settings
+            </Link>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
@@ -154,6 +147,11 @@ export function ProfileDropdown() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <MyProfileDialog
+        open={isProfileDialogOpen}
+        onOpenChange={setIsProfileDialogOpen}
+      />
 
       <SignOutDialog
         open={!!open}

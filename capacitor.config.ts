@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'com.aman.amoganextapp',
-  appName: 'amoganextapp',
+  appName: 'amoganative',
   webDir: 'www',
   server: {
     url: 'https://amoganextapp.vercel.app',

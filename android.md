@@ -331,16 +331,27 @@ npx cap open android
 | `android/app/src/main/AndroidManifest.xml` | **MODIFIED** | Added deep link intent filters for `com.aman.amoganextapp://` & `https://amoganextapp.vercel.app` + Permissions. |
 | `src/lib/platform.ts` | **NEW** | Platform detection helper (`isCapacitor()`, `isAndroid()`, `isWeb()`). |
 | `src/lib/capacitor-init.ts` | **NEW** | Deep link listener (`appUrlOpen`), Android back button listener, and session auto-restoration. |
-| `src/features/auth/sign-in/components/user-auth-form.tsx` | **MODIFIED** | Platform-aware Google OAuth (Implicit flow for Mobile, PKCE for Web). |
-| `src/components/providers.tsx` | **MODIFIED** | Initialized `initializeCapacitorHandlers(router)` on mount. |
-| `android.md` | **NEW** | Full step-by-step developer documentation.   
+| `src/features/settings/index.tsx` | **MODIFIED** | Built full Profile & Settings page handling user updates to Supabase & SQLite. |
+| `scripts/generate-assets.js` | **NEW** | Node.js script using `sharp` & `@capacitor/assets` generating 148 branded resolution assets. |
+| `capacitor.config.ts` | **MODIFIED** | Updated `appName` to `amoganative`. |
+| `android/app/src/main/res/values/strings.xml` | **MODIFIED** | Updated `app_name` to `amoganative`. |
+| `android.md` | **MODIFIED** | Updated with `amoganative` branding, logo assets, and profile page documentation. |
 
+---
 
+## 4. Branding & Asset Generation Commands
 
+```bash
+# 1. Generate all logo launcher icons & splash screen assets (148 files generated)
+node scripts/generate-assets.js
 
-# 1. Sync latest assets and native plugins
+# 2. Sync latest assets and native plugins
 npx cap sync android
 
-# 2. Build the release APK package
+# 3. Build the debug APK package
 cd android
+.\gradlew.bat assembleDebug
+
+# 4. Build the release APK package
 .\gradlew.bat assembleRelease
+```

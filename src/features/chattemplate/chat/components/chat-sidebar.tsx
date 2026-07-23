@@ -7,8 +7,10 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { getDisplayNameInitials } from '@/lib/utils'
 import { Conversation } from '../types/chat.types'
 import { UserTypingState } from '../types/typing.types'
-
+import { isCapacitor } from '@/lib/platform'
 import { Button } from '@/components/ui/button'
+import { MyProfileDialog } from './my-profile-dialog'
+import { useAuthStore } from '@/stores/auth-store'
 
 interface ChatSidebarProps {
   conversations: Conversation[]
@@ -38,6 +40,9 @@ export function ChatSidebar({
   onDeleteConversation,
 }: ChatSidebarProps) {
   const [searchQuery, setSearchQuery] = useState('')
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const currentUser = useAuthStore((state) => state.auth.user)
+  const isMobileApp = isCapacitor()
 
   // Filter conversations based on name query
   const filteredConversations = conversations.filter((c) => {
@@ -69,8 +74,24 @@ export function ChatSidebar({
 
   return (
     <div className='flex h-full w-full flex-col bg-card border-0 sm:border border-border rounded-none sm:rounded-xl shadow-xs overflow-hidden shrink-0'>
-      {/* Search & Collapse Toggle Section */}
-      <div className='p-4 border-b border-border bg-muted/10 shrink-0 flex items-center justify-between gap-2 h-[73px]'>
+      {/* Search & Header Section */}
+      <div className='p-3.5 border-b border-border bg-muted/10 shrink-0 flex items-center justify-between gap-2 h-[73px]'>
+        {/* Render Profile Avatar button ONLY on Mobile APK (isCapacitor() === true) */}
+        {isMobileApp && (
+          <button
+            onClick={() => setIsProfileOpen(true)}
+            className="flex-shrink-0 p-0.5 rounded-full border border-border/80 hover:border-primary transition-all cursor-pointer"
+            title="Open My Profile"
+          >
+            <Avatar className="h-9 w-9">
+              <AvatarImage src={currentUser?.picture} />
+              <AvatarFallback className="text-[11px] font-bold bg-primary/10 text-primary">
+                {getDisplayNameInitials(currentUser?.name || 'ME')}
+              </AvatarFallback>
+            </Avatar>
+          </button>
+        )}
+
         <div className={cn(
           'relative flex-grow flex-1 min-w-0 transition-all duration-300 animate-in fade-in duration-200',
           isCollapsed ? 'block lg:hidden' : 'block'
@@ -97,6 +118,10 @@ export function ChatSidebar({
         </Button>
       </div>
 
+      {isMobileApp && (
+        <MyProfileDialog open={isProfileOpen} onOpenChange={setIsProfileOpen} />
+      )}
+
       {/* Main List Scroll Area */}
       <div className='flex-grow overflow-y-auto p-2 scrollbar-thin'>
         {isLoading ? (
@@ -104,176 +129,109 @@ export function ChatSidebar({
             <Loader2 className='h-5 w-5 animate-spin text-primary' />
             <p className='text-[10px] font-medium'>Loading conversations...</p>
           </div>
-        ) : conversations.length === 0 ? (
-          <div className='flex flex-col items-center justify-center py-20 text-muted-foreground/60 space-y-3 text-center px-4 animate-in fade-in duration-300'>
-            <div className='h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-sm mx-auto'>
-              <MessageSquare className='h-6 w-6 stroke-[1.5]' />
-            </div>
-            <div className='space-y-1'>
-              <p className='text-xs font-bold text-foreground'>No conversations yet</p>
-              <p className='text-[10px] max-w-[200px] text-muted-foreground/80 leading-normal mx-auto'>Start a chat by adding and selecting a contact.</p>
-            </div>
-            {onNavigateToTab && (
-              <Button
-                variant='outline'
-                onClick={() => onNavigateToTab('contact')}
-                className='h-8 rounded-lg text-[10px] font-bold border-border/80 px-4 mt-2 active:scale-95 transition-all cursor-pointer'
-              >
-                Go to Contacts
-              </Button>
-            )}
-          </div>
         ) : filteredConversations.length === 0 ? (
-          <div className='flex flex-col items-center justify-center py-20 text-muted-foreground/60 space-y-2 text-center px-4'>
-            <MessageSquare className='h-8 w-8 stroke-[1.5]' />
-            <p className='text-xs font-semibold'>No chats found</p>
-            <p className='text-[10px]'>Try refining your search query.</p>
+          <div className='flex flex-col items-center justify-center py-14 text-muted-foreground/80 space-y-2'>
+            <MessageSquare className='h-8 w-8 stroke-1 text-muted-foreground/40' />
+            <p className='text-xs font-medium'>No chats found</p>
           </div>
         ) : (
           <div className='space-y-1'>
             {filteredConversations.map((convo) => {
               const isSelected = selectedConversation?.id === convo.id
-              const lastMsgTime = convo.lastMessage?.created_at
+              const unreadCount = convo.unreadCount || 0
+              const initials = getDisplayNameInitials(convo.name || 'Chat')
+
+              // Check if user is online
+              const otherUserObj = convo.members?.find(m => m.user_id !== currentUserId)
+              const otherUserId = otherUserObj?.user_id || convo.id
+              const isUserOnline = onlineUserIds?.has(otherUserId)
+
+              // Check typing status
+              const typingUsers = conversationTypingMap[convo.id] || []
+              const activeTyping = typingUsers.find(u => u.userId !== currentUserId)
 
               return (
-                <button
+                <div
                   key={convo.id}
-                  type='button'
                   onClick={() => onSelectConversation(convo)}
                   className={cn(
-                    'w-full flex items-center transition-all duration-200 cursor-pointer relative group',
-                    isCollapsed 
-                      ? 'p-3 gap-3 text-left lg:p-2 lg:py-3.5 lg:justify-center lg:gap-0 lg:group/item' 
-                      : 'gap-3 p-3 text-left',
+                    'group relative flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all duration-200',
                     isSelected
-                      ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100/50 dark:border-emerald-900/30 shadow-xs'
-                      : 'hover:bg-muted/40 border border-transparent'
+                      ? 'bg-primary/10 text-primary border border-primary/20 shadow-2xs font-medium'
+                      : 'hover:bg-muted/60 text-foreground border border-transparent'
                   )}
                 >
-                  {isCollapsed && isSelected && (
-                    <span className="absolute left-0 w-1 h-8 bg-emerald-500 rounded-r-md animate-in slide-in-from-left duration-200 hidden lg:block" />
-                  )}
-
-                  <div className='relative shrink-0'>
-                    <Avatar className={cn(
-                      'h-10 w-10 border border-border/60 rounded-xl shrink-0 transition-transform duration-200',
-                      isCollapsed ? 'lg:group-hover/item:scale-108 lg:group-hover/item:shadow-sm' : ''
-                    )}>
-                      <AvatarImage src={convo.image} alt={convo.name} />
-                      <AvatarFallback className='rounded-xl bg-primary/10 text-primary font-bold text-xs'>
-                        {getDisplayNameInitials(convo.name || '')}
+                  {/* User Avatar with Online status indicator */}
+                  <div className='relative flex-shrink-0'>
+                    <Avatar className='h-11 w-11 border border-border/60 transition-transform group-hover:scale-102'>
+                      <AvatarImage src={convo.image} alt={convo.name || 'Chat'} />
+                      <AvatarFallback className='text-xs font-bold bg-muted text-foreground'>
+                        {initials}
                       </AvatarFallback>
                     </Avatar>
-                    {convo.type === 'direct' && (() => {
-                      const recipient = convo.members?.find(m => m.id !== currentUserId)
-                      const isOnline = recipient ? onlineUserIds?.has(recipient.id) : false
-                      return (
-                        <span className={cn(
-                          'absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-background',
-                          isOnline ? 'bg-emerald-500' : 'bg-gray-400'
-                        )} />
-                      )
-                    })()}
+                    {isUserOnline && (
+                      <span className='absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 border-2 border-background shadow-2xs animate-in zoom-in duration-300' />
+                    )}
                   </div>
 
+                  {/* Text details */}
                   <div className={cn(
-                    'flex-grow min-w-0 flex flex-col gap-0.5 animate-in fade-in duration-200',
-                    isCollapsed ? 'block lg:hidden' : 'block'
+                    'flex flex-1 flex-col min-w-0 transition-all duration-300',
+                    isCollapsed ? 'hidden lg:hidden' : 'flex'
                   )}>
                     <div className='flex items-center justify-between gap-1'>
-                      <span className='text-xs font-bold text-foreground truncate block max-w-[65%]'>
-                        {convo.name}
+                      <span className='text-xs font-bold truncate text-foreground group-hover:text-primary transition-colors'>
+                        {convo.name || 'Direct Chat'}
                       </span>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span className={cn(
-                          'text-[9px] tabular-nums shrink-0',
-                          convo.unreadCount && convo.unreadCount > 0 ? 'text-emerald-500 font-extrabold' : 'text-muted-foreground/80 font-bold'
-                        )}>
-                          {formatTime(lastMsgTime)}
+                      {convo.lastMessage?.created_at && (
+                        <span className='text-[10px] text-muted-foreground/80 flex-shrink-0 font-normal'>
+                          {formatTime(convo.lastMessage.created_at)}
                         </span>
+                      )}
+                    </div>
+
+                    <div className='flex items-center justify-between gap-1 mt-0.5'>
+                      {activeTyping ? (
+                        <span className='text-[11px] font-semibold text-emerald-500 animate-pulse flex items-center gap-1 truncate'>
+                          {activeTyping.status === 'recording' ? (
+                            <>
+                              <Mic className='h-3 w-3 animate-bounce text-red-500' />
+                              <span className='text-red-500'>recording audio...</span>
+                            </>
+                          ) : (
+                            <>typing...</>
+                          )}
+                        </span>
+                      ) : (
+                        <p className='text-xs text-muted-foreground truncate font-normal'>
+                          {getLastMessageText(convo)}
+                        </p>
+                      )}
+
+                      {/* Unread badge & trash icon */}
+                      <div className='flex items-center gap-1.5 flex-shrink-0'>
+                        {unreadCount > 0 && (
+                          <span className='h-4 min-w-[16px] px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center shadow-2xs'>
+                            {unreadCount}
+                          </span>
+                        )}
+
                         {onDeleteConversation && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            type="button"
+                          <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              if (confirm(`Delete conversation "${convo.name}"?`)) {
-                                onDeleteConversation(convo.id)
-                              }
+                              onDeleteConversation(convo.id)
                             }}
-                            className="h-5 w-5 rounded-md opacity-0 group-hover:opacity-100 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 transition-all shrink-0 cursor-pointer"
-                            title="Delete conversation"
+                            className='opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-all cursor-pointer'
+                            title='Delete conversation'
                           >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
+                            <Trash2 className='h-3.5 w-3.5' />
+                          </button>
                         )}
                       </div>
                     </div>
-
-                    <div className='flex items-center justify-between gap-2 min-w-0'>
-                      {(() => {
-                        const typingUsers = conversationTypingMap[convo.id] || []
-                        if (typingUsers.length > 0) {
-                          const isRecording = typingUsers.some(u => u.status === 'recording')
-                          return (
-                            <div className='flex items-center gap-1 min-w-0 flex-1'>
-                              {isRecording ? (
-                                <span className='text-[10px] text-red-500 font-bold truncate leading-normal flex items-center gap-1 animate-pulse'>
-                                  <Mic className='h-3 w-3 animate-pulse shrink-0' />
-                                  {convo.type === 'direct'
-                                    ? 'recording audio...'
-                                    : `${typingUsers[0].userName}: recording audio...`}
-                                </span>
-                              ) : (
-                                <span className='text-[10px] text-emerald-500 font-bold truncate leading-normal flex items-center gap-1 animate-pulse'>
-                                  {convo.type === 'direct'
-                                    ? 'typing...'
-                                    : `${typingUsers[0].userName}: typing...`}
-                                </span>
-                              )}
-                            </div>
-                          )
-                        }
-
-                        return (
-                          <div className="flex items-center gap-1 min-w-0 flex-1">
-                            {convo.lastMessage && convo.lastMessage.sender_user_id === currentUserId && (
-                              <span className="shrink-0 flex items-center">
-                                {convo.lastMessage.message_status === 'pending' && (
-                                  <Clock className="h-3 w-3 text-muted-foreground/60 animate-pulse" />
-                                )}
-                                {convo.lastMessage.message_status === 'sent' && (
-                                  <Check className="h-3 w-3 text-muted-foreground/70" />
-                                )}
-                                {convo.lastMessage.message_status === 'delivered' && (
-                                  <CheckCheck className="h-3 w-3 text-muted-foreground/70" />
-                                )}
-                                {convo.lastMessage.message_status === 'read' && (
-                                  <CheckCheck className="h-3 w-3 text-sky-500" />
-                                )}
-                                {!convo.lastMessage.message_status && (
-                                  <CheckCheck className="h-3 w-3 text-muted-foreground/70" />
-                                )}
-                              </span>
-                            )}
-                            <p className={cn(
-                              'text-[10px] truncate leading-normal flex-1',
-                              convo.unreadCount && convo.unreadCount > 0 ? 'text-foreground font-extrabold' : 'text-muted-foreground font-semibold'
-                            )}>
-                              {getLastMessageText(convo)}
-                            </p>
-                          </div>
-                        )
-                      })()}
-                      {convo.unreadCount && convo.unreadCount > 0 ? (
-                        <span className='h-4 min-w-4 px-1 rounded-full bg-emerald-500 text-white text-[8px] font-extrabold flex items-center justify-center shrink-0 animate-in zoom-in-50 duration-150 leading-none'>
-                          {convo.unreadCount > 99 ? '99+' : convo.unreadCount}
-                        </span>
-                      ) : null}
-                    </div>
                   </div>
-                </button>
+                </div>
               )
             })}
           </div>
@@ -282,4 +240,3 @@ export function ChatSidebar({
     </div>
   )
 }
-export default ChatSidebar

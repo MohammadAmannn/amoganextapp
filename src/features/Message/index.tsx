@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { ArrowLeft, Mail, Plus } from 'lucide-react'
+import { ArrowLeft, MessageSquare, Plus } from 'lucide-react'
 import { Main } from '@/components/layout/main'
 import { AppHeader } from '@/components/layout/app-header'
 import { ComingSoon } from '@/components/coming-soon'
@@ -14,7 +14,7 @@ import { EmailList } from './components/email-list'
 import { EmailView } from './components/email-view'
 import { NewEmail } from './components/new-email'
 
-export default function EmailFeature() {
+export default function MessageFeature() {
   const [emails, setEmails] = useState<Email[]>(initialEmails)
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(
     initialEmails.find((e) => e.id === '8') || initialEmails[0] || null
@@ -44,7 +44,7 @@ export default function EmailFeature() {
 
   const handleDelete = (id: string) => {
     setEmails((prev) => prev.filter((e) => e.id !== id))
-    toast.success('Email moved to trash')
+    toast.success('Message moved to trash')
     if (selectedEmail?.id === id) {
       setSelectedEmail(null)
     }
@@ -54,7 +54,7 @@ export default function EmailFeature() {
     setEmails((prev) =>
       prev.map((e) => (e.id === id ? { ...e, done: true } : e))
     )
-    toast.success('Email archived')
+    toast.success('Message archived')
     if (selectedEmail?.id === id) {
       setSelectedEmail(null)
     }
@@ -62,7 +62,7 @@ export default function EmailFeature() {
 
   return (
     <>
-      <AppHeader title='Email' />
+      <AppHeader title='Message' />
 
       <Main fixed className='flex flex-1 flex-col p-4 sm:p-6 pt-3 sm:pt-3 bg-background overflow-hidden min-h-0'>
         <Tabs
@@ -105,24 +105,25 @@ export default function EmailFeature() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Compose/New Email Button */}
+            {/* Compose/New Message Button */}
             <button
               onClick={() => setIsComposing(true)}
               className='ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:text-black font-semibold text-xs transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-sm border border-transparent'
-              title='Compose New Email'
+              title='Compose New Message'
             >
-              <Mail className='h-3.5 w-3.5' />
+              <MessageSquare className='h-3.5 w-3.5' />
               <span>New</span>
               <Plus className='h-3 w-3' />
             </button>
           </div>
 
           {isComposing ? (
-            <div className='flex-grow flex flex-col h-full overflow-hidden bg-background mt-0'>
+            <div className='flex-grow flex flex-col h-full overflow-hidden border border-border rounded-xl bg-background shadow-xs mt-0'>
               <NewEmail
                 onCancel={() => setIsComposing(false)}
                 onSend={(emailData) => {
                   toast.success("Email sent successfully!")
+                  // Optionally add to emails list
                   const newEmail: Email = {
                     id: String(Date.now()),
                     from: undefined,
@@ -151,9 +152,11 @@ export default function EmailFeature() {
             <>
               <TabsContent
                 value='inbox'
-                className='flex-1 overflow-hidden flex flex-row mt-0 focus-visible:outline-none bg-background'
+                className='flex-1 overflow-hidden flex flex-row mt-0 focus-visible:outline-none border border-border rounded-xl bg-background shadow-xs'
               >
+                {/* Responsive split screen */}
                 <div className='flex flex-1 h-full overflow-hidden w-full'>
+                  {/* Left Column: Email List */}
                   <div
                     className={cn(
                       'shrink-0 h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out',
@@ -174,12 +177,14 @@ export default function EmailFeature() {
                     />
                   </div>
 
+                  {/* Right Column: Email Detail */}
                   <div
                     className={cn(
                       'flex-grow flex flex-col h-full overflow-hidden relative',
                       !selectedEmail && 'hidden md:block'
                     )}
                   >
+                    {/* Back button visible only on mobile when email is selected */}
                     {selectedEmail && (
                       <button
                         onClick={() => setSelectedEmail(null)}
@@ -197,16 +202,17 @@ export default function EmailFeature() {
                       />
                     ) : (
                       <div className='flex h-full flex-col items-center justify-center bg-background text-muted-foreground p-8'>
-                        <p className='text-sm'>Select an email to view its content</p>
+                        <p className='text-sm'>Select a message to view its content</p>
                       </div>
                     )}
                   </div>
                 </div>
               </TabsContent>
 
+              {/* Send Tab - Same as Inbox */}
               <TabsContent
                 value='send'
-                className='flex-1 overflow-hidden flex flex-row mt-0 focus-visible:outline-none bg-background'
+                className='flex-1 overflow-hidden flex flex-row mt-0 focus-visible:outline-none border border-border rounded-xl bg-background shadow-xs'
               >
                 <div className='flex flex-1 h-full overflow-hidden w-full'>
                   <div
@@ -250,13 +256,14 @@ export default function EmailFeature() {
                       />
                     ) : (
                       <div className='flex h-full flex-col items-center justify-center bg-background text-muted-foreground p-8'>
-                        <p className='text-sm'>Select an email to view its content</p>
+                        <p className='text-sm'>Select a message to view its content</p>
                       </div>
                     )}
                   </div>
                 </div>
               </TabsContent>
 
+              {/* Folder Tab - Coming Soon */}
               <TabsContent
                 value='folder'
                 className='flex-1 flex items-center justify-center border border-dashed rounded-xl focus-visible:outline-none bg-muted/5 min-h-[400px] mt-0'
@@ -264,6 +271,7 @@ export default function EmailFeature() {
                 <ComingSoon />
               </TabsContent>
 
+              {/* Contact Tab - Coming Soon */}
               <TabsContent
                 value='contact'
                 className='flex-1 flex items-center justify-center border border-dashed rounded-xl focus-visible:outline-none bg-muted/5 min-h-[400px] mt-0'
@@ -271,6 +279,7 @@ export default function EmailFeature() {
                 <ComingSoon />
               </TabsContent>
 
+              {/* Groups Tab - Coming Soon */}
               <TabsContent
                 value='groups'
                 className='flex-1 flex items-center justify-center border border-dashed rounded-xl focus-visible:outline-none bg-muted/5 min-h-[400px] mt-0'

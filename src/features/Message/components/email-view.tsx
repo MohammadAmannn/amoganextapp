@@ -68,9 +68,11 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
   const formattedDate = format(emailDate, "MMM d, yyyy h:mm a")
   const relativeTime = formatDistanceToNow(emailDate, { addSuffix: true })
 
+  // Process the email body and reset state when email changes
   useEffect(() => {
     setSubject(email.subject)
     let processedBody = email.body
+    // Remove the h2 heading with "Weekly Team Updates"
     processedBody = processedBody.replace(/<h2>Weekly Team Updates<\/h2>/, "")
     setEmailBody(processedBody)
     
@@ -87,13 +89,16 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setIsUploading(true)
+
       const newFiles = Array.from(e.target.files).map((file) => ({
         id: Date.now() + Math.random().toString(36).substring(2, 9),
         name: file.name,
         type: file.type,
         size: formatFileSize(file.size),
       }))
+
       await new Promise((resolve) => setTimeout(resolve, 1500))
+
       setAttachments((prev) => [...prev, ...newFiles])
       setIsUploading(false)
       e.target.value = ""
@@ -140,6 +145,7 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
       "bg-pink-200 text-pink-800 dark:bg-pink-900/40 dark:text-pink-200",
       "bg-indigo-200 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200",
     ]
+
     const hash = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0)
     return colors[hash % colors.length]
   }
@@ -147,6 +153,7 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
   return (
     <div className="flex flex-col h-full bg-background overflow-y-auto">
       <div className="px-4 py-3 border-b border-border bg-background/50 shrink-0">
+        {/* Header Row: Avatar + From info on LEFT, Back button on RIGHT */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div
@@ -170,11 +177,13 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
           
           <Button variant="ghost" size="sm" onClick={onBack} className="text-xs hover:bg-muted cursor-pointer shrink-0 ml-2 h-8">
             <ArrowLeft className="h-3.5 w-3.5 mr-1" />
-            Back to Email
+            Back to Message
           </Button>
         </div>
 
+        {/* Second Row: CC, BCC, Date, and Action Icons */}
         <div className="flex flex-col mt-2">
+          {/* CC recipients if any */}
           {email.cc && email.cc.length > 0 && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
               <span className="font-medium">CC:</span>
@@ -182,6 +191,7 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
             </div>
           )}
           
+          {/* BCC recipients if any */}
           {email.bcc && email.bcc.length > 0 && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
               <span className="font-medium">BCC:</span>
@@ -189,6 +199,7 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
             </div>
           )}
           
+          {/* Date and Action Icons on same row */}
           <div className="flex items-center justify-between flex-wrap gap-1 mt-1">
             <div className="flex items-center text-xs text-muted-foreground">
               <span className="mr-1.5">to me</span>
@@ -269,7 +280,9 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
         </div>
       </div>
 
+      {/* Rest of the component - Subject, Email Content, Attachments */}
       <div className="p-4 flex-1 space-y-4">
+        {/* Editable subject text box */}
         <div className="space-y-1">
           <label htmlFor="subject" className="block text-xs font-semibold text-muted-foreground">
             Subject
@@ -282,6 +295,7 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
           />
         </div>
 
+        {/* Rich Text Editor */}
         <div className="space-y-1">
           <label className="block text-xs font-semibold text-muted-foreground">
             Email Content
@@ -333,6 +347,7 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
           </div>
         </div>
 
+        {/* Attachments Section */}
         <div className="space-y-2 pt-2 border-t border-border/60">
           <div className="flex items-center">
             <h3 className="text-sm font-semibold">Attachments ({attachments.length})</h3>

@@ -59,6 +59,13 @@ export const sidebarData: SidebarData = {
           url: '/email',
           icon: Mail,
         },
+
+        {
+          title:"Message",
+          url:"/message",
+          icon:Mail
+        },
+
         {
           title: 'Email Settings',
           url: '/email-settings',

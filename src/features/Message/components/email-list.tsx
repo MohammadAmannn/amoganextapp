@@ -67,8 +67,10 @@ export function EmailList({
   isCollapsed,
   onToggleCollapse,
 }: EmailListProps) {
+  // State for selected email account
   const [selectedAccount, setSelectedAccount] = useState<string>('all')
 
+  // Get unique email accounts from the emails data
   const emailAccounts = React.useMemo(() => {
     const accounts = new Map()
     emails.forEach(email => {
@@ -83,6 +85,7 @@ export function EmailList({
     return Array.from(accounts.values())
   }, [emails])
 
+  // Filter by search query and selected account
   const filtered = emails.filter((email) => {
     const matchesSearch =
       email.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -97,9 +100,11 @@ export function EmailList({
   })
 
   return (
-    <div className='flex h-full w-full flex-col bg-background overflow-hidden shrink-0'>
+    <div className='flex h-full w-full flex-col bg-background border-r border-border overflow-hidden shrink-0'>
+      {/* Only show Dropdown and Search when NOT collapsed */}
       {!isCollapsed && (
         <div className='px-3 pt-3 pb-2 shrink-0 bg-background border-b border-border'>
+          {/* Dropdown - Full width matching search bar style */}
           <div className='relative mb-2'>
             <select 
               className='w-full h-8 px-3 rounded-md bg-muted/10 border border-border text-xs font-medium text-foreground hover:bg-muted/20 transition-colors cursor-pointer outline-none focus:ring-1 focus:ring-primary/30 appearance-none'
@@ -122,11 +127,12 @@ export function EmailList({
             </select>
           </div>
 
+          {/* Search Input with toggle button on the right */}
           <div className='flex items-center gap-2'>
             <div className='relative flex-1 min-w-0'>
               <Search className='absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60' />
               <Input
-                placeholder='Search Emails...'
+                placeholder='Search Messages...'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className='pl-8 pr-7 h-8 text-xs rounded-md bg-muted/10 border-border focus-visible:ring-1 focus-visible:ring-ring w-full'
@@ -141,6 +147,7 @@ export function EmailList({
               )}
             </div>
 
+            {/* Toggle button on the right of search bar */}
             <button
               onClick={onToggleCollapse}
               className='p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors border border-border bg-background shrink-0 cursor-pointer flex items-center justify-center h-8 w-8'
@@ -152,6 +159,7 @@ export function EmailList({
         </div>
       )}
 
+      {/* When collapsed, only show toggle button centered */}
       {isCollapsed && (
         <div className='px-3 pt-3 pb-2 shrink-0 bg-background border-b border-border flex justify-center'>
           <button
@@ -164,6 +172,7 @@ export function EmailList({
         </div>
       )}
 
+      {/* Scrollable Email list */}
       <div className='flex-1 min-h-0 overflow-y-auto scrollbar-thin bg-background'>
         <div className='flex flex-col py-1 gap-0.5'>
           {filtered.length === 0 ? (
@@ -193,11 +202,13 @@ export function EmailList({
                     'border border-transparent'
                   )}
                 >
+                  {/* Left Accent vertical line for selected state */}
                   {isSelected && (
                     <div className='absolute left-0 top-1 bottom-1 w-0.5 bg-indigo-600 rounded-l-full' />
                   )}
 
                   {isCollapsed ? (
+                    // Collapsed state: Only show avatar with initials
                     <div className='relative shrink-0'>
                       <div className={cn(
                         'w-9 h-9 rounded-lg flex items-center justify-center font-bold text-xs shadow-xs border transition-all duration-200',
@@ -212,7 +223,9 @@ export function EmailList({
                       )}
                     </div>
                   ) : (
+                    // Normal expanded state: Show sender details like in screenshot
                     <>
+                      {/* Top row: Name + badges + time */}
                       <div className='flex items-center justify-between'>
                         <div className='flex items-center gap-1.5 flex-wrap min-w-0'>
                           <span className={cn(
@@ -248,6 +261,7 @@ export function EmailList({
                         </span>
                       </div>
 
+                      {/* Subject - single line */}
                       <p className={cn(
                         'text-sm truncate',
                         !email.read ? 'font-medium text-foreground' : 'text-muted-foreground'
@@ -255,10 +269,12 @@ export function EmailList({
                         {email.subject}
                       </p>
 
+                      {/* Preview Snippet - single line */}
                       <p className='text-xs text-muted-foreground/70 line-clamp-1'>
                         {email.preview}
                       </p>
 
+                      {/* More actions dropdown - positioned absolutely */}
                       <div className='absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity'>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

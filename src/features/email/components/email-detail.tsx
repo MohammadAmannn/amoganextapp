@@ -9,6 +9,7 @@ import {
   MoreVertical,
   ReplyAll,
 } from 'lucide-react'
+import { format } from 'date-fns'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -250,29 +251,38 @@ export function EmailDetail({
         </div>
       </div>
 
-      {/* Info Area */}
-      <div className='px-6 py-4 border-b border-border/80 flex items-start gap-4 shrink-0 bg-background/50'>
-        <Avatar className='h-10 w-10 border shadow-xs'>
-          <AvatarFallback className='bg-primary/10 text-primary text-xs font-bold'>
-            {email.avatarInitials}
-          </AvatarFallback>
-        </Avatar>
+      {/* Info Area with From/User Email and Avatar - now at top */}
+      <div className='px-6 py-3 border-b border-border/80 flex items-center justify-between shrink-0 bg-background/50'>
+        <div className='flex items-center gap-3 flex-1 min-w-0'>
+          <Avatar className='h-10 w-10 border shadow-xs shrink-0'>
+            <AvatarFallback className='bg-primary/10 text-primary text-xs font-bold'>
+              {email.avatarInitials}
+            </AvatarFallback>
+          </Avatar>
+          
+          <div className='flex flex-col min-w-0'>
+            <span className='text-sm font-bold text-foreground truncate'>
+              From: {email.name}
+            </span>
+            <span className='text-xs text-muted-foreground truncate'>
+              {email.email}
+            </span>
+          </div>
+        </div>
         
-        <div className='flex-1 min-w-0'>
-          <h3 className='text-sm font-bold text-foreground truncate'>
-            {email.name}
-          </h3>
-          <p className='text-xs font-semibold text-foreground/80 leading-snug line-clamp-1 mt-0.5'>
-            {email.subject}
-          </p>
-          <p className='text-[11px] text-muted-foreground mt-1'>
-            Reply-To: <span className='font-mono'>{email.replyTo}</span>
-          </p>
+        <div className='text-[10px] text-muted-foreground whitespace-nowrap shrink-0 ml-2'>
+          {format(email.date, "MMM d, yyyy h:mm a")}
         </div>
+      </div>
 
-        <div className='text-[10px] text-muted-foreground whitespace-nowrap pt-1 shrink-0'>
-          Sep 24, 2024, 11:49:40 PM
-        </div>
+      {/* Subject and Reply-To below */}
+      <div className='px-6 py-3 border-b border-border/40 shrink-0 bg-background/30'>
+        <h3 className='text-sm font-semibold text-foreground'>
+          {email.subject}
+        </h3>
+        <p className='text-[11px] text-muted-foreground mt-1'>
+          Reply-To: <span className='font-mono'>{email.replyTo}</span>
+        </p>
       </div>
 
       {/* Scrollable Email Body content */}

@@ -90,7 +90,6 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
     if (e.target.files && e.target.files.length > 0) {
       setIsUploading(true)
 
-      // Create array of file metadata
       const newFiles = Array.from(e.target.files).map((file) => ({
         id: Date.now() + Math.random().toString(36).substring(2, 9),
         name: file.name,
@@ -98,13 +97,10 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
         size: formatFileSize(file.size),
       }))
 
-      // Simulate network delay for upload
       await new Promise((resolve) => setTimeout(resolve, 1500))
 
       setAttachments((prev) => [...prev, ...newFiles])
       setIsUploading(false)
-
-      // Reset the input value so the same file can be selected again
       e.target.value = ""
     }
   }
@@ -132,7 +128,6 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
     return "FILE"
   }
 
-  // Helper function to get initials from name
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -141,7 +136,6 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
       .substring(0, 2)
   }
 
-  // Helper function to get a color based on name
   const getColorForName = (name: string) => {
     const colors = [
       "bg-blue-200 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200",
@@ -152,180 +146,141 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
       "bg-indigo-200 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200",
     ]
 
-    // Simple hash function to get consistent color for a name
     const hash = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0)
     return colors[hash % colors.length]
   }
 
-  // Render avatar for a recipient
-  const renderAvatar = (recipient: EmailRecipient, type?: string) => (
-    <TooltipProvider key={recipient.email}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div
-            className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium border border-background select-none cursor-pointer",
-              getColorForName(recipient.name),
-            )}
-          >
-            {getInitials(recipient.name)}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{recipient.name}</p>
-          <p className="text-xs text-muted-foreground">{recipient.email}</p>
-          {type && <p className="text-xs font-medium text-primary mt-0.5">{type}</p>}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  )
-
   return (
     <div className="flex flex-col h-full bg-background overflow-y-auto">
-      <div className="p-4 border-b border-border bg-background/50 shrink-0">
-        <div className="flex flex-col">
-          {/* Back to Email button at the top right */}
-          <div className="flex justify-end mb-2">
-            <Button variant="ghost" size="sm" onClick={onBack} className="text-xs hover:bg-muted cursor-pointer">
-              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
-              Back to Email
-            </Button>
+      <div className="px-4 py-3 border-b border-border bg-background/50 shrink-0">
+        {/* Header Row: Avatar + From info on LEFT, Back button on RIGHT */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div
+              className={cn(
+                "w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold border border-border shrink-0",
+                getColorForName(email.name)
+              )}
+            >
+              {email.avatarInitials || getInitials(email.name)}
+            </div>
+            
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm font-bold text-foreground truncate">
+                From: {email.name}
+              </span>
+              <span className="text-xs text-muted-foreground truncate">
+                {email.email}
+              </span>
+            </div>
           </div>
+          
+          <Button variant="ghost" size="sm" onClick={onBack} className="text-xs hover:bg-muted cursor-pointer shrink-0 ml-2 h-8">
+            <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+            Back to Email
+          </Button>
+        </div>
 
-          {/* Email header information - all left aligned */}
-          <div className="flex flex-col mb-3">
-            {/* Profile pictures row */}
-            <div className="flex items-center mb-2 space-x-2">
-              {/* Sender avatar */}
-              <div
-                className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold border border-border select-none",
-                  getColorForName(email.name)
-                )}
-              >
-                {email.avatarInitials || getInitials(email.name)}
-              </div>
-
-              {/* CC recipients */}
-              {email.cc && email.cc.length > 0 && (
-                <>
-                  <div className="text-xs text-muted-foreground mx-1">cc:</div>
-                  <div className="flex -space-x-2">
-                    {email.cc.map((recipient) => (
-                      <div key={recipient.email} className="relative">
-                        {renderAvatar(recipient, "CC")}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {/* BCC recipients */}
-              {email.bcc && email.bcc.length > 0 && (
-                <>
-                  <div className="text-xs text-muted-foreground mx-1">bcc:</div>
-                  <div className="flex -space-x-2">
-                    {email.bcc.map((recipient) => (
-                      <div key={recipient.email} className="relative">
-                        {renderAvatar(recipient, "BCC")}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
+        {/* Second Row: CC, BCC, Date, and Action Icons */}
+        <div className="flex flex-col mt-2">
+          {/* CC recipients if any */}
+          {email.cc && email.cc.length > 0 && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
+              <span className="font-medium">CC:</span>
+              <span>{email.cc.map(c => c.name).join(', ')}</span>
+            </div>
+          )}
+          
+          {/* BCC recipients if any */}
+          {email.bcc && email.bcc.length > 0 && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
+              <span className="font-medium">BCC:</span>
+              <span>{email.bcc.map(c => c.name).join(', ')}</span>
+            </div>
+          )}
+          
+          {/* Date and Action Icons on same row */}
+          <div className="flex items-center justify-between flex-wrap gap-1 mt-1">
+            <div className="flex items-center text-xs text-muted-foreground">
+              <span className="mr-1.5">to me</span>
+              <span>
+                {formattedDate} - {relativeTime}
+              </span>
             </div>
 
-            {/* From name */}
-            <div className="flex items-center text-xs sm:text-sm">
-              <span className="font-semibold text-muted-foreground mr-1.5">From:</span>
-              <span className="font-bold text-foreground">{email.name}</span>
-            </div>
+            <div className="flex items-center space-x-0.5">
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10" title="Mark as important">
+                <Flag className={cn("h-3.5 w-3.5", email.important ? "fill-destructive" : "")} />
+                <span className="sr-only">Important</span>
+              </Button>
 
-            {/* From email */}
-            <p className="text-xs text-muted-foreground">{email.email}</p>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-500 hover:bg-amber-500/10" title="Action item">
+                <AlertTriangle className={cn("h-3.5 w-3.5", email.actionItem ? "fill-amber-500" : "")} />
+                <span className="sr-only">Action item</span>
+              </Button>
 
-            {/* Date time and action icons on the same row */}
-            <div className="flex items-center justify-between mt-2 mb-1 flex-wrap gap-2">
-              <div className="flex items-center text-xs text-muted-foreground">
-                <span className="mr-1.5">to me</span>
-                <span>
-                  {formattedDate} - {relativeTime}
-                </span>
-              </div>
-
-              <div className="flex items-center space-x-1">
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10" title="Mark as important">
-                  <Flag className={cn("h-4 w-4", email.important ? "fill-destructive" : "")} />
-                  <span className="sr-only">Important</span>
+              {onStartChat && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-primary hover:bg-primary/10 cursor-pointer"
+                  onClick={onStartChat}
+                  title="Chat about this email"
+                >
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  <span className="sr-only">Chat</span>
                 </Button>
+              )}
 
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-500 hover:bg-amber-500/10" title="Action item">
-                  <AlertTriangle className={cn("h-4 w-4", email.actionItem ? "fill-amber-500" : "")} />
-                  <span className="sr-only">Action item</span>
-                </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-500 hover:bg-emerald-500/10" title="View as document">
+                <FileText className="h-3.5 w-3.5" />
+                <span className="sr-only">View as document</span>
+              </Button>
 
-                {onStartChat && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-primary hover:bg-primary/10 cursor-pointer"
-                    onClick={onStartChat}
-                    title="Chat about this email"
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    <span className="sr-only">Chat</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 cursor-pointer">
+                    <MoreVertical className="h-3.5 w-3.5" />
+                    <span className="sr-only">More options</span>
                   </Button>
-                )}
-
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-500 hover:bg-emerald-500/10" title="View as document">
-                  <FileText className="h-4 w-4" />
-                  <span className="sr-only">View as document</span>
-                </Button>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 cursor-pointer">
-                      <MoreVertical className="h-4 w-4" />
-                      <span className="sr-only">More options</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-[180px] bg-background border border-border">
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Reply className="h-4 w-4 mr-2" />
-                      Reply
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Forward className="h-4 w-4 mr-2" />
-                      Forward
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Archive className="h-4 w-4 mr-2" />
-                      Archive
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Share
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Printer className="h-4 w-4 mr-2" />
-                      Print
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onDelete(email.id)} className="text-destructive cursor-pointer focus:bg-destructive/10 focus:text-destructive">
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[170px] bg-background border border-border">
+                  <DropdownMenuItem className="cursor-pointer text-xs">
+                    <Reply className="h-3.5 w-3.5 mr-2" />
+                    Reply
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer text-xs">
+                    <Forward className="h-3.5 w-3.5 mr-2" />
+                    Forward
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer text-xs">
+                    <Archive className="h-3.5 w-3.5 mr-2" />
+                    Archive
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer text-xs">
+                    <Share2 className="h-3.5 w-3.5 mr-2" />
+                    Share
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer text-xs">
+                    <Printer className="h-3.5 w-3.5 mr-2" />
+                    Print
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer text-xs">
+                    <Download className="h-3.5 w-3.5 mr-2" />
+                    Download
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onDelete(email.id)} className="text-destructive cursor-pointer focus:bg-destructive/10 focus:text-destructive text-xs">
+                    <Trash2 className="h-3.5 w-3.5 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Rest of the component - Subject, Email Content, Attachments */}
       <div className="p-4 flex-1 space-y-4">
         {/* Editable subject text box */}
         <div className="space-y-1">
@@ -346,7 +301,6 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
             Email Content
           </label>
           <div className="border border-border rounded-lg overflow-hidden bg-background">
-            {/* Toolbar */}
             <div className="flex items-center p-2 border-b border-border bg-muted/40 gap-1 flex-wrap">
               <Button type="button" variant="ghost" size="icon" className="h-8 w-8" title="Bold">
                 <Bold className="h-4 w-4" />
@@ -383,7 +337,6 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
               </Button>
             </div>
 
-            {/* Editor Content */}
             <div
               className="p-4 min-h-[200px] prose max-w-none focus:outline-none text-sm leading-relaxed"
               contentEditable={true}
@@ -478,15 +431,15 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
 
       <div className="p-4 border-t border-border bg-muted/20 shrink-0">
         <div className="flex space-x-2 overflow-x-auto py-1">
-          <Button variant="outline" size="sm" className="flex-shrink-0 cursor-pointer">
+          <Button variant="outline" size="sm" className="flex-shrink-0 cursor-pointer text-xs">
             <Reply className="h-3.5 w-3.5 mr-1.5" />
             Reply
           </Button>
-          <Button variant="outline" size="sm" className="flex-shrink-0 cursor-pointer">
+          <Button variant="outline" size="sm" className="flex-shrink-0 cursor-pointer text-xs">
             <ReplyAll className="h-3.5 w-3.5 mr-1.5" />
             Reply All
           </Button>
-          <Button variant="outline" size="sm" className="flex-shrink-0 cursor-pointer">
+          <Button variant="outline" size="sm" className="flex-shrink-0 cursor-pointer text-xs">
             <Forward className="h-3.5 w-3.5 mr-1.5" />
             Forward
           </Button>
@@ -494,7 +447,7 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
             variant="outline"
             size="sm"
             onClick={() => onDelete(email.id)}
-            className="flex-shrink-0 text-destructive border-destructive/20 hover:bg-destructive/5 hover:text-destructive cursor-pointer"
+            className="flex-shrink-0 text-destructive border-destructive/20 hover:bg-destructive/5 hover:text-destructive cursor-pointer text-xs"
           >
             <Trash2 className="h-3.5 w-3.5 mr-1.5" />
             Delete

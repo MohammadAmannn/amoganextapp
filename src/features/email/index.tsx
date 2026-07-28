@@ -70,7 +70,7 @@ export default function EmailFeature() {
           onValueChange={setActiveTab}
           className='flex flex-1 flex-col overflow-hidden space-y-4 min-h-0'
         >
-          {/* Custom Tabs Navigation (matches notifications and inbox tabs style) */}
+          {/* Custom Tabs Navigation */}
           <div className='w-full overflow-x-auto pb-2 shrink-0 border-b border-border px-4 sm:px-0 sticky top-0 bg-background z-10 flex items-center gap-4'>
             <TabsList className='h-auto gap-6 border-0 bg-transparent p-0 shadow-none rounded-none'>
               <TabsTrigger
@@ -80,29 +80,35 @@ export default function EmailFeature() {
                 Inbox
               </TabsTrigger>
               <TabsTrigger
-                value='favourite'
+                value='send'
                 className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none'
               >
-                Favourite
+                Send
               </TabsTrigger>
               <TabsTrigger
-                value='archive'
+                value='folder'
                 className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none'
               >
-                Archive
+                Folder
               </TabsTrigger>
               <TabsTrigger
-                value='history'
+                value='contact'
                 className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none'
               >
-                History
+                Contact
+              </TabsTrigger>
+              <TabsTrigger
+                value='groups'
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none'
+              >
+                Groups
               </TabsTrigger>
             </TabsList>
 
             {/* Compose/New Email Button */}
             <button
               onClick={() => setIsComposing(true)}
-              className='ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white  hover:text-black font-semibold text-xs transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-sm border border-transparent'
+              className='ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:text-black font-semibold text-xs transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-sm border border-transparent'
               title='Compose New Email'
             >
               <Mail className='h-3.5 w-3.5' />
@@ -203,23 +209,79 @@ export default function EmailFeature() {
                 </div>
               </TabsContent>
 
-              {/* Other Tabs content */}
+              {/* Send Tab - Same as Inbox */}
               <TabsContent
-                value='favourite'
+                value='send'
+                className='flex-1 overflow-hidden flex flex-row mt-0 focus-visible:outline-none border border-border rounded-xl bg-background shadow-xs'
+              >
+                <div className='flex flex-1 h-full overflow-hidden w-full'>
+                  <div
+                    className={cn(
+                      'shrink-0 h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out',
+                      selectedEmail && 'hidden md:block',
+                      isSidebarCollapsed ? 'w-20' : 'w-full md:w-[350px] lg:w-[400px]'
+                    )}
+                  >
+                    <EmailList
+                      emails={emails}
+                      selectedEmailId={selectedEmail?.id ?? null}
+                      onSelectEmail={handleSelectEmail}
+                      searchQuery={searchQuery}
+                      setSearchQuery={setSearchQuery}
+                      mode={'done'}
+                      setMode={setMode}
+                      isCollapsed={isSidebarCollapsed}
+                      onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                    />
+                  </div>
+                  <div
+                    className={cn(
+                      'flex-grow flex flex-col h-full overflow-hidden relative',
+                      !selectedEmail && 'hidden md:block'
+                    )}
+                  >
+                    {selectedEmail && (
+                      <button
+                        onClick={() => setSelectedEmail(null)}
+                        className='md:hidden absolute left-4 top-3 z-50 p-1.5 rounded-full hover:bg-muted text-muted-foreground transition-colors border bg-background shrink-0'
+                      >
+                        <ArrowLeft className='h-4 w-4' />
+                      </button>
+                    )}
+                    {selectedEmail ? (
+                      <EmailView
+                        email={selectedEmail}
+                        onBack={() => setSelectedEmail(null)}
+                        onDelete={handleDelete}
+                      />
+                    ) : (
+                      <div className='flex h-full flex-col items-center justify-center bg-background text-muted-foreground p-8'>
+                        <p className='text-sm'>Select an email to view its content</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Folder Tab - Coming Soon */}
+              <TabsContent
+                value='folder'
                 className='flex-1 flex items-center justify-center border border-dashed rounded-xl focus-visible:outline-none bg-muted/5 min-h-[400px] mt-0'
               >
                 <ComingSoon />
               </TabsContent>
 
+              {/* Contact Tab - Coming Soon */}
               <TabsContent
-                value='archive'
+                value='contact'
                 className='flex-1 flex items-center justify-center border border-dashed rounded-xl focus-visible:outline-none bg-muted/5 min-h-[400px] mt-0'
               >
                 <ComingSoon />
               </TabsContent>
 
+              {/* Groups Tab - Coming Soon */}
               <TabsContent
-                value='history'
+                value='groups'
                 className='flex-1 flex items-center justify-center border border-dashed rounded-xl focus-visible:outline-none bg-muted/5 min-h-[400px] mt-0'
               >
                 <ComingSoon />

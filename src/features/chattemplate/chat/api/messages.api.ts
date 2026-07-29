@@ -5,10 +5,15 @@ import { Message } from '../types/chat.types'
 /**
  * Fetch all messages for a specific conversation and user copy.
  */
-export async function getConversationMessages(conversationId: string, userId: string): Promise<Message[]> {
+export async function getConversationMessages(
+  conversationId: string,
+  userId: string,
+  options?: { limit?: number; before?: string }
+): Promise<Message[]> {
   try {
     const query = createQuery()
-      .select(`
+      .select(
+        `
         *,
         sender:profiles!sender_user_id (
           id,
@@ -16,13 +21,20 @@ export async function getConversationMessages(conversationId: string, userId: st
           email,
           avatar
         )
-      `)
+      `
+      )
       .eq('conversation_id', conversationId)
       .eq('owner_user_id', userId)
       .or('deleted.eq.false,deleted_by.not.is.null')
-      .order('created_at', { ascending: true })
 
-    const data = await apiClient.get<any[]>(`/rest/v1/chat_messages${query.toString()}`)
+    if (options?.before) query.lt('created_at', options.before)
+    query.order('created_at', { ascending: !options?.limit })
+    if (options?.limit) query.limit(options.limit)
+
+    const response = await apiClient.get<any[]>(
+      `/rest/v1/chat_messages${query.toString()}`
+    )
+    const data = options?.limit ? [...response].reverse() : response
     if (!data) return []
 
     const messages: Message[] = data.map((d: any) => ({
@@ -36,7 +48,7 @@ export async function getConversationMessages(conversationId: string, userId: st
       sent: d.sent,
       received: d.received,
       created_at: d.created_at,
-      
+
       message_status: d.message_status || undefined,
       client_message_id: d.client_message_id || undefined,
       queued_at: d.queued_at || undefined,
@@ -76,46 +88,129 @@ export async function getConversationMessages(conversationId: string, userId: st
 
       sender_message_id: d.sender_message_id || undefined,
 
-      sender: d.sender ? {
-        id: d.sender.id,
-        name: d.sender.name,
-        email: d.sender.email,
-        avatar_url: d.sender.avatar || undefined,
-      } : undefined,
+      sender: d.sender
+        ? {
+            id: d.sender.id,
+            name: d.sender.name,
+            email: d.sender.email,
+            avatar_url: d.sender.avatar || undefined,
+          }
+        : undefined,
       location_data: d.location_data || undefined,
       location_type: d.location_type || undefined,
     }))
 
-    // Load reply references for UI display if needed
+    // Resolve reply references against the current user's message copies first.
+    // Every member owns a different row id, while reply_to_message_id points to
+    // the sender's canonical copy. Matching sender_message_id keeps replies
+    // visible for both the sender and every receiver without duplicating rows.
     for (const msg of messages) {
       if (msg.reply && msg.replyto_message_id) {
+        const localReply = messages.find(
+          (candidate) =>
+            candidate.id === msg.replyto_message_id ||
+            candidate.sender_message_id === msg.replyto_message_id
+        )
+
+        if (localReply) {
+          msg.replyto_message = localReply
+          msg.replyMetadata = {
+            replyemoji: msg.replyemoji || null,
+            replyto_message_id: msg.replyto_message_id,
+            replyto_user_id: msg.replyto_user_id || null,
+            parent_message_id: msg.parent_message_id || null,
+            replyMessageText: localReply.deleted
+              ? 'Original message unavailable'
+              : localReply.message_type === 'text'
+                ? localReply.message || ''
+                : `Attachment: ${localReply.file_name || 'File'}`,
+            replySenderName: localReply.sender?.name || 'User',
+          }
+          continue
+        }
+
         const replyQuery = createQuery()
-          .select(`
+          .select(
+            `
             id,
+            sender_user_id,
+            created_at,
             message,
             message_type,
             file_name,
+            deleted,
             sender:profiles!sender_user_id(name)
-          `)
+          `
+          )
           .eq('id', msg.replyto_message_id)
           .limit(1)
 
         try {
-          const replyMsgs = await apiClient.get<any[]>(`/rest/v1/chat_messages${replyQuery.toString()}`)
+          const replyMsgs = await apiClient.get<any[]>(
+            `/rest/v1/chat_messages${replyQuery.toString()}`
+          )
           const replyMsg = replyMsgs[0] || null
 
           if (replyMsg) {
+            msg.replyto_message = {
+              id: replyMsg.id,
+              conversation_id: msg.conversation_id,
+              owner_user_id: msg.owner_user_id,
+              sender_user_id: replyMsg.sender_user_id,
+              message: replyMsg.deleted
+                ? 'Original message unavailable'
+                : replyMsg.message,
+              message_type: replyMsg.message_type || 'text',
+              direction: 'Received',
+              sent: true,
+              received: true,
+              created_at: replyMsg.created_at || msg.created_at,
+              file_name: replyMsg.file_name || undefined,
+              thumb: false,
+              favorite: false,
+              flag: false,
+              star: false,
+              pin: false,
+              archive: false,
+              deleted: !!replyMsg.deleted,
+              action_this: false,
+              reply: false,
+              forward: false,
+              sender: replyMsg.sender
+                ? {
+                    id: replyMsg.sender_user_id,
+                    name: replyMsg.sender.name || 'User',
+                    email: '',
+                  }
+                : undefined,
+            }
             msg.replyMetadata = {
               replyemoji: msg.replyemoji || null,
               replyto_message_id: msg.replyto_message_id,
               replyto_user_id: msg.replyto_user_id || null,
               parent_message_id: msg.parent_message_id || null,
-              replyMessageText: replyMsg.message_type === 'text' ? replyMsg.message : `Attachment: ${replyMsg.file_name || 'File'}`,
+              replyMessageText: replyMsg.deleted
+                ? 'Original message unavailable'
+                : replyMsg.message_type === 'text'
+                  ? replyMsg.message
+                  : `Attachment: ${replyMsg.file_name || 'File'}`,
               replySenderName: replyMsg.sender?.name || 'User',
+            }
+          } else {
+            msg.replyMetadata = {
+              replyemoji: msg.replyemoji || null,
+              replyto_message_id: msg.replyto_message_id,
+              replyto_user_id: msg.replyto_user_id || null,
+              parent_message_id: msg.parent_message_id || null,
+              replyMessageText: 'Original message unavailable',
+              replySenderName: 'User',
             }
           }
         } catch (e) {
-          console.warn('[Messages API] Failed to fetch reply message details:', e)
+          console.warn(
+            '[Messages API] Failed to fetch reply message details:',
+            e
+          )
         }
       }
     }
@@ -135,7 +230,15 @@ export async function createMessage(msg: {
   conversationId: string
   senderId: string
   message: string
-  messageType: 'text' | 'image' | 'video' | 'audio' | 'document' | 'system' | 'other' | 'location'
+  messageType:
+    | 'text'
+    | 'image'
+    | 'video'
+    | 'audio'
+    | 'document'
+    | 'system'
+    | 'other'
+    | 'location'
   fileUrl?: string
   fileName?: string
   fileSize?: number
@@ -159,8 +262,12 @@ export async function createMessage(msg: {
 }): Promise<Message | null> {
   try {
     // 1. Get conversation members
-    const memberQuery = createQuery().select('user_id').eq('conversation_id', msg.conversationId)
-    const members = await apiClient.get<any[]>(`/rest/v1/conversation_members${memberQuery.toString()}`)
+    const memberQuery = createQuery()
+      .select('user_id')
+      .eq('conversation_id', msg.conversationId)
+    const members = await apiClient.get<any[]>(
+      `/rest/v1/conversation_members${memberQuery.toString()}`
+    )
 
     if (!members || members.length === 0) {
       throw new Error('No members found in conversation')
@@ -177,9 +284,13 @@ export async function createMessage(msg: {
         .eq('id', msg.replyMetadata.replyto_message_id)
         .limit(1)
 
-      const replyMsgs = await apiClient.get<any[]>(`/rest/v1/chat_messages${parentMsgQuery.toString()}`)
+      const replyMsgs = await apiClient.get<any[]>(
+        `/rest/v1/chat_messages${parentMsgQuery.toString()}`
+      )
       const replyMsg = replyMsgs[0] || null
-      resolvedReplyToId = replyMsg ? (replyMsg.sender_message_id || replyMsg.id) : msg.replyMetadata.replyto_message_id
+      resolvedReplyToId = replyMsg
+        ? replyMsg.sender_message_id || replyMsg.id
+        : msg.replyMetadata.replyto_message_id
     }
 
     // 2. Map copies for all conversation members
@@ -254,12 +365,19 @@ export async function createMessage(msg: {
     }
 
     // 4. Return the sender's own copy of the message, constructed locally
-    const senderRecord = records.find((r: any) => r.owner_user_id === msg.senderId)
+    const senderRecord = records.find(
+      (r: any) => r.owner_user_id === msg.senderId
+    )
     if (!senderRecord) return null
 
     // Load sender details from profiles table to attach to the returned copy
-    const profileQuery = createQuery().select('id, name, email, avatar').eq('id', msg.senderId).limit(1)
-    const profiles = await apiClient.get<any[]>(`/rest/v1/profiles${profileQuery.toString()}`)
+    const profileQuery = createQuery()
+      .select('id, name, email, avatar')
+      .eq('id', msg.senderId)
+      .limit(1)
+    const profiles = await apiClient.get<any[]>(
+      `/rest/v1/profiles${profileQuery.toString()}`
+    )
     const profile = profiles[0] || null
 
     return {
@@ -275,9 +393,13 @@ export async function createMessage(msg: {
       created_at: senderRecord.created_at,
       file_url: senderRecord.file_url || undefined,
       file_name: senderRecord.file_name || undefined,
-      file_size: senderRecord.file_size ? Number(senderRecord.file_size) : undefined,
+      file_size: senderRecord.file_size
+        ? Number(senderRecord.file_size)
+        : undefined,
       mime_type: senderRecord.mime_type || undefined,
-      duration: senderRecord.duration ? Number(senderRecord.duration) : undefined,
+      duration: senderRecord.duration
+        ? Number(senderRecord.duration)
+        : undefined,
       thumbnail: senderRecord.thumbnail || undefined,
       thumb: senderRecord.thumb,
       favorite: senderRecord.favorite,
@@ -297,12 +419,14 @@ export async function createMessage(msg: {
       client_message_id: senderRecord.client_message_id || undefined,
       location_data: senderRecord.location_data || undefined,
       location_type: senderRecord.location_type || undefined,
-      sender: profile ? {
-        id: profile.id,
-        name: profile.name || profile.email.split('@')[0],
-        email: profile.email,
-        avatar_url: profile.avatar || undefined,
-      } : undefined,
+      sender: profile
+        ? {
+            id: profile.id,
+            name: profile.name || profile.email.split('@')[0],
+            email: profile.email,
+            avatar_url: profile.avatar || undefined,
+          }
+        : undefined,
     }
   } catch (err) {
     console.error('[Messages API] Failed to create message copies:', err)
@@ -315,15 +439,58 @@ export async function createMessage(msg: {
  */
 export async function updateMessageBooleanAction(
   messageId: string,
-  action: 'thumb' | 'favorite' | 'flag' | 'star' | 'pin' | 'archive' | 'action_this',
+  action:
+    'thumb' | 'favorite' | 'flag' | 'star' | 'pin' | 'archive' | 'action_this',
   value: boolean
 ): Promise<boolean> {
   try {
     const query = createQuery().eq('id', messageId)
-    await apiClient.patch(`/rest/v1/chat_messages${query.toString()}`, { [action]: value })
+    await apiClient.patch(`/rest/v1/chat_messages${query.toString()}`, {
+      [action]: value,
+    })
     return true
   } catch (err) {
-    console.error(`[Messages API] Failed to update message action ${action}:`, err)
+    console.error(
+      `[Messages API] Failed to update message action ${action}:`,
+      err
+    )
+    return false
+  }
+}
+
+/** Updates the text on every member copy of a sender-owned text message. */
+export async function editMessage(
+  messageId: string,
+  senderId: string,
+  message: string
+): Promise<boolean> {
+  try {
+    const fetchQuery = createQuery()
+      .select('id,sender_user_id,sender_message_id,message_type')
+      .eq('id', messageId)
+      .limit(1)
+    const rows = await apiClient.get<any[]>(
+      `/rest/v1/chat_messages${fetchQuery.toString()}`
+    )
+    const original = rows[0]
+    if (
+      !original ||
+      original.sender_user_id !== senderId ||
+      original.message_type !== 'text'
+    ) {
+      return false
+    }
+
+    const senderMessageId = original.sender_message_id || original.id
+    const updateQuery = createQuery().or(
+      `id.eq.${senderMessageId},sender_message_id.eq.${senderMessageId}`
+    )
+    await apiClient.patch(`/rest/v1/chat_messages${updateQuery.toString()}`, {
+      message,
+    })
+    return true
+  } catch (error) {
+    console.error('[Messages API] Failed to edit message:', error)
     return false
   }
 }
@@ -334,7 +501,9 @@ export async function updateMessageBooleanAction(
 export async function deleteMessageForMe(messageId: string): Promise<boolean> {
   try {
     const query = createQuery().eq('id', messageId)
-    await apiClient.patch(`/rest/v1/chat_messages${query.toString()}`, { deleted: true })
+    await apiClient.patch(`/rest/v1/chat_messages${query.toString()}`, {
+      deleted: true,
+    })
     return true
   } catch (err) {
     console.error('[Messages API] Failed to delete message for me:', err)
@@ -345,28 +514,40 @@ export async function deleteMessageForMe(messageId: string): Promise<boolean> {
 /**
  * Deletes a message and all its member copies for everyone in a conversation.
  */
-export async function deleteMessageForEveryone(messageId: string, senderId: string): Promise<boolean> {
+export async function deleteMessageForEveryone(
+  messageId: string,
+  senderId: string
+): Promise<boolean> {
   try {
     // 1. Fetch message details to find sender_message_id
-    const fetchQuery = createQuery().select('id, sender_user_id, sender_message_id').eq('id', messageId).limit(1)
-    const msgs = await apiClient.get<any[]>(`/rest/v1/chat_messages${fetchQuery.toString()}`)
+    const fetchQuery = createQuery()
+      .select('id, sender_user_id, sender_message_id')
+      .eq('id', messageId)
+      .limit(1)
+    const msgs = await apiClient.get<any[]>(
+      `/rest/v1/chat_messages${fetchQuery.toString()}`
+    )
     const msg = msgs[0] || null
 
     if (!msg) return false
     if (msg.sender_user_id !== senderId) {
-      console.error('[Messages API] Only the sender can delete a message for everyone')
+      console.error(
+        '[Messages API] Only the sender can delete a message for everyone'
+      )
       return false
     }
 
     const senderMsgId = msg.sender_message_id || msg.id
 
     // 2. Update all message copies associated with this message
-    const updateQuery = createQuery().or(`id.eq.${senderMsgId},sender_message_id.eq.${senderMsgId}`)
+    const updateQuery = createQuery().or(
+      `id.eq.${senderMsgId},sender_message_id.eq.${senderMsgId}`
+    )
     await apiClient.patch(`/rest/v1/chat_messages${updateQuery.toString()}`, {
       message: 'This message was deleted.',
       deleted: true,
       deleted_at: new Date().toISOString(),
-      deleted_by: senderId
+      deleted_by: senderId,
     })
 
     return true
@@ -387,15 +568,21 @@ export async function forwardMessage(
   try {
     // 1. Fetch the original message copy
     const fetchQuery = createQuery().select('*').eq('id', messageId).limit(1)
-    const msgs = await apiClient.get<any[]>(`/rest/v1/chat_messages${fetchQuery.toString()}`)
+    const msgs = await apiClient.get<any[]>(
+      `/rest/v1/chat_messages${fetchQuery.toString()}`
+    )
     const original = msgs[0] || null
 
     if (!original) return false
 
     // 2. Loop and duplicate message copies for target conversations
     for (const conversationId of targetConversationIds) {
-      const memberQuery = createQuery().select('user_id').eq('conversation_id', conversationId)
-      const members = await apiClient.get<any[]>(`/rest/v1/conversation_members${memberQuery.toString()}`)
+      const memberQuery = createQuery()
+        .select('user_id')
+        .eq('conversation_id', conversationId)
+      const members = await apiClient.get<any[]>(
+        `/rest/v1/conversation_members${memberQuery.toString()}`
+      )
 
       if (!members || members.length === 0) continue
 
@@ -423,6 +610,8 @@ export async function forwardMessage(
           mime_type: original.mime_type || null,
           duration: original.duration || null,
           thumbnail: original.thumbnail || null,
+          location_data: original.location_data || null,
+          location_type: original.location_type || null,
 
           thumb: false,
           favorite: false,
@@ -438,7 +627,7 @@ export async function forwardMessage(
           forwardto_message_id: original.id,
           forwardto_user_id: original.sender_user_id,
 
-          sender_message_id: isSender ? null : senderMsgId
+          sender_message_id: isSender ? null : senderMsgId,
         }
       })
 

@@ -64,11 +64,11 @@ export default function EmailFeature() {
     <>
       <AppHeader title='Email' />
 
-      <Main fixed className='flex flex-1 flex-col p-4 sm:p-6 pt-3 sm:pt-3 bg-background overflow-hidden min-h-0'>
+      <Main fixed className='flex flex-1 flex-col p-4 sm:p-6 pt-2 sm:pt-2 bg-background overflow-hidden min-h-0'>
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
-          className='flex flex-1 flex-col overflow-hidden space-y-4 min-h-0'
+          className='flex flex-1 flex-col overflow-hidden min-h-0'
         >
           {/* Custom Tabs Navigation */}
           <div className='w-full overflow-x-auto pb-2 shrink-0 border-b border-border px-4 sm:px-0 sticky top-0 bg-background z-10 flex items-center gap-4'>

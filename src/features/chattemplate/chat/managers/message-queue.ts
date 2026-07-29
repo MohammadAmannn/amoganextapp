@@ -1,6 +1,12 @@
-import { queueMessage, getQueuedMessages, deleteQueuedMessage, QueuedMessage } from '../utils/indexeddb'
+import {
+  queueMessage,
+  getQueuedMessages,
+  deleteQueuedMessage,
+  QueuedMessage,
+} from '../utils/indexeddb'
 
 export async function addMessageToQueue(msg: {
+  clientMessageId?: string
   conversationId: string
   senderId: string
   message: string
@@ -21,7 +27,7 @@ export async function addMessageToQueue(msg: {
   locationData?: any
   locationType?: 'current' | 'live'
 }): Promise<QueuedMessage> {
-  const clientMsgId = crypto.randomUUID()
+  const clientMsgId = msg.clientMessageId || crypto.randomUUID()
   const queuedItem: QueuedMessage = {
     client_message_id: clientMsgId,
     conversation_id: msg.conversationId,
@@ -45,6 +51,8 @@ export async function getOfflineMessages(): Promise<QueuedMessage[]> {
   return await getQueuedMessages()
 }
 
-export async function removeMessageFromQueue(clientMsgId: string): Promise<void> {
+export async function removeMessageFromQueue(
+  clientMsgId: string
+): Promise<void> {
   await deleteQueuedMessage(clientMsgId)
 }

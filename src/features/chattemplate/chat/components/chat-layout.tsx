@@ -1,39 +1,49 @@
 import { useState, useEffect } from 'react'
-import { Main } from '@/components/layout/main'
-import { AppHeader } from '@/components/layout/app-header'
-import { ChatSidebar } from './chat-sidebar'
-import { ChatWindow } from './chat-window'
-import { ChatWelcome } from './chat-welcome'
+import { toast } from 'sonner'
+import { useAuthStore } from '@/stores/auth-store'
 import { cn } from '@/lib/utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ComingSoon } from '@/components/coming-soon'
-
+import { AppHeader } from '@/components/layout/app-header'
+import { Main } from '@/components/layout/main'
 import { ContactList } from '@/features/chattemplate/contacts/components/contact-list'
 import { NewContactForm } from '@/features/chattemplate/contacts/components/new-contact-form'
+import { getUserContacts } from '@/features/chattemplate/contacts/repositories/contact-repository'
+import { Contact } from '@/features/chattemplate/contacts/types/contact.types'
+import { Group } from '@/features/chattemplate/groups'
 import { GroupList } from '@/features/chattemplate/groups/components/group-list'
 import { NewGroupForm } from '@/features/chattemplate/groups/components/new-group-form'
-import { Group } from '@/features/chattemplate/groups'
-import { Contact } from '@/features/chattemplate/contacts/types/contact.types'
-import { useAuthStore } from '@/stores/auth-store'
-
 // Clean Architecture Realtime Chat Imports
 import { useConversation } from '../hooks/use-conversation'
+import { useMessageQueue } from '../hooks/use-message-queue'
 import { useMessages } from '../hooks/use-messages'
-import { useRealtime } from '../hooks/use-realtime'
-import { useSendMessage } from '../hooks/use-send-message'
-import { getUserContacts } from '@/features/chattemplate/contacts/repositories/contact-repository'
-import { ensureProfileExists, getProfileByEmail, getOrCreateProfileForContact } from '../repositories/profile-repository'
-import { createGroupConversation, clearConversationUnreadCount, getUserConversations, removeGroupMember, deleteConversation } from '../repositories/conversation-repository'
-import { Message } from '../types/chat.types'
-
 // Realtime Presence and Offline Messaging Imports
 import { useOnlineStatus } from '../hooks/use-online-status'
 import { usePresence } from '../hooks/use-presence'
-import { useMessageQueue } from '../hooks/use-message-queue'
+import { useRealtime } from '../hooks/use-realtime'
+import { useSendMessage } from '../hooks/use-send-message'
 import { useTypingBroadcast } from '../hooks/use-typing-broadcast'
-import { markMessagesAsRead, markMessagesAsDelivered } from '../repositories/delivery-repository'
+import {
+  createGroupConversation,
+  clearConversationUnreadCount,
+  getUserConversations,
+  removeGroupMember,
+  deleteConversation,
+} from '../repositories/conversation-repository'
+import {
+  markMessagesAsRead,
+  markMessagesAsDelivered,
+} from '../repositories/delivery-repository'
+import {
+  ensureProfileExists,
+  getProfileByEmail,
+  getOrCreateProfileForContact,
+} from '../repositories/profile-repository'
+import { Message } from '../types/chat.types'
 import { isBrowserOnline } from '../utils/network'
-import { toast } from 'sonner'
+import { ChatSidebar } from './chat-sidebar'
+import { ChatWelcome } from './chat-welcome'
+import { ChatWindow } from './chat-window'
 
 export function ChatLayout() {
   const [mobileView, setMobileView] = useState<'sidebar' | 'chat'>('sidebar')
@@ -53,7 +63,7 @@ export function ChatLayout() {
   }, [])
 
   const handleToggleLeftSidebar = () => {
-    setIsLeftSidebarCollapsed(prev => {
+    setIsLeftSidebarCollapsed((prev) => {
       const nextVal = !prev
       localStorage.setItem('chat_sidebar_collapsed', String(nextVal))
       return nextVal
@@ -72,7 +82,10 @@ export function ChatLayout() {
     sendTypingStatus,
     getTypingUsersForConversation,
     conversationTypingMap,
-  } = useTypingBroadcast(currentUser?.accountNo, currentUser?.name || currentUser?.email)
+  } = useTypingBroadcast(
+    currentUser?.accountNo,
+    currentUser?.name || currentUser?.email
+  )
 
   const {
     conversations,
@@ -84,27 +97,43 @@ export function ChatLayout() {
     startDirectConversation,
   } = useConversation()
 
-  const activeTypingUsers = getTypingUsersForConversation(activeConversation?.id)
+  const activeTypingUsers = getTypingUsersForConversation(
+    activeConversation?.id
+  )
 
   const {
     messages,
     setMessages,
     loadMessages,
+    loadOlderMessages,
+    hasMore,
+    isLoadingOlder,
   } = useMessages()
 
   const handleMessageSynced = (clientMsgId: string, serverMsg: Message) => {
-    if (activeConversation && activeConversation.id === serverMsg.conversation_id) {
-      setMessages(prev => prev.map(m => m.id === clientMsgId ? serverMsg : m))
+    if (
+      activeConversation &&
+      activeConversation.id === serverMsg.conversation_id
+    ) {
+      setMessages((prev) =>
+        prev.map((m) => (m.id === clientMsgId ? serverMsg : m))
+      )
     }
-    
-    setConversations(prev => prev.map(c => {
-      if (c.id === serverMsg.conversation_id) {
-        if (c.lastMessage && (c.lastMessage.id === clientMsgId || c.lastMessage.client_message_id === clientMsgId)) {
-          return { ...c, lastMessage: serverMsg }
+
+    setConversations((prev) =>
+      prev.map((c) => {
+        if (c.id === serverMsg.conversation_id) {
+          if (
+            c.lastMessage &&
+            (c.lastMessage.id === clientMsgId ||
+              c.lastMessage.client_message_id === clientMsgId)
+          ) {
+            return { ...c, lastMessage: serverMsg }
+          }
         }
-      }
-      return c
-    }))
+        return c
+      })
+    )
   }
 
   const { queue, enqueue } = useMessageQueue(handleMessageSynced)
@@ -143,8 +172,10 @@ export function ChatLayout() {
     if (activeConversation && currentUser) {
       clearConversationUnreadCount(activeConversation.id, currentUser.accountNo)
       markMessagesAsRead(activeConversation.id, currentUser.accountNo)
-      setConversations(prev =>
-        prev.map(c => c.id === activeConversation.id ? { ...c, unreadCount: 0 } : c)
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === activeConversation.id ? { ...c, unreadCount: 0 } : c
+        )
       )
     }
   }, [activeConversation?.id, currentUser, setConversations])
@@ -152,7 +183,7 @@ export function ChatLayout() {
   // Mark received messages as delivered on startup
   useEffect(() => {
     if (currentUser && conversations.length > 0) {
-      conversations.forEach(c => {
+      conversations.forEach((c) => {
         markMessagesAsDelivered(c.id, currentUser.accountNo)
       })
     }
@@ -163,12 +194,27 @@ export function ChatLayout() {
     currentUser?.accountNo,
     // 1. INSERT handler
     (newMsg: Message) => {
-      if (activeConversation && newMsg.conversation_id === activeConversation.id) {
-        setMessages(prev => {
-          if (prev.some(m => m.id === newMsg.id || (m.client_message_id && m.client_message_id === newMsg.client_message_id))) return prev
+      if (
+        activeConversation &&
+        newMsg.conversation_id === activeConversation.id
+      ) {
+        setMessages((prev) => {
+          if (
+            prev.some(
+              (m) =>
+                m.id === newMsg.id ||
+                (m.client_message_id &&
+                  m.client_message_id === newMsg.client_message_id)
+            )
+          )
+            return prev
           let resolvedMsg = newMsg
           if (newMsg.replyto_message_id && !newMsg.replyto_message) {
-            const parent = prev.find(m => m.id === newMsg.replyto_message_id || m.sender_message_id === newMsg.replyto_message_id)
+            const parent = prev.find(
+              (m) =>
+                m.id === newMsg.replyto_message_id ||
+                m.sender_message_id === newMsg.replyto_message_id
+            )
             if (parent) {
               resolvedMsg = { ...newMsg, replyto_message: parent }
             }
@@ -176,7 +222,10 @@ export function ChatLayout() {
           return [...prev, resolvedMsg]
         })
         if (currentUser) {
-          clearConversationUnreadCount(activeConversation.id, currentUser.accountNo)
+          clearConversationUnreadCount(
+            activeConversation.id,
+            currentUser.accountNo
+          )
           markMessagesAsRead(activeConversation.id, currentUser.accountNo)
         }
       } else {
@@ -185,18 +234,22 @@ export function ChatLayout() {
         }
       }
 
-      setConversations(prev => {
-        const index = prev.findIndex(c => c.id === newMsg.conversation_id)
+      setConversations((prev) => {
+        const index = prev.findIndex((c) => c.id === newMsg.conversation_id)
         if (index !== -1) {
           const convo = prev[index]
           const updatedConvo = {
             ...convo,
             lastMessage: newMsg,
-            unreadCount: (activeConversation && newMsg.conversation_id === activeConversation.id)
-              ? 0
-              : (newMsg.sender_user_id === currentUser?.accountNo ? convo.unreadCount : (convo.unreadCount || 0) + 1)
+            unreadCount:
+              activeConversation &&
+              newMsg.conversation_id === activeConversation.id
+                ? 0
+                : newMsg.sender_user_id === currentUser?.accountNo
+                  ? convo.unreadCount
+                  : (convo.unreadCount || 0) + 1,
           }
-          const filtered = prev.filter(c => c.id !== newMsg.conversation_id)
+          const filtered = prev.filter((c) => c.id !== newMsg.conversation_id)
           return [updatedConvo, ...filtered]
         } else {
           if (currentUser) {
@@ -210,27 +263,43 @@ export function ChatLayout() {
     (updatedMsg: Message) => {
       const isDeletedForMe = updatedMsg.deleted && !updatedMsg.deleted_by
 
-      if (activeConversation && updatedMsg.conversation_id === activeConversation.id) {
-        setMessages(prev => {
+      if (
+        activeConversation &&
+        updatedMsg.conversation_id === activeConversation.id
+      ) {
+        setMessages((prev) => {
           if (isDeletedForMe) {
-            return prev.filter(m => m.id !== updatedMsg.id)
+            return prev.filter((m) => m.id !== updatedMsg.id)
           }
-          return prev.map(m => m.id === updatedMsg.id || (m.client_message_id && m.client_message_id === updatedMsg.client_message_id) ? updatedMsg : m)
+          return prev.map((m) =>
+            m.id === updatedMsg.id ||
+            (m.client_message_id &&
+              m.client_message_id === updatedMsg.client_message_id)
+              ? updatedMsg
+              : m
+          )
         })
       }
 
-      setConversations(prev => {
-        return prev.map(c => {
+      setConversations((prev) => {
+        return prev.map((c) => {
           if (c.id === updatedMsg.conversation_id) {
-            if (c.lastMessage?.id === updatedMsg.id || (c.lastMessage?.client_message_id && c.lastMessage.client_message_id === updatedMsg.client_message_id)) {
+            if (
+              c.lastMessage?.id === updatedMsg.id ||
+              (c.lastMessage?.client_message_id &&
+                c.lastMessage.client_message_id ===
+                  updatedMsg.client_message_id)
+            ) {
               return {
                 ...c,
-                lastMessage: isDeletedForMe ? undefined : {
-                  ...c.lastMessage,
-                  message: updatedMsg.message || '',
-                  deleted: updatedMsg.deleted,
-                  message_status: updatedMsg.message_status,
-                } as Message
+                lastMessage: isDeletedForMe
+                  ? undefined
+                  : ({
+                      ...c.lastMessage,
+                      message: updatedMsg.message || '',
+                      deleted: updatedMsg.deleted,
+                      message_status: updatedMsg.message_status,
+                    } as Message),
               }
             }
           }
@@ -240,7 +309,7 @@ export function ChatLayout() {
     },
     // 3. DELETE handler
     (deletedMsgId: string) => {
-      setMessages(prev => prev.filter(m => m.id !== deletedMsgId))
+      setMessages((prev) => prev.filter((m) => m.id !== deletedMsgId))
     }
   )
 
@@ -250,8 +319,10 @@ export function ChatLayout() {
     try {
       const contactsData = await getUserContacts(currentUser.accountNo)
       setContacts(contactsData)
-      
-      const groupsRes = await fetch(`/api/groups?email=${encodeURIComponent(currentUser.email || '')}`)
+
+      const groupsRes = await fetch(
+        `/api/groups?email=${encodeURIComponent(currentUser.email || '')}`
+      )
       if (groupsRes.ok) {
         const groupsData = await groupsRes.json()
         setGroups(groupsData)
@@ -279,7 +350,10 @@ export function ChatLayout() {
     if (!currentUser) return
     try {
       // Load or create direct conversation using the verified contactUserId
-      await startDirectConversation(currentUser.accountNo, contact.contactUserId)
+      await startDirectConversation(
+        currentUser.accountNo,
+        contact.contactUserId
+      )
       setMobileView('chat')
       setActiveMainTab('chat')
     } catch (e) {
@@ -292,7 +366,9 @@ export function ChatLayout() {
     try {
       // Find if we already have this group conversation loaded in memory
       let found = conversations.find(
-        (c) => c.type === 'group' && c.name?.toLowerCase() === group.groupName.toLowerCase()
+        (c) =>
+          c.type === 'group' &&
+          c.name?.toLowerCase() === group.groupName.toLowerCase()
       )
 
       // Fallback: reload conversations from DB to see if it was created elsewhere
@@ -300,7 +376,9 @@ export function ChatLayout() {
         const dbConvos = await getUserConversations(currentUser.accountNo)
         setConversations(dbConvos)
         found = dbConvos.find(
-          (c) => c.type === 'group' && c.name?.toLowerCase() === group.groupName.toLowerCase()
+          (c) =>
+            c.type === 'group' &&
+            c.name?.toLowerCase() === group.groupName.toLowerCase()
         )
       }
 
@@ -312,8 +390,11 @@ export function ChatLayout() {
         // Create new group conversation dynamically using members
         const memberIds: string[] = []
         // Resolve or create user profiles
-        for (const email of (group.users || [])) {
-          const profile = await getOrCreateProfileForContact(email, email.split('@')[0])
+        for (const email of group.users || []) {
+          const profile = await getOrCreateProfileForContact(
+            email,
+            email.split('@')[0]
+          )
           if (profile) {
             memberIds.push(profile.id)
           }
@@ -336,7 +417,7 @@ export function ChatLayout() {
           } else {
             // Reconstruct members from profiles search
             const resolvedMembers = []
-            for (const email of (group.users || [])) {
+            for (const email of group.users || []) {
               const p = await getProfileByEmail(email)
               if (p) {
                 resolvedMembers.push(p)
@@ -390,11 +471,15 @@ export function ChatLayout() {
     let parentMsgCopy = undefined
     if (replyMetadata?.replyto_message_id) {
       parentMsgCopy = messages.find(
-        m => m.id === replyMetadata.replyto_message_id || m.sender_message_id === replyMetadata.replyto_message_id
+        (m) =>
+          m.id === replyMetadata.replyto_message_id ||
+          m.sender_message_id === replyMetadata.replyto_message_id
       )
     }
 
-    const localFileUrl = attachmentFile ? URL.createObjectURL(attachmentFile) : attachment?.fileUrl
+    const localFileUrl = attachmentFile
+      ? URL.createObjectURL(attachmentFile)
+      : attachment?.fileUrl
 
     const optimisticMsg: Message = {
       id: optimisticId,
@@ -402,14 +487,16 @@ export function ChatLayout() {
       owner_user_id: currentUser.accountNo,
       sender_user_id: currentUser.accountNo,
       message: text || null,
-      message_type: locationData ? 'location' : (attachment?.messageType || 'text'),
+      message_type: locationData
+        ? 'location'
+        : attachment?.messageType || 'text',
       direction: 'Sent',
       sent: false,
       received: false,
       created_at: now,
       message_status: 'pending',
       client_message_id: optimisticId,
-      
+
       file_url: localFileUrl,
       file_name: attachment?.fileName,
       file_size: attachment?.fileSize,
@@ -440,22 +527,26 @@ export function ChatLayout() {
         name: currentUser.name || currentUser.email || 'You',
         email: currentUser.email || '',
         avatar_url: currentUser.picture || undefined,
-      }
+      },
     }
 
     // Append optimistic message
     setMessages((prev) => [...prev, optimisticMsg])
 
     // Update sidebar last message preview immediately
-    setConversations(prev => {
-      const index = prev.findIndex(c => c.id === optimisticMsg.conversation_id)
+    setConversations((prev) => {
+      const index = prev.findIndex(
+        (c) => c.id === optimisticMsg.conversation_id
+      )
       if (index !== -1) {
         const convo = prev[index]
         const updatedConvo = {
           ...convo,
           lastMessage: optimisticMsg,
         }
-        const filtered = prev.filter(c => c.id !== optimisticMsg.conversation_id)
+        const filtered = prev.filter(
+          (c) => c.id !== optimisticMsg.conversation_id
+        )
         return [updatedConvo, ...filtered]
       }
       return prev
@@ -464,17 +555,22 @@ export function ChatLayout() {
     // If offline, save in IndexedDB queue
     if (!isBrowserOnline()) {
       await enqueue({
+        clientMessageId: optimisticId,
         conversationId: activeConversation.id,
         senderId: currentUser.accountNo,
         message: text,
-        messageType: locationData ? 'location' : (attachment?.messageType || 'text'),
+        messageType: locationData
+          ? 'location'
+          : attachment?.messageType || 'text',
         attachmentFile,
-        attachmentMetadata: attachment ? {
-          fileName: attachment.fileName,
-          fileSize: attachment.fileSize,
-          mimeType: attachment.mimeType,
-          duration: attachment.duration,
-        } : undefined,
+        attachmentMetadata: attachment
+          ? {
+              fileName: attachment.fileName,
+              fileSize: attachment.fileSize,
+              mimeType: attachment.mimeType,
+              duration: attachment.duration,
+            }
+          : undefined,
         replyMetadata,
         locationData: locationData?.location,
         locationType: locationData?.location?.type,
@@ -499,7 +595,9 @@ export function ChatLayout() {
         let resolvedMsg = savedMsg
         if (savedMsg.replyto_message_id && !savedMsg.replyto_message) {
           const parent = messages.find(
-            m => m.id === savedMsg.replyto_message_id || m.sender_message_id === savedMsg.replyto_message_id
+            (m) =>
+              m.id === savedMsg.replyto_message_id ||
+              m.sender_message_id === savedMsg.replyto_message_id
           )
           if (parent) {
             resolvedMsg = { ...savedMsg, replyto_message: parent }
@@ -507,19 +605,25 @@ export function ChatLayout() {
         }
 
         // Replace optimistic message with actual saved message
-        setMessages((prev) => prev.map((m) => (m.id === optimisticId ? resolvedMsg : m)))
-        
+        setMessages((prev) =>
+          prev.map((m) => (m.id === optimisticId ? resolvedMsg : m))
+        )
+
         // Update sidebar last message preview
-        setConversations(prev => {
-          const index = prev.findIndex(c => c.id === resolvedMsg.conversation_id)
+        setConversations((prev) => {
+          const index = prev.findIndex(
+            (c) => c.id === resolvedMsg.conversation_id
+          )
           if (index !== -1) {
             const convo = prev[index]
             const updatedConvo = {
               ...convo,
               lastMessage: resolvedMsg,
-              unreadCount: 0
+              unreadCount: 0,
             }
-            const filtered = prev.filter(c => c.id !== resolvedMsg.conversation_id)
+            const filtered = prev.filter(
+              (c) => c.id !== resolvedMsg.conversation_id
+            )
             return [updatedConvo, ...filtered]
           }
           return prev
@@ -529,38 +633,51 @@ export function ChatLayout() {
       console.error('Failed to send message:', e)
       // Save to queue on network failure
       await enqueue({
+        clientMessageId: optimisticId,
         conversationId: activeConversation.id,
         senderId: currentUser.accountNo,
         message: text,
         messageType: attachment?.messageType || 'text',
         attachmentFile,
-        attachmentMetadata: attachment ? {
-          fileName: attachment.fileName,
-          fileSize: attachment.fileSize,
-          mimeType: attachment.mimeType,
-          duration: attachment.duration,
-        } : undefined,
+        attachmentMetadata: attachment
+          ? {
+              fileName: attachment.fileName,
+              fileSize: attachment.fileSize,
+              mimeType: attachment.mimeType,
+              duration: attachment.duration,
+            }
+          : undefined,
         replyMetadata,
       })
       toast.error('Network error. Queued message.')
     }
   }
 
-  const handleRemoveMember = async (conversationId: string, memberId: string) => {
+  const handleRemoveMember = async (
+    conversationId: string,
+    memberId: string
+  ) => {
     try {
       const ok = await removeGroupMember(conversationId, memberId)
       if (ok) {
         if (activeConversation && activeConversation.id === conversationId) {
-          const updatedMembers = activeConversation.members?.filter(m => m.id !== memberId) || []
-          setActiveConversation({ ...activeConversation, members: updatedMembers })
+          const updatedMembers =
+            activeConversation.members?.filter((m) => m.id !== memberId) || []
+          setActiveConversation({
+            ...activeConversation,
+            members: updatedMembers,
+          })
         }
-        setConversations(prev => prev.map(c => {
-          if (c.id === conversationId) {
-            const updatedMembers = c.members?.filter(m => m.id !== memberId) || []
-            return { ...c, members: updatedMembers }
-          }
-          return c
-        }))
+        setConversations((prev) =>
+          prev.map((c) => {
+            if (c.id === conversationId) {
+              const updatedMembers =
+                c.members?.filter((m) => m.id !== memberId) || []
+              return { ...c, members: updatedMembers }
+            }
+            return c
+          })
+        )
         toast.success('Member removed from group')
       } else {
         toast.error('Failed to remove member')
@@ -576,7 +693,7 @@ export function ChatLayout() {
     try {
       const ok = await deleteConversation(conversationId, currentUser.accountNo)
       if (ok) {
-        setConversations(prev => prev.filter(c => c.id !== conversationId))
+        setConversations((prev) => prev.filter((c) => c.id !== conversationId))
         if (activeConversation?.id === conversationId) {
           setActiveConversation(null)
           setMessages([])
@@ -596,47 +713,47 @@ export function ChatLayout() {
     <>
       <AppHeader title='Chat Template' />
 
-      <Main fixed className='pt-3 pb-0 sm:pb-4 px-0 sm:px-4'>
+      <Main fixed className='px-0 pt-3 pb-0 sm:px-4 sm:pb-4'>
         <Tabs
           value={activeMainTab}
           onValueChange={setActiveMainTab}
-          className='flex flex-1 flex-col overflow-hidden space-y-4'
+          className='flex flex-1 flex-col space-y-4 overflow-hidden'
         >
-          <div className='w-full overflow-x-auto pb-2 shrink-0 border-b border-border px-4 sm:px-0'>
-            <TabsList className='h-auto gap-6 border-0 bg-transparent p-0 shadow-none rounded-none'>
+          <div className='w-full shrink-0 overflow-x-auto border-b border-border px-4 pb-2 sm:px-0'>
+            <TabsList className='h-auto gap-6 rounded-none border-0 bg-transparent p-0 shadow-none'>
               <TabsTrigger
                 value='chat'
-                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none text-sm'
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 text-sm shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none'
               >
                 Chat
               </TabsTrigger>
               <TabsTrigger
                 value='contact'
-                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none text-sm'
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 text-sm shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none'
               >
                 Contact
               </TabsTrigger>
               <TabsTrigger
                 value='new-contact'
-                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none text-sm'
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 text-sm shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none'
               >
                 New Contact
               </TabsTrigger>
               <TabsTrigger
                 value='new-group'
-                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none text-sm'
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 text-sm shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none'
               >
                 New Group
               </TabsTrigger>
               <TabsTrigger
                 value='group'
-                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none text-sm'
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 text-sm shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none'
               >
                 Group
               </TabsTrigger>
               <TabsTrigger
                 value='history'
-                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none text-sm'
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 text-sm shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none'
               >
                 History
               </TabsTrigger>
@@ -645,12 +762,12 @@ export function ChatLayout() {
 
           <TabsContent
             value='chat'
-            className='flex-1 overflow-hidden flex flex-row mt-0 gap-5 focus-visible:outline-none'
+            className='mt-0 flex flex-1 flex-row gap-5 overflow-hidden focus-visible:outline-none'
           >
             {/* Left Column (Sidebar) */}
             <div
               className={cn(
-                'h-full flex-col shrink-0 sm:flex transition-all duration-300 ease-in-out overflow-hidden',
+                'h-full shrink-0 flex-col overflow-hidden transition-all duration-300 ease-in-out sm:flex',
                 mobileView === 'sidebar' ? 'flex w-full' : 'hidden',
                 isLeftSidebarCollapsed ? 'lg:w-20' : 'sm:w-80 lg:w-96'
               )}
@@ -673,13 +790,13 @@ export function ChatLayout() {
             {/* Right Column (Chat Panel & Sliding User Profile Sidebar) */}
             <div
               className={cn(
-                'flex-grow flex flex-row transition-all duration-300 overflow-hidden border border-border/80 dark:border-zinc-800 bg-card rounded-2xl shadow-xs',
+                'flex flex-grow flex-row overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs transition-all duration-300 dark:border-zinc-800',
                 mobileView === 'chat'
-                  ? 'flex fixed inset-0 z-50 bg-background w-full h-full animate-fade-in sm:relative sm:inset-auto sm:z-0 sm:h-full'
-                  : 'hidden sm:flex sm:relative sm:h-full'
+                  ? 'animate-fade-in fixed inset-0 z-50 flex h-full w-full bg-background sm:relative sm:inset-auto sm:z-0 sm:h-full'
+                  : 'hidden sm:relative sm:flex sm:h-full'
               )}
             >
-              <div className="flex-grow flex flex-col h-full overflow-hidden w-full max-w-full min-w-0">
+              <div className='flex h-full w-full max-w-full min-w-0 flex-grow flex-col overflow-hidden'>
                 {activeConversation ? (
                   <ChatWindow
                     selectedTarget={activeConversation}
@@ -690,8 +807,20 @@ export function ChatLayout() {
                     onToggleLeftSidebar={handleToggleLeftSidebar}
                     onlineUserIds={onlineUserIds}
                     typingUsers={activeTypingUsers}
-                    onSendTypingStatus={(status) => sendTypingStatus(activeConversation.id, status)}
+                    onSendTypingStatus={(status) =>
+                      sendTypingStatus(activeConversation.id, status)
+                    }
                     onRemoveMember={handleRemoveMember}
+                    hasMoreMessages={hasMore}
+                    isLoadingOlder={isLoadingOlder}
+                    onLoadOlder={() =>
+                      currentUser
+                        ? loadOlderMessages(
+                            activeConversation.id,
+                            currentUser.accountNo
+                          )
+                        : Promise.resolve()
+                    }
                   />
                 ) : (
                   <ChatWelcome />
@@ -702,7 +831,7 @@ export function ChatLayout() {
 
           <TabsContent
             value='contact'
-            className='flex-1 flex flex-col focus-visible:outline-none bg-transparent min-h-[400px] mt-0 overflow-y-auto'
+            className='mt-0 flex min-h-[400px] flex-1 flex-col overflow-y-auto bg-transparent focus-visible:outline-none'
           >
             <ContactList
               contacts={contacts}
@@ -714,27 +843,32 @@ export function ChatLayout() {
 
           <TabsContent
             value='new-contact'
-            className='flex-1 flex flex-col focus-visible:outline-none bg-transparent min-h-[400px] mt-0 overflow-y-auto'
+            className='mt-0 flex min-h-[400px] flex-1 flex-col overflow-y-auto bg-transparent focus-visible:outline-none'
           >
-            <NewContactForm onSuccess={() => {
-              fetchContactsAndGroups()
-              setActiveMainTab('contact')
-            }} />
+            <NewContactForm
+              onSuccess={() => {
+                fetchContactsAndGroups()
+                setActiveMainTab('contact')
+              }}
+            />
           </TabsContent>
 
           <TabsContent
             value='new-group'
-            className='flex-1 flex flex-col focus-visible:outline-none bg-transparent min-h-[400px] mt-0 overflow-y-auto'
+            className='mt-0 flex min-h-[400px] flex-1 flex-col overflow-y-auto bg-transparent focus-visible:outline-none'
           >
-            <NewGroupForm contacts={contacts} onSuccess={() => {
-              fetchContactsAndGroups()
-              setActiveMainTab('group')
-            }} />
+            <NewGroupForm
+              contacts={contacts}
+              onSuccess={() => {
+                fetchContactsAndGroups()
+                setActiveMainTab('group')
+              }}
+            />
           </TabsContent>
 
           <TabsContent
             value='group'
-            className='flex-1 flex flex-col focus-visible:outline-none bg-transparent min-h-[400px] mt-0 overflow-y-auto'
+            className='mt-0 flex min-h-[400px] flex-1 flex-col overflow-y-auto bg-transparent focus-visible:outline-none'
           >
             <GroupList
               groups={groups}
@@ -747,7 +881,7 @@ export function ChatLayout() {
 
           <TabsContent
             value='history'
-            className='flex-1 flex items-center justify-center border border-dashed rounded-xl focus-visible:outline-none bg-muted/5 min-h-[400px] mt-0'
+            className='mt-0 flex min-h-[400px] flex-1 items-center justify-center rounded-xl border border-dashed bg-muted/5 focus-visible:outline-none'
           >
             <ComingSoon />
           </TabsContent>

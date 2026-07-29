@@ -1,10 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
-import { getOfflineMessages, addMessageToQueue, removeMessageFromQueue } from '../managers/message-queue'
+import {
+  getOfflineMessages,
+  addMessageToQueue,
+  removeMessageFromQueue,
+} from '../managers/message-queue'
 import { syncOfflineQueue } from '../managers/offline-sync'
 import { QueuedMessage } from '../utils/indexeddb'
 import { useOnlineStatus } from './use-online-status'
 
-export function useMessageQueue(onMessageSynced?: (clientMsgId: string, serverMsg: any) => void) {
+export function useMessageQueue(
+  onMessageSynced?: (clientMsgId: string, serverMsg: any) => void
+) {
   const [queue, setQueue] = useState<QueuedMessage[]>([])
   const isOnline = useOnlineStatus()
 
@@ -43,36 +49,44 @@ export function useMessageQueue(onMessageSynced?: (clientMsgId: string, serverMs
     return () => clearInterval(interval)
   }, [isOnline, loadQueue, onMessageSynced])
 
-  const enqueue = useCallback(async (msg: {
-    conversationId: string
-    senderId: string
-    message: string
-    messageType?: 'text' | 'image' | 'video' | 'document' | 'audio' | 'location'
-    attachmentFile?: File | Blob
-    attachmentMetadata?: {
-      fileName: string
-      fileSize: number
-      mimeType: string
-      duration?: number
-    }
-    replyMetadata?: {
-      replyemoji?: string
-      replyto_message_id?: string
-      replyto_user_id?: string
-      parent_message_id?: string
-    }
-    locationData?: any
-    locationType?: 'current' | 'live'
-  }) => {
-    const item = await addMessageToQueue(msg)
-    await loadQueue()
-    return item
-  }, [loadQueue])
+  const enqueue = useCallback(
+    async (msg: {
+      clientMessageId?: string
+      conversationId: string
+      senderId: string
+      message: string
+      messageType?:
+        'text' | 'image' | 'video' | 'document' | 'audio' | 'location'
+      attachmentFile?: File | Blob
+      attachmentMetadata?: {
+        fileName: string
+        fileSize: number
+        mimeType: string
+        duration?: number
+      }
+      replyMetadata?: {
+        replyemoji?: string
+        replyto_message_id?: string
+        replyto_user_id?: string
+        parent_message_id?: string
+      }
+      locationData?: any
+      locationType?: 'current' | 'live'
+    }) => {
+      const item = await addMessageToQueue(msg)
+      await loadQueue()
+      return item
+    },
+    [loadQueue]
+  )
 
-  const dequeue = useCallback(async (clientMsgId: string) => {
-    await removeMessageFromQueue(clientMsgId)
-    await loadQueue()
-  }, [loadQueue])
+  const dequeue = useCallback(
+    async (clientMsgId: string) => {
+      await removeMessageFromQueue(clientMsgId)
+      await loadQueue()
+    },
+    [loadQueue]
+  )
 
   return {
     queue,

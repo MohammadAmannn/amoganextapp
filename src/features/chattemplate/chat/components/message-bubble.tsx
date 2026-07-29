@@ -1,12 +1,12 @@
 import { useState, useRef } from 'react'
-import { cn } from '@/lib/utils'
 import { Check, CheckCheck, Clock, CornerUpLeft, MapPin } from 'lucide-react'
-import { Message } from '../types/chat.types'
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import { AttachmentRenderer } from '@/features/chattemplate/files/components/attachment-renderer'
+import { Message } from '../types/chat.types'
 import { MessageActions } from './message-actions'
 import { MessageToolbar } from './message-toolbar'
 import { ReplyPreview } from './reply-preview'
-import { toast } from 'sonner'
 
 interface MessageBubbleProps {
   message: Message
@@ -14,13 +14,21 @@ interface MessageBubbleProps {
   isGroup: boolean
   onReact: (
     messageId: string,
-    action: 'thumb' | 'favorite' | 'flag' | 'star' | 'pin' | 'archive' | 'action_this',
+    action:
+      | 'thumb'
+      | 'favorite'
+      | 'flag'
+      | 'star'
+      | 'pin'
+      | 'archive'
+      | 'action_this',
     value: boolean
   ) => void
   onDeleteForMe: (messageId: string) => void
   onDeleteForEveryone?: (messageId: string) => void
   onReply: (message: Message) => void
   onForward: (message: Message) => void
+  onEdit?: (message: Message) => void
   onViewDocument?: (url: string, name: string, messageId?: string) => void
   onOpenLocationOnMap?: (location: any, type: 'current' | 'live') => void
 }
@@ -34,13 +42,14 @@ export function MessageBubble({
   onDeleteForEveryone,
   onReply,
   onForward,
+  onEdit,
   onViewDocument,
   onOpenLocationOnMap,
 }: MessageBubbleProps) {
   if (message.message_type === 'system') {
     return (
-      <div className="w-full flex justify-center my-1 select-none animate-in fade-in duration-200">
-        <div className="bg-sky-100/80 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 border border-sky-200/50 dark:border-sky-900/30 rounded-xl px-4 py-1.5 text-[11px] font-semibold shadow-xs max-w-[85%] text-center whitespace-pre-wrap">
+      <div className='animate-in fade-in my-1 flex w-full justify-center duration-200 select-none'>
+        <div className='max-w-[85%] rounded-xl border border-sky-200/50 bg-sky-100/80 px-4 py-1.5 text-center text-[11px] font-semibold whitespace-pre-wrap text-sky-800 shadow-xs dark:border-sky-900/30 dark:bg-sky-950/40 dark:text-sky-300'>
           {message.message}
         </div>
       </div>
@@ -68,9 +77,11 @@ export function MessageBubble({
   // Share handler
   const handleShare = () => {
     if (navigator.share && message.message) {
-      navigator.share({
-        text: message.message,
-      }).catch(() => {})
+      navigator
+        .share({
+          text: message.message,
+        })
+        .catch(() => {})
     } else {
       toast.success('Ready to share message link!')
     }
@@ -99,7 +110,14 @@ export function MessageBubble({
   }
 
   const handleReact = (
-    action: 'thumb' | 'favorite' | 'flag' | 'star' | 'pin' | 'archive' | 'action_this',
+    action:
+      | 'thumb'
+      | 'favorite'
+      | 'flag'
+      | 'star'
+      | 'pin'
+      | 'archive'
+      | 'action_this',
     value: boolean
   ) => {
     if (onReact) {
@@ -135,7 +153,7 @@ export function MessageBubble({
     <div
       id={`msg-${message.id}`}
       className={cn(
-        'group flex flex-col items-start gap-1 max-w-[85%] sm:max-w-[75%] transition-all duration-300 relative pb-3',
+        'group relative flex max-w-[85%] flex-col items-start gap-1 pb-3 transition-all duration-300 sm:max-w-[75%]',
         {
           'ms-auto items-end': isMe,
         }
@@ -143,7 +161,7 @@ export function MessageBubble({
     >
       {/* Sender name for group chats (not me) */}
       {isGroup && !isMe && message.sender && (
-        <span className="text-[10px] font-semibold text-muted-foreground/80 px-1 leading-none select-none">
+        <span className='px-1 text-[10px] leading-none font-semibold text-muted-foreground/80 select-none'>
           {message.sender.name}
         </span>
       )}
@@ -154,19 +172,21 @@ export function MessageBubble({
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         className={cn(
-          'rounded-2xl px-4 py-2.5 text-sm leading-relaxed border transition-all duration-200 shadow-xs max-w-full relative group/bubble select-text',
+          'group/bubble relative max-w-full rounded-2xl border px-4 py-2.5 text-sm leading-relaxed shadow-xs transition-all duration-200 select-text',
           {
-            'bg-emerald-100 dark:bg-emerald-950/40 text-foreground border-emerald-200/50 dark:border-emerald-900/30 rounded-tr-none':
+            'rounded-tr-none border-emerald-200/50 bg-emerald-100 text-foreground dark:border-emerald-900/30 dark:bg-emerald-950/40':
               isMe && !message.deleted,
-            'bg-card text-foreground rounded-tl-none border-border/50': !isMe && !message.deleted,
-            'bg-muted/30 text-muted-foreground border-muted rounded-2xl italic': message.deleted,
+            'rounded-tl-none border-border/50 bg-card text-foreground':
+              !isMe && !message.deleted,
+            'rounded-2xl border-muted bg-muted/30 text-muted-foreground italic':
+              message.deleted,
           }
         )}
       >
         {/* Forwarded Tag */}
         {message.forward && !message.deleted && (
-          <span className="text-[10px] text-muted-foreground font-extrabold flex items-center gap-1 mb-1 leading-none opacity-80 select-none">
-            <CornerUpLeft className="h-2.5 w-2.5 scale-x-[-1] text-sky-500" />
+          <span className='mb-1 flex items-center gap-1 text-[10px] leading-none font-extrabold text-muted-foreground opacity-80 select-none'>
+            <CornerUpLeft className='h-2.5 w-2.5 scale-x-[-1] text-sky-500' />
             Forwarded message
           </span>
         )}
@@ -190,59 +210,83 @@ export function MessageBubble({
         )}
 
         {/* Location Card Renderer */}
-        {!message.deleted && message.message_type === 'location' && message.location_data && (
-          <div 
-            onClick={(e) => {
-              e.stopPropagation()
-              onOpenLocationOnMap?.(message.location_data, message.location_type || 'current')
-            }}
-            className="flex items-center gap-3 p-3 bg-muted/40 hover:bg-muted/70 dark:bg-zinc-800/40 dark:hover:bg-zinc-800/70 border border-border/60 rounded-xl cursor-pointer transition-colors max-w-[260px] my-1"
-          >
-            <div className="h-10 w-10 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center shrink-0">
-              <MapPin className="h-5 w-5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
+        {!message.deleted &&
+          message.message_type === 'location' &&
+          message.location_data && (
+            <div
+              onClick={(e) => {
+                e.stopPropagation()
+                onOpenLocationOnMap?.(
+                  message.location_data,
+                  message.location_type || 'current'
+                )
+              }}
+              className='my-1 flex max-w-[260px] cursor-pointer items-center gap-3 rounded-xl border border-border/60 bg-muted/40 p-3 transition-colors hover:bg-muted/70 dark:bg-zinc-800/40 dark:hover:bg-zinc-800/70'
+            >
+              <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20'>
+                <MapPin className='h-5 w-5 animate-pulse text-emerald-600 dark:text-emerald-400' />
+              </div>
+              <div className='min-w-0 flex-1 text-left'>
+                <span className='block truncate text-xs font-bold text-foreground'>
+                  {message.location_type === 'live'
+                    ? 'Live Location'
+                    : 'Current Location'}
+                </span>
+                <span
+                  className='block truncate text-[10px] text-muted-foreground'
+                  title={message.location_data.address}
+                >
+                  {message.location_data.address ||
+                    `${message.location_data.latitude.toFixed(5)}, ${message.location_data.longitude.toFixed(5)}`}
+                </span>
+                <span className='mt-0.5 block animate-pulse text-[10px] font-semibold text-emerald-600 dark:text-emerald-400'>
+                  Click to view map
+                </span>
+              </div>
             </div>
-            <div className="flex-1 min-w-0 text-left">
-              <span className="text-xs font-bold block text-foreground truncate">
-                {message.location_type === 'live' ? 'Live Location' : 'Current Location'}
-              </span>
-              <span className="text-[10px] text-muted-foreground block truncate" title={message.location_data.address}>
-                {message.location_data.address || `${message.location_data.latitude.toFixed(5)}, ${message.location_data.longitude.toFixed(5)}`}
-              </span>
-              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold block mt-0.5 animate-pulse">
-                Click to view map
-              </span>
-            </div>
-          </div>
-        )}
+          )}
 
         {/* Text Message Content */}
         {message.deleted ? (
-          <p className="break-words">This message was deleted.</p>
+          <p className='break-words'>This message was deleted.</p>
         ) : (
-          (message.message_type === 'text' || (message.message && message.message_type !== 'location')) && (
-            <p className="break-words whitespace-pre-wrap mt-1">{message.message}</p>
+          (message.message_type === 'text' ||
+            (message.message && message.message_type !== 'location')) && (
+            <p className='mt-1 break-words whitespace-pre-wrap'>
+              {message.message}
+            </p>
           )
         )}
 
         {/* Timestamp and Check marks */}
-        <div className="flex items-center gap-1 justify-end text-[9px] mt-1 opacity-70 select-none text-muted-foreground leading-none">
+        <div className='mt-1 flex items-center justify-end gap-1 text-[9px] leading-none text-muted-foreground opacity-70 select-none'>
           <span>{messageTime}</span>
           {isMe && !message.deleted && (
-            <span className="flex items-center">
+            <span className='flex items-center'>
               {message.message_status === 'pending' && (
-                <span title="Pending"><Clock className="h-3 w-3 text-muted-foreground/60 animate-pulse" /></span>
+                <span title='Pending'>
+                  <Clock className='h-3 w-3 animate-pulse text-muted-foreground/60' />
+                </span>
               )}
               {message.message_status === 'sent' && (
-                <span title="Sent"><Check className="h-3.5 w-3.5 text-muted-foreground/70" /></span>
+                <span title='Sent'>
+                  <Check className='h-3.5 w-3.5 text-muted-foreground/70' />
+                </span>
               )}
               {message.message_status === 'delivered' && (
-                <span title="Delivered"><CheckCheck className="h-3.5 w-3.5 text-muted-foreground/70" /></span>
+                <span title='Delivered'>
+                  <CheckCheck className='h-3.5 w-3.5 text-muted-foreground/70' />
+                </span>
               )}
               {message.message_status === 'read' && (
-                <span title="Read"><CheckCheck className="h-3.5 w-3.5 text-sky-500" /></span>
+                <span title='Read'>
+                  <CheckCheck className='h-3.5 w-3.5 text-sky-500' />
+                </span>
               )}
               {!message.message_status && (
-                <span title="Sent"><CheckCheck className="h-3.5 w-3.5 text-muted-foreground/70" /></span>
+                <span title='Sent'>
+                  <CheckCheck className='h-3.5 w-3.5 text-muted-foreground/70' />
+                </span>
               )}
             </span>
           )}
@@ -271,16 +315,19 @@ export function MessageBubble({
           onDeleteForEveryone={handleDeleteForEveryone}
           onReply={handleReply}
           onForward={handleForward}
+          onEdit={onEdit ? () => onEdit(message) : undefined}
           onShare={handleShare}
           isSender={isMe}
           className={cn(
-            'absolute z-30 transition-all duration-200 shadow-md scale-95 pointer-events-none opacity-0',
+            'pointer-events-none absolute z-30 scale-95 opacity-0 shadow-md transition-all duration-200',
             // Desktop hover behavior
-            'group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto',
+            'group-hover:pointer-events-auto group-hover:scale-100 group-hover:opacity-100',
             // Mobile active behavior
-            showMobileToolbar ? 'opacity-100 scale-100 pointer-events-auto' : '',
+            showMobileToolbar
+              ? 'pointer-events-auto scale-100 opacity-100'
+              : '',
             // Positioning based on sender
-            isMe ? 'right-2 -bottom-4' : 'left-2 -bottom-4'
+            isMe ? 'right-2 -bottom-4' : '-bottom-4 left-2'
           )}
         />
       )}

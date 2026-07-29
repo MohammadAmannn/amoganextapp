@@ -4,7 +4,7 @@
  */
 export class QueryBuilder {
   private params: URLSearchParams = new URLSearchParams()
-  
+
   /**
    * Embeds resource relationships or filters output columns.
    */
@@ -14,12 +14,17 @@ export class QueryBuilder {
     this.params.set('select', cleaned)
     return this
   }
-  
+
   /**
    * Equality filter.
    */
   eq(column: string, value: any): this {
     this.params.append(column, `eq.${value}`)
+    return this
+  }
+
+  lt(column: string, value: any): this {
+    this.params.append(column, `lt.${value}`)
     return this
   }
 
@@ -35,7 +40,7 @@ export class QueryBuilder {
    * IN filter matching array of values.
    */
   in(column: string, values: any[]): this {
-    const formatted = values.map(v => `${v}`).join(',')
+    const formatted = values.map((v) => `${v}`).join(',')
     this.params.append(column, `in.(${formatted})`)
     return this
   }

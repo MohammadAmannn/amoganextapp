@@ -49,6 +49,7 @@ interface RealtimeChatViewProps {
   membersCount?: number
   onlineCount?: number
   onBack: () => void
+  conversation?: Conversation | null
 }
 
 export function RealtimeChatView({
@@ -58,6 +59,7 @@ export function RealtimeChatView({
   membersCount,
   onlineCount,
   onBack,
+  conversation,
 }: RealtimeChatViewProps) {
   const currentUser = useAuthStore((state) => state.auth.user)
   const {
@@ -509,6 +511,9 @@ export function RealtimeChatView({
             ? loadOlderMessages(conversationId, currentUser.accountNo)
             : Promise.resolve()
         }
+        conversation={conversation}
+        rawMessages={messages}
+        currentUser={currentUser}
       />
       <LocationPicker
         open={isLocationPickerOpen}

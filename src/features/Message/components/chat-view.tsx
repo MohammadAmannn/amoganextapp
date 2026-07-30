@@ -37,8 +37,12 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { MessageToolbar } from '@/features/chattemplate/chat/components/message-toolbar'
-import { Message } from '@/features/chattemplate/chat/types/chat.types'
+import { Message, Conversation } from '@/features/chattemplate/chat/types/chat.types'
 import { VoiceMessagePlayer } from '@/features/chattemplate/files/components/voice-message-player'
+import { ChatProfilePage } from '@/features/chattemplate/chat/components/chat-profile-drawer'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { getDisplayNameInitials } from '@/lib/utils'
 
 const DynamicDocViewer = dynamic(
   () =>
@@ -154,6 +158,9 @@ interface ChatViewProps {
     value?: boolean
   ) => void
   onReply?: (message: ChatMessage) => void
+  rawMessages?: Message[]
+  currentUser?: { accountNo: string; name?: string; email?: string } | null
+  conversation?: Conversation | null
 }
 
 function formatTime(date: Date) {
@@ -180,7 +187,11 @@ export function ChatView({
   isLoadingOlder,
   onMessageAction,
   onReply,
+  rawMessages,
+  currentUser,
+  conversation,
 }: ChatViewProps) {
+  const [showProfile, setShowProfile] = useState(false)
   const [draft, setDraft] = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const recorderRef = useRef<MediaRecorder | null>(null)
@@ -409,6 +420,69 @@ export function ChatView({
       ? `${membersCount} members, ${onlineCount} online`
       : 'Last seen today at ' + formatTime(new Date())
 
+  if (showProfile) {
+    const displayConvo = conversation || ({
+      id: 'synthetic-convo',
+      name: chatName,
+      image: chatAvatar,
+      type: (membersCount && membersCount > 2) ? 'group' : 'direct',
+      created_at: new Date().toISOString(),
+      members: (membersCount && membersCount > 2)
+        ? Array.from({ length: membersCount }).map((_, i) => ({
+            id: `m-${i}`,
+            name: `Member ${i + 1}`,
+            email: `member${i + 1}@example.com`,
+            avatar_url: ''
+          }))
+        : [
+            { id: currentUser?.accountNo || '1', name: currentUser?.name || 'You', email: currentUser?.email || '', avatar_url: '' },
+            { id: '2', name: chatName, email: 'partner@example.com', avatar_url: chatAvatar || '' }
+          ]
+    } as Conversation)
+
+    const displayRawMessages = rawMessages || messages.map(msg => ({
+      id: msg.id,
+      conversation_id: displayConvo.id,
+      owner_user_id: msg.isOwn ? (currentUser?.accountNo || '1') : '2',
+      sender_user_id: msg.isOwn ? (currentUser?.accountNo || '1') : '2',
+      message: msg.content,
+      message_type: msg.location
+        ? 'location'
+        : msg.attachment?.type || 'text',
+      direction: msg.isOwn ? 'Sent' : 'Received',
+      sent: true,
+      received: true,
+      created_at: msg.time.toISOString(),
+      file_url: msg.attachment?.url,
+      file_name: msg.attachment?.name,
+      file_size: msg.attachment?.size,
+      mime_type: msg.attachment?.mimeType,
+      duration: msg.attachment?.duration,
+      deleted: false,
+      star: !!msg.star,
+      pin: !!msg.pin,
+      favorite: !!msg.favorite,
+      flag: !!msg.flag,
+      archive: !!msg.archive,
+      thumb: !!msg.thumb,
+    })) as Message[]
+
+    return (
+      <div className='animate-in fade-in flex h-full w-full flex-col overflow-hidden bg-card duration-200 select-none'>
+        <ChatProfilePage
+          conversation={displayConvo}
+          messages={displayRawMessages}
+          currentUser={currentUser || null}
+          onBack={() => setShowProfile(false)}
+          onViewDocument={(url, name) => {
+            setShowProfile(false)
+            setPreviewDoc({ type: 'document', url, name, size: 0, mimeType: '' })
+          }}
+        />
+      </div>
+    )
+  }
+
   if (previewDoc) {
     return (
       <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-background md:relative md:z-auto'>
@@ -474,10 +548,10 @@ export function ChatView({
   }
 
   return (
-    <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-background md:relative md:z-auto'>
+    <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-card overflow-hidden rounded-none border-0 border-border shadow-xs md:relative md:z-auto sm:rounded-xl sm:border'>
       {/* Header */}
-      <div className='flex shrink-0 items-center justify-between border-b border-border px-4 py-2.5'>
-        <div className='flex min-w-0 items-center gap-3'>
+      <div className='flex flex-none shrink-0 items-center justify-between border-b border-border bg-muted/10 p-4 select-none'>
+        <div className='flex min-w-0 items-center gap-2'>
           <button
             onClick={onBack}
             className='-ml-1 shrink-0 rounded-full p-1.5 text-muted-foreground hover:bg-muted md:hidden'
@@ -486,35 +560,72 @@ export function ChatView({
             <X className='h-4 w-4' />
           </button>
 
-          <div className='relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-muted'>
-            {chatAvatar ? (
-              <img
-                src={chatAvatar}
-                alt={chatName}
-                className='h-full w-full object-cover'
-              />
-            ) : (
-              <div className='flex h-full w-full items-center justify-center bg-muted text-sm font-medium text-muted-foreground'>
-                {chatName?.charAt(0)?.toUpperCase()}
-              </div>
-            )}
-          </div>
-
-          <div className='min-w-0'>
-            <div className='truncate text-[15px] leading-tight font-semibold text-foreground'>
-              {chatName}
+          <div
+            onClick={() => setShowProfile(true)}
+            className='flex cursor-pointer items-center gap-3 transition-opacity select-none hover:opacity-85'
+            title='Click to view info'
+          >
+            <div className='relative shrink-0'>
+              <Avatar className='h-10 w-10 rounded-xl border border-border/60'>
+                {chatAvatar ? (
+                  <AvatarImage src={chatAvatar} alt={chatName} />
+                ) : null}
+                <AvatarFallback className='rounded-xl bg-primary/10 font-bold text-primary'>
+                  {chatName?.charAt(0)?.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
             </div>
-            <div className='truncate text-xs leading-tight text-muted-foreground'>
-              {typingText || subtitle}
+
+            <div className='flex min-w-0 flex-col'>
+              <span className='block truncate text-sm leading-tight font-bold text-foreground'>
+                {chatName}
+              </span>
+              <span className='truncate text-xs leading-tight text-muted-foreground'>
+                {typingText || subtitle}
+              </span>
             </div>
           </div>
         </div>
 
-        <div className='flex shrink-0 items-center gap-5 text-muted-foreground'>
-          <Info className='h-5 w-5 cursor-pointer' strokeWidth={1.8} />
-          <Phone className='h-5 w-5 cursor-pointer' strokeWidth={1.8} />
-          <Video className='h-5 w-5 cursor-pointer' strokeWidth={1.8} />
-          <MoreVertical className='h-5 w-5 cursor-pointer' strokeWidth={1.8} />
+        <div className='flex shrink-0 items-center gap-1.5'>
+          <Button
+            size='icon'
+            variant='ghost'
+            onClick={() => setShowProfile(true)}
+            className={cn(
+              'h-8.5 w-8.5 rounded-full transition-colors',
+              showProfile
+                ? 'bg-primary/15 text-primary'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            )}
+            title='View Details'
+          >
+            <Info className='h-4.5 w-4.5' />
+          </Button>
+          <Button
+            size='icon'
+            variant='ghost'
+            className='h-8.5 w-8.5 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground'
+            title='Voice Call'
+          >
+            <Phone className='h-4 w-4' />
+          </Button>
+          <Button
+            size='icon'
+            variant='ghost'
+            className='h-8.5 w-8.5 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground'
+            title='Video Call'
+          >
+            <Video className='h-4 w-4' />
+          </Button>
+          <Button
+            size='icon'
+            variant='ghost'
+            className='h-8.5 w-8.5 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground'
+            title='More options'
+          >
+            <MoreVertical className='h-4 w-4' />
+          </Button>
         </div>
       </div>
 
@@ -522,7 +633,7 @@ export function ChatView({
       <div
         ref={scrollRef}
         onScroll={() => void handleMessagesScroll()}
-        className='flex-1 overflow-y-auto bg-background px-4 py-4'
+        className='min-h-0 w-full flex-1 overflow-y-auto bg-muted/5 p-4 scrollbar-thin'
       >
         {isLoadingOlder && (
           <div className='py-2 text-center text-xs text-muted-foreground'>
@@ -763,92 +874,99 @@ export function ChatView({
           </button>
         </div>
       )}
-      <div className='flex shrink-0 items-center gap-3 border-t border-border px-4 py-2.5'>
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type='button'
-              className='rounded-md p-1 text-muted-foreground hover:bg-muted'
-              aria-label='Open emoji picker'
-            >
-              <Smile className='h-5 w-5' strokeWidth={1.8} />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            side='top'
-            align='start'
-            className='w-auto border-0 bg-transparent p-0 shadow-none'
-          >
-            <EmojiPicker
-              onSelectEmoji={(emoji: string) =>
-                setDraft((value) => value + emoji)
-              }
-            />
-          </PopoverContent>
-        </Popover>
-        <input
-          type='text'
-          value={draft}
-          onChange={(e) => {
-            setDraft(e.target.value)
-            onTypingChange?.(e.target.value)
-          }}
-          onKeyDown={handleKeyDown}
-          placeholder='Message'
-          className='flex-1 bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none'
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type='button'
-              className='rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground'
-              aria-label='Attachment options'
-            >
-              <Paperclip className='h-5 w-5' strokeWidth={1.8} />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align='end'
-            side='top'
-            sideOffset={12}
-            className='w-40'
-          >
-            <DropdownMenuItem
-              onClick={() => imageInputRef.current?.click()}
-              className='cursor-pointer gap-2'
-            >
-              <ImagePlus className='h-4 w-4' /> Images
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => videoInputRef.current?.click()}
-              className='cursor-pointer gap-2'
-            >
-              <VideoIcon className='h-4 w-4' /> Videos
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => documentInputRef.current?.click()}
-              className='cursor-pointer gap-2'
-            >
-              <FileText className='h-4 w-4' /> Documents
-            </DropdownMenuItem>
-            {onShareLocation && (
-              <DropdownMenuItem
-                onClick={onShareLocation}
-                className='cursor-pointer gap-2'
+      <div className='pb-safe relative flex flex-none shrink-0 items-center gap-2.5 border-t border-border bg-muted/10 p-3'>
+        <div className='relative flex h-10 min-w-0 flex-1 items-center gap-2.5 overflow-hidden rounded-full border border-border bg-background px-3.5 py-1.5 shadow-xs'>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type='button'
+                className='shrink-0 cursor-pointer rounded-md p-0.5 hover:bg-muted focus:ring-1 focus:ring-ring focus:outline-none'
+                aria-label='Open emoji picker'
               >
-                <MapPin className='h-4 w-4' /> Location
+                <Smile className='h-5 w-5 text-muted-foreground/80 transition-colors hover:text-foreground' />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              side='top'
+              align='start'
+              className='border-none bg-transparent p-0 shadow-none'
+              sideOffset={12}
+            >
+              <EmojiPicker
+                onSelectEmoji={(emoji: string) =>
+                  setDraft((value) => value + emoji)
+                }
+              />
+            </PopoverContent>
+          </Popover>
+
+          <input
+            type='text'
+            value={draft}
+            onChange={(e) => {
+              setDraft(e.target.value)
+              onTypingChange?.(e.target.value)
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder='Message'
+            className='min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground focus:border-0 focus:ring-0 focus:outline-none'
+          />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type='button'
+                className='shrink-0 cursor-pointer rounded-md p-0.5 hover:bg-muted focus:ring-1 focus:ring-ring focus:outline-none'
+                aria-label='Attachment options'
+              >
+                <Paperclip className='h-5 w-5 text-muted-foreground/80 transition-colors hover:text-foreground' />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align='end'
+              side='top'
+              sideOffset={12}
+              className='w-40'
+            >
+              <DropdownMenuItem
+                onClick={() => imageInputRef.current?.click()}
+                className='cursor-pointer gap-2 font-semibold'
+              >
+                <ImagePlus className='h-4 w-4' /> Images
               </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <button
-          type='button'
-          onClick={() => cameraInputRef.current?.click()}
-          className='flex-shrink-0 text-muted-foreground'
-          aria-label='Take a photo'
-        >
-          <Camera className='h-5 w-5 cursor-pointer' strokeWidth={1.8} />
-        </button>
+              <DropdownMenuItem
+                onClick={() => videoInputRef.current?.click()}
+                className='cursor-pointer gap-2 font-semibold'
+              >
+                <VideoIcon className='h-4 w-4' /> Videos
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => documentInputRef.current?.click()}
+                className='cursor-pointer gap-2 font-semibold'
+              >
+                <FileText className='h-4 w-4' /> Documents
+              </DropdownMenuItem>
+              {onShareLocation && (
+                <DropdownMenuItem
+                  onClick={onShareLocation}
+                  className='cursor-pointer gap-2 font-semibold'
+                >
+                  <MapPin className='h-4 w-4' /> Location
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <button
+            type='button'
+            onClick={() => cameraInputRef.current?.click()}
+            className='shrink-0 cursor-pointer rounded-md p-0.5 hover:bg-muted focus:ring-1 focus:ring-ring focus:outline-none'
+            aria-label='Take photo'
+          >
+            <Camera className='h-5 w-5 text-muted-foreground/80 transition-colors hover:text-foreground' />
+          </button>
+        </div>
+
         <button
           type='button'
           onClick={() => {
@@ -881,14 +999,14 @@ export function ChatView({
           }
           title={draft.trim() ? 'Send' : 'Hold to record'}
           className={cn(
-            'flex h-9 w-9 flex-shrink-0 touch-none items-center justify-center rounded-full bg-green-600 transition-all hover:opacity-90 active:scale-95',
+            'flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-emerald-600 text-white shadow-md transition-all duration-100 hover:bg-emerald-700 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-95 disabled:opacity-55',
             isRecording && 'scale-110 bg-red-600'
           )}
         >
           {draft.trim() ? (
-            <Send className='h-4 w-4 text-white' strokeWidth={2} />
+            <Send className='h-4.5 w-4.5 translate-x-[1px]' strokeWidth={2} />
           ) : (
-            <Mic className='h-4 w-4 text-white' strokeWidth={2} />
+            <Mic className='h-4.5 w-4.5' strokeWidth={2} />
           )}
         </button>
       </div>

@@ -378,6 +378,9 @@ export default function MessageFeature() {
               conversationId={selectedDirectoryChat.conversationId}
               chatName={selectedDirectoryChat.name}
               chatAvatar={selectedDirectoryChat.avatar}
+              conversation={conversations.find(
+                (c) => c.id === selectedDirectoryChat.conversationId
+              )}
               onBack={() => setSelectedDirectoryChat(null)}
             />
           ) : (
@@ -387,6 +390,7 @@ export default function MessageFeature() {
               messages={directoryMessages[selectedDirectoryChat.id] || []}
               onBack={() => setSelectedDirectoryChat(null)}
               onSendMessage={handleSendDirectoryChatMessage}
+              currentUser={currentUser}
             />
           )
         ) : selectedEmail && selectedEmail.isChat && selectedEmail.chatData ? (
@@ -398,6 +402,7 @@ export default function MessageFeature() {
             messages={selectedEmail.chatData.messages}
             onBack={() => setSelectedEmail(null)}
             onSendMessage={handleSendChatMessage}
+            currentUser={currentUser}
           />
         ) : selectedEmail ? (
           <EmailView
@@ -559,6 +564,9 @@ export default function MessageFeature() {
                       chatAvatar={selectedDirectoryChat.avatar}
                       membersCount={selectedDirectoryChat.membersCount}
                       onlineCount={selectedDirectoryChat.onlineCount}
+                      conversation={conversations.find(
+                        (c) => c.id === selectedDirectoryChat.conversationId
+                      )}
                       onBack={() => setSelectedDirectoryChat(null)}
                     />
                   ) : (
@@ -572,6 +580,7 @@ export default function MessageFeature() {
                       }
                       onBack={() => setSelectedDirectoryChat(null)}
                       onSendMessage={handleSendDirectoryChatMessage}
+                      currentUser={currentUser}
                     />
                   )
                 ) : (

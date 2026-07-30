@@ -39,7 +39,11 @@ import { ChatAttachment, ChatMessage, ChatView } from './components/chat-view'
 import { EmailList } from './components/email-list'
 import { EmailView } from './components/email-view'
 import { NewEmail } from './components/new-email'
+import { AiChatPanel } from './components/ai-chat-panel'
+import { DocViewerPanel } from './components/doc-viewer-panel'
 import { RealtimeChatView } from './components/realtime-chat-view'
+import CalendarTemplate from '@/features/calendartemplate'
+import KanbanTemplate from '@/features/kanbantemplate'
 import { emails as initialEmails, Email } from './data/emails'
 
 interface DirectoryChat {
@@ -67,6 +71,10 @@ export default function MessageFeature() {
   const [directoryMessages, setDirectoryMessages] = useState<
     Record<string, ChatMessage[]>
   >({})
+  const [isAiChatOpen, setIsAiChatOpen] = useState(false)
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+  const [isKanbanOpen, setIsKanbanOpen] = useState(false)
+  const [isFileOpen, setIsFileOpen] = useState(false)
   const currentUser = useAuthStore((state) => state.auth.user)
   const { conversations, setConversations, loadConversations } =
     useConversation()
@@ -187,6 +195,10 @@ export default function MessageFeature() {
   const handleSelectContact = async (contact: Contact) => {
     if (!currentUser) return
     setSelectedEmail(null)
+    setIsAiChatOpen(false)
+    setIsCalendarOpen(false)
+    setIsKanbanOpen(false)
+    setIsFileOpen(false)
     const conversationId = await getOrCreateDirectConversation(
       currentUser.accountNo,
       contact.contactUserId
@@ -202,10 +214,16 @@ export default function MessageFeature() {
       name: contact.nickname || contact.fullName,
       avatar: contact.avatarUrl,
     })
+    // Switch to inbox tab so the split-panel chat view renders
+    setActiveTab('inbox')
   }
 
   const handleSelectConversation = (conversation: Conversation) => {
     setSelectedEmail(null)
+    setIsAiChatOpen(false)
+    setIsCalendarOpen(false)
+    setIsKanbanOpen(false)
+    setIsFileOpen(false)
     setSelectedDirectoryChat({
       id: `conversation-${conversation.id}`,
       conversationId: conversation.id,
@@ -257,10 +275,15 @@ export default function MessageFeature() {
       membersCount: group.users.length,
       onlineCount: 0,
     })
+    setActiveTab('inbox')
   }
 
   const handleSelectEmail = (email: Email) => {
     setSelectedDirectoryChat(null)
+    setIsAiChatOpen(false)
+    setIsCalendarOpen(false)
+    setIsKanbanOpen(false)
+    setIsFileOpen(false)
     setSelectedEmail(email)
     if (!email.read) {
       setEmails((prev) =>
@@ -331,7 +354,7 @@ export default function MessageFeature() {
       <div
         className={cn(
           'flex h-full shrink-0 flex-col overflow-hidden border-r border-border transition-all duration-300 ease-in-out',
-          (selectedEmail || selectedDirectoryChat) && 'hidden md:flex',
+          (selectedEmail || selectedDirectoryChat || isAiChatOpen || isCalendarOpen || isKanbanOpen || isFileOpen) && 'hidden md:flex',
           isSidebarCollapsed ? 'w-20' : 'w-full md:w-[340px] lg:w-[380px]'
         )}
       >
@@ -358,6 +381,42 @@ export default function MessageFeature() {
           onSelectContact={handleSelectContact}
           conversations={conversations}
           onSelectConversation={handleSelectConversation}
+          onSelectAiChat={!doneMode ? () => {
+            setSelectedEmail(null)
+            setSelectedDirectoryChat(null)
+            setIsCalendarOpen(false)
+            setIsKanbanOpen(false)
+            setIsFileOpen(false)
+            setIsAiChatOpen(true)
+          } : undefined}
+          isAiChatSelected={isAiChatOpen}
+          onSelectCalendar={!doneMode ? () => {
+            setSelectedEmail(null)
+            setSelectedDirectoryChat(null)
+            setIsAiChatOpen(false)
+            setIsKanbanOpen(false)
+            setIsFileOpen(false)
+            setIsCalendarOpen(true)
+          } : undefined}
+          isCalendarSelected={isCalendarOpen}
+          onSelectTask={!doneMode ? () => {
+            setSelectedEmail(null)
+            setSelectedDirectoryChat(null)
+            setIsAiChatOpen(false)
+            setIsCalendarOpen(false)
+            setIsFileOpen(false)
+            setIsKanbanOpen(true)
+          } : undefined}
+          isTaskSelected={isKanbanOpen}
+          onSelectFile={!doneMode ? () => {
+            setSelectedEmail(null)
+            setSelectedDirectoryChat(null)
+            setIsAiChatOpen(false)
+            setIsCalendarOpen(false)
+            setIsKanbanOpen(false)
+            setIsFileOpen(true)
+          } : undefined}
+          isFileSelected={isFileOpen}
         />
       </div>
 
@@ -365,7 +424,7 @@ export default function MessageFeature() {
       <div
         className={cn(
           'relative flex h-full flex-grow flex-col overflow-hidden',
-          !selectedEmail && !selectedDirectoryChat && 'hidden md:flex'
+          !selectedEmail && !selectedDirectoryChat && !isAiChatOpen && !isCalendarOpen && !isKanbanOpen && !isFileOpen && 'hidden md:flex'
         )}
       >
         {/* Mobile back button (only for email view — chat has its own) */}
@@ -378,7 +437,15 @@ export default function MessageFeature() {
           </button>
         )}
 
-        {selectedDirectoryChat ? (
+        {isAiChatOpen ? (
+          <AiChatPanel onBack={() => setIsAiChatOpen(false)} />
+        ) : isCalendarOpen ? (
+          <CalendarTemplate embedded onBack={() => setIsCalendarOpen(false)} />
+        ) : isKanbanOpen ? (
+          <KanbanTemplate embedded onBack={() => setIsKanbanOpen(false)} />
+        ) : isFileOpen ? (
+          <DocViewerPanel onBack={() => setIsFileOpen(false)} />
+        ) : selectedDirectoryChat ? (
           selectedDirectoryChat.conversationId ? (
             <RealtimeChatView
               conversationId={selectedDirectoryChat.conversationId}
@@ -629,6 +696,7 @@ export default function MessageFeature() {
                   contacts={contacts}
                   onRefresh={fetchContactsAndGroups}
                   onAddContactClick={() => setActiveTab('new-contact')}
+                  onSelectContact={handleSelectContact}
                 />
               </TabsContent>
 
@@ -648,42 +716,13 @@ export default function MessageFeature() {
                 value='groups'
                 className='mt-0 flex min-h-0 flex-1 flex-col overflow-y-auto bg-transparent focus-visible:outline-none'
               >
-                {selectedDirectoryChat?.kind === 'group' ? (
-                  selectedDirectoryChat.conversationId ? (
-                    <RealtimeChatView
-                      conversationId={selectedDirectoryChat.conversationId}
-                      chatName={selectedDirectoryChat.name}
-                      chatAvatar={selectedDirectoryChat.avatar}
-                      membersCount={selectedDirectoryChat.membersCount}
-                      onlineCount={selectedDirectoryChat.onlineCount}
-                      conversation={conversations.find(
-                        (c) => c.id === selectedDirectoryChat.conversationId
-                      )}
-                      onBack={() => setSelectedDirectoryChat(null)}
-                    />
-                  ) : (
-                    <ChatView
-                      chatName={selectedDirectoryChat.name}
-                      chatAvatar={selectedDirectoryChat.avatar}
-                      membersCount={selectedDirectoryChat.membersCount}
-                      onlineCount={selectedDirectoryChat.onlineCount}
-                      messages={
-                        directoryMessages[selectedDirectoryChat.id] || []
-                      }
-                      onBack={() => setSelectedDirectoryChat(null)}
-                      onSendMessage={handleSendDirectoryChatMessage}
-                      currentUser={currentUser}
-                    />
-                  )
-                ) : (
-                  <GroupList
-                    groups={groups}
-                    contacts={contacts}
-                    onRefresh={fetchContactsAndGroups}
-                    onSelectGroup={handleSelectGroup}
-                    onAddGroupClick={() => setActiveTab('new-group')}
-                  />
-                )}
+                <GroupList
+                  groups={groups}
+                  contacts={contacts}
+                  onRefresh={fetchContactsAndGroups}
+                  onSelectGroup={handleSelectGroup}
+                  onAddGroupClick={() => setActiveTab('new-group')}
+                />
               </TabsContent>
 
               <TabsContent

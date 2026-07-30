@@ -18,6 +18,12 @@ import {
   Users,
   Mail,
   MessageSquare,
+  Bot,
+  Sparkles,
+  Calendar,
+  ClipboardList,
+  FileText,
+  FolderOpen,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -47,6 +53,14 @@ interface EmailListProps {
   onSelectContact?: (contact: Contact) => void
   conversations?: Conversation[]
   onSelectConversation?: (conversation: Conversation) => void
+  onSelectAiChat?: () => void
+  isAiChatSelected?: boolean
+  onSelectCalendar?: () => void
+  isCalendarSelected?: boolean
+  onSelectTask?: () => void
+  isTaskSelected?: boolean
+  onSelectFile?: () => void
+  isFileSelected?: boolean
 }
 
 function getLabelVariant(
@@ -83,6 +97,14 @@ export function EmailList({
   onSelectContact,
   conversations = [],
   onSelectConversation,
+  onSelectAiChat,
+  isAiChatSelected,
+  onSelectCalendar,
+  isCalendarSelected,
+  onSelectTask,
+  isTaskSelected,
+  onSelectFile,
+  isFileSelected,
 }: EmailListProps) {
   const [selectedAccount, setSelectedAccount] = useState<string>('all')
 
@@ -114,38 +136,203 @@ export function EmailList({
     return matchesSearch && matchesMode && matchesAccount
   })
 
+  const mailItems = React.useMemo(() => {
+    return filtered.filter((e) => !e.isChat)
+  }, [filtered])
+
+  const chatItems = React.useMemo(() => {
+    const conversationItems: Email[] = conversations.map(
+      (conversation) => ({
+        id: `conversation-${conversation.id}`,
+        name: conversation.name || 'Conversation',
+        email: '',
+        replyTo: '',
+        subject: '',
+        preview: conversation.lastMessage?.message || '',
+        body: '',
+        date: conversation.lastMessage?.created_at
+          ? new Date(conversation.lastMessage.created_at)
+          : new Date(conversation.created_at),
+        read: !conversation.unreadCount,
+        labels: ['chat'],
+        avatarInitials: (conversation.name || 'Chat')
+          .slice(0, 2)
+          .toUpperCase(),
+        from: undefined,
+        isChat: true,
+        chatData: {
+          name: conversation.name || 'Conversation',
+          avatar: conversation.image || '',
+          membersCount: conversation.members?.length || 0,
+          onlineCount: 0,
+          messages: conversation.lastMessage
+            ? [
+              {
+                id: conversation.lastMessage.id,
+                sender: '',
+                content:
+                  conversation.lastMessage.message ||
+                  conversation.lastMessage.file_name ||
+                  'Attachment',
+                time: new Date(conversation.lastMessage.created_at),
+                isOwn: false,
+                avatarInitials: (conversation.name || 'Chat')
+                  .slice(0, 2)
+                  .toUpperCase(),
+              },
+            ]
+            : [],
+        },
+      })
+    )
+    const conversationContactIds = new Set(
+      conversations.flatMap(
+        (conversation) =>
+          conversation.members?.map((member) => member.id) || []
+      )
+    )
+    const contactItems: Email[] = contacts
+      .filter(
+        (contact) =>
+          !conversationContactIds.has(contact.contactUserId)
+      )
+      .map((contact) => ({
+        id: `contact-${contact.id}`,
+        name: contact.nickname || contact.fullName,
+        email: contact.email,
+        replyTo: contact.email,
+        subject: '',
+        preview: '',
+        body: '',
+        date: contact.createdAt
+          ? new Date(contact.createdAt)
+          : new Date(),
+        read: true,
+        labels: ['chat'],
+        avatarInitials: (contact.nickname || contact.fullName)
+          .slice(0, 2)
+          .toUpperCase(),
+        from: undefined,
+        isChat: true,
+        chatData: {
+          name: contact.nickname || contact.fullName,
+          avatar: contact.avatarUrl || '',
+          membersCount: 1,
+          onlineCount: contact.status === 'Active' ? 1 : 0,
+          messages: [],
+        },
+      }))
+    const normalizedChatSearch = searchQuery.trim().toLowerCase()
+    return [...conversationItems, ...contactItems].filter(
+      (item) =>
+        !normalizedChatSearch ||
+        item.name.toLowerCase().includes(normalizedChatSearch) ||
+        item.preview.toLowerCase().includes(normalizedChatSearch)
+    )
+  }, [conversations, contacts, searchQuery])
+
   return (
     <div className='flex h-full w-full shrink-0 flex-col overflow-hidden bg-background'>
       {!isCollapsed && (
         <div className='shrink-0 border-b border-border bg-background px-3 pt-3 pb-2'>
-          <div className='relative mb-2'>
-            <select
-              className='h-8 w-full cursor-pointer appearance-none rounded-md border border-border bg-muted/10 px-3 text-xs font-medium text-foreground transition-colors outline-none hover:bg-muted/20 focus:ring-1 focus:ring-primary/30'
-              value={selectedAccount}
-              onChange={(e) => setSelectedAccount(e.target.value)}
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                backgroundPosition: 'right 0.75rem center',
-                backgroundRepeat: 'no-repeat',
-                backgroundSize: '1.2em 1.2em',
-                paddingRight: '2.5rem',
+          {/* Horizontal Icon Navigation instead of a dropdown */}
+          <div className='mb-2 rounded-xl border border-border/80 bg-muted/10 p-1 flex items-center justify-between gap-1'>
+            {/* Mail Icon */}
+            <button
+              onClick={() => {
+                const firstMail = mailItems[0]
+                if (firstMail) onSelectEmail(firstMail)
               }}
+              className={cn(
+                'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
+                selectedEmailId !== null && mailItems.some((m) => m.id === selectedEmailId) &&
+                'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
+              )}
+              title='Mail List'
             >
-              <option value='all'>Select Accounts</option>
-              {emailAccounts.map((account) => (
-                <option key={account.email} value={account.email}>
-                  {account.avatarInitials} {account.name} &lt;{account.email}
-                  &gt;
-                </option>
-              ))}
-            </select>
+              <Mail className='h-4 w-4' />
+            </button>
+
+            {/* Chat Icon */}
+            <button
+              onClick={() => {
+                const firstChat = chatItems[0]
+                if (firstChat) {
+                  if (firstChat.id.startsWith('conversation-')) {
+                    const convoId = firstChat.id.replace('conversation-', '')
+                    const convo = conversations.find((c) => c.id === convoId)
+                    if (convo) onSelectConversation?.(convo)
+                  } else if (firstChat.id.startsWith('contact-')) {
+                    const contactId = firstChat.id.replace('contact-', '')
+                    const contact = contacts.find((c) => c.id === contactId)
+                    if (contact) onSelectContact?.(contact)
+                  }
+                }
+              }}
+              className={cn(
+                'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
+                (selectedContactId !== null || (selectedEmailId !== null && chatItems.some((c) => c.id === selectedEmailId))) &&
+                'bg-background text-emerald-600 dark:text-emerald-400 shadow-sm border border-border/60 font-semibold'
+              )}
+              title='Chats & Direct Messages'
+            >
+              <MessageSquare className='h-4 w-4' />
+            </button>
+
+            {/* AI Assistant Icon */}
+            <button
+              onClick={onSelectAiChat}
+              className={cn(
+                'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
+                isAiChatSelected && 'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
+              )}
+              title='AI Assistant'
+            >
+              <Bot className='h-4 w-4' />
+            </button>
+
+            {/* Calendar Icon */}
+            <button
+              onClick={onSelectCalendar}
+              className={cn(
+                'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
+                isCalendarSelected && 'bg-background text-amber-600 dark:text-amber-400 shadow-sm border border-border/60 font-semibold'
+              )}
+              title='Calendar Schedule'
+            >
+              <Calendar className='h-4 w-4' />
+            </button>
+
+            {/* Tasks / Kanban Icon */}
+            <button
+              onClick={onSelectTask}
+              className={cn(
+                'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
+                isTaskSelected && 'bg-background text-purple-600 dark:text-purple-400 shadow-sm border border-border/60 font-semibold'
+              )}
+              title='Tasks & Kanban Board'
+            >
+              <ClipboardList className='h-4 w-4' />
+            </button>
+
+            {/* File Icon */}
+            <button
+              onClick={onSelectFile}
+              className={cn(
+                'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
+                isFileSelected && 'bg-background text-red-600 dark:text-red-400 shadow-sm border border-border/60 font-semibold'
+              )}
+              title='Document Specifications'
+            >
+              <FileText className='h-4 w-4' />
+            </button>
           </div>
 
           <div className='flex items-center gap-2'>
             <div className='relative min-w-0 flex-1'>
               <Search className='absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60' />
               <Input
-                placeholder='Search Emails...'
+                placeholder='Search...'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className='h-8 w-full rounded-md border-border bg-muted/10 pr-7 pl-8 text-xs focus-visible:ring-1 focus-visible:ring-ring'
@@ -231,20 +418,20 @@ export function EmailList({
                     onlineCount: 0,
                     messages: conversation.lastMessage
                       ? [
-                          {
-                            id: conversation.lastMessage.id,
-                            sender: '',
-                            content:
-                              conversation.lastMessage.message ||
-                              conversation.lastMessage.file_name ||
-                              'Attachment',
-                            time: new Date(conversation.lastMessage.created_at),
-                            isOwn: false,
-                            avatarInitials: (conversation.name || 'Chat')
-                              .slice(0, 2)
-                              .toUpperCase(),
-                          },
-                        ]
+                        {
+                          id: conversation.lastMessage.id,
+                          sender: '',
+                          content:
+                            conversation.lastMessage.message ||
+                            conversation.lastMessage.file_name ||
+                            'Attachment',
+                          time: new Date(conversation.lastMessage.created_at),
+                          isOwn: false,
+                          avatarInitials: (conversation.name || 'Chat')
+                            .slice(0, 2)
+                            .toUpperCase(),
+                        },
+                      ]
                       : [],
                   },
                 })
@@ -588,6 +775,189 @@ export function EmailList({
                         </div>
                       )}
                       {chatItems.map(renderCard)}
+                    </>
+                  )}
+
+                  {/* AI Chat card */}
+                  {!isCollapsed && onSelectAiChat && (
+                    <>
+                      {!isCollapsed && (
+                        <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
+                          <Bot className='h-3 w-3 shrink-0 text-indigo-500' />
+                          <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
+                            AI
+                          </span>
+                          <div className='h-px flex-1 bg-border' />
+                        </div>
+                      )}
+                      <div
+                        id='ai-chat-card'
+                        onClick={onSelectAiChat}
+                        className={[
+                          'group relative mx-1.5 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
+                          isAiChatSelected
+                            ? 'border-indigo-200/50 bg-indigo-500/10 dark:border-indigo-900/30 dark:bg-indigo-950/20'
+                            : 'border-transparent bg-background hover:bg-indigo-500/5 hover:border-indigo-200/30',
+                        ].join(' ')}
+                      >
+                        {isAiChatSelected && (
+                          <div className='absolute top-1 bottom-1 left-0 w-0.5 rounded-l-full bg-indigo-600' />
+                        )}
+                        <div className='flex items-center justify-between'>
+                          <div className='flex min-w-0 items-center gap-2'>
+                            <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-200/40 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-600 dark:border-indigo-800/40 dark:text-indigo-400'>
+                              <Bot className='h-3.5 w-3.5' />
+                            </div>
+                            <span className='flex items-center gap-1 truncate text-sm font-semibold text-foreground'>
+                              AI Assistant
+                              <Sparkles className='h-3 w-3 text-indigo-400' />
+                            </span>
+                          </div>
+                          <span className='ml-2 shrink-0 rounded-full bg-indigo-500/10 px-1.5 py-0.5 text-[9px] font-bold text-indigo-600 dark:text-indigo-400'>
+                            AI
+                          </span>
+                        </div>
+                        <p className='line-clamp-2 text-xs text-muted-foreground/70 leading-relaxed pl-10'>
+                          Explain the new features of React 19 with examples of Server Actions and the use() hook.
+                        </p>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Calendar card */}
+                  {!isCollapsed && onSelectCalendar && (
+                    <>
+                      {!isCollapsed && (
+                        <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
+                          <Calendar className='h-3 w-3 shrink-0 text-amber-500' />
+                          <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
+                            Calendar
+                          </span>
+                          <div className='h-px flex-1 bg-border' />
+                        </div>
+                      )}
+                      <div
+                        id='calendar-card'
+                        onClick={onSelectCalendar}
+                        className={[
+                          'group relative mx-1.5 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
+                          isCalendarSelected
+                            ? 'border-amber-200/50 bg-amber-500/10 dark:border-amber-900/30 dark:bg-amber-950/20'
+                            : 'border-transparent bg-background hover:bg-amber-500/5 hover:border-amber-200/30',
+                        ].join(' ')}
+                      >
+                        {isCalendarSelected && (
+                          <div className='absolute top-1 bottom-1 left-0 w-0.5 rounded-l-full bg-amber-600' />
+                        )}
+                        <div className='flex items-center justify-between'>
+                          <div className='flex min-w-0 items-center gap-2'>
+                            <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-200/40 bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-600 dark:border-amber-800/40 dark:text-amber-400'>
+                              <Calendar className='h-3.5 w-3.5' />
+                            </div>
+                            <span className='flex items-center gap-1.5 truncate text-sm font-semibold text-foreground'>
+                              Weekly Planning & Sync
+                            </span>
+                          </div>
+                          <span className='ml-2 shrink-0 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-bold text-amber-600 dark:text-amber-400'>
+                            Event
+                          </span>
+                        </div>
+                       
+                        <span className='pl-10 text-[10px] text-muted-foreground/80 font-medium block'>
+                          July 30, 2026 - Aug 05, 2026
+                        </span>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Task / Kanban card */}
+                  {!isCollapsed && onSelectTask && (
+                    <>
+                      {!isCollapsed && (
+                        <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
+                          <ClipboardList className='h-3 w-3 shrink-0 text-purple-500' />
+                          <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
+                            Tasks
+                          </span>
+                          <div className='h-px flex-1 bg-border' />
+                        </div>
+                      )}
+                      <div
+                        id='task-card'
+                        onClick={onSelectTask}
+                        className={[
+                          'group relative mx-1.5 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
+                          isTaskSelected
+                            ? 'border-purple-200/50 bg-purple-500/10 dark:border-purple-900/30 dark:bg-purple-950/20'
+                            : 'border-transparent bg-background hover:bg-purple-500/5 hover:border-purple-200/30',
+                        ].join(' ')}
+                      >
+                        {isTaskSelected && (
+                          <div className='absolute top-1 bottom-1 left-0 w-0.5 rounded-l-full bg-purple-600' />
+                        )}
+                        <div className='flex items-center justify-between'>
+                          <div className='flex min-w-0 items-center gap-2'>
+                            <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-purple-200/40 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 text-purple-600 dark:border-purple-800/40 dark:text-purple-400'>
+                              <ClipboardList className='h-3.5 w-3.5' />
+                            </div>
+                            <span className='flex items-center gap-1.5 truncate text-sm font-semibold text-foreground'>
+                              Sprint 5 Kanban Board
+                            </span>
+                          </div>
+                          <span className='ml-2 shrink-0 rounded-full bg-purple-500/10 px-1.5 py-0.5 text-[9px] font-bold text-purple-600 dark:text-purple-400'>
+                            Kanban
+                          </span>
+                        </div>
+                        
+                        <span className='pl-10 text-[10px] text-muted-foreground/80 font-medium block'>
+                          July 30, 2026 - Aug 10, 2026
+                        </span>
+                      </div>
+                    </>
+                  )}
+
+                  {/* File card */}
+                  {!isCollapsed && onSelectFile && (
+                    <>
+                      {!isCollapsed && (
+                        <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
+                          <FileText className='h-3 w-3 shrink-0 text-red-500' />
+                          <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
+                            Files
+                          </span>
+                          <div className='h-px flex-1 bg-border' />
+                        </div>
+                      )}
+                      <div
+                        id='file-card'
+                        onClick={onSelectFile}
+                        className={[
+                          'group relative mx-1.5 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
+                          isFileSelected
+                            ? 'border-red-200/50 bg-red-500/10 dark:border-red-900/30 dark:bg-red-950/20'
+                            : 'border-transparent bg-background hover:bg-red-500/5 hover:border-red-200/30',
+                        ].join(' ')}
+                      >
+                        {isFileSelected && (
+                          <div className='absolute top-1 bottom-1 left-0 w-0.5 rounded-l-full bg-red-600' />
+                        )}
+                        <div className='flex items-center justify-between'>
+                          <div className='flex min-w-0 items-center gap-2'>
+                            <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-red-200/40 bg-gradient-to-br from-red-500/20 to-rose-500/20 text-red-600 dark:border-red-800/40 dark:text-red-400'>
+                              <FileText className='h-3.5 w-3.5' />
+                            </div>
+                            <span className='flex items-center gap-1.5 truncate text-sm font-semibold text-foreground'>
+                              demo.pdf                            </span>
+                          </div>
+                          <span className='ml-2 shrink-0 rounded-full bg-red-500/10 px-1.5 py-0.5 text-[9px] font-bold text-red-600 dark:text-red-400'>
+                            File
+                          </span>
+                        </div>
+                       
+                        <span className='pl-10 text-[10px] text-muted-foreground/80 font-medium block'>
+                          July 30, 2026 at 4:00 PM
+                        </span>
+                      </div>
                     </>
                   )}
                 </>

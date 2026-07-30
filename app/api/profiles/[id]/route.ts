@@ -3,7 +3,7 @@ import { apiClient } from '@/features/chattemplate/shared/api/apiClient'
 import { createQuery } from '@/features/chattemplate/shared/api/queryBuilder'
 import { updateProfile } from '@/features/chattemplate/chat/repositories/profile-repository'
 
-export const runtime = 'nodejs'
+
 
 /**
  * GET /api/profiles/[id]

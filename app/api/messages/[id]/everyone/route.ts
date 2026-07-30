@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { deleteMessageForEveryone } from '@/features/chattemplate/chat/repositories/message-repository'
 
-export const runtime = 'nodejs'
+
 
 /**
  * DELETE /api/messages/[id]/everyone

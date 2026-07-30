@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { apiClient } from '@/features/chattemplate/shared/api/apiClient'
 import { createQuery } from '@/features/chattemplate/shared/api/queryBuilder'
 
-export const runtime = 'nodejs'
+
 
 /**
  * GET /api/notifications?userId=YOUR_USER_ID

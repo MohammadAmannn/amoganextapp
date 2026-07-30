@@ -3,7 +3,7 @@ import { getShortUrl } from '@/lib/short-url-store'
 import { parseBrowser, parseOS, parseDevice, parseReferrer, cleanReferrerName } from '@/lib/ua-parser'
 import { createClient } from '@supabase/supabase-js'
 
-export const runtime = 'nodejs'
+
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY

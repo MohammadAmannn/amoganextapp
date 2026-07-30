@@ -4,7 +4,7 @@ import {
   createContact,
 } from '@/features/chattemplate/contacts/repositories/contact-repository'
 
-export const runtime = 'nodejs'
+
 
 /**
  * GET /api/contacts?userId=YOUR_USER_ID

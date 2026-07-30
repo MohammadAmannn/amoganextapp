@@ -151,7 +151,7 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
   }
 
   return (
-    <div className="flex flex-col h-full bg-background overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex h-full w-full flex-col bg-card overflow-y-auto rounded-none border-0 border-border shadow-xs md:relative md:z-auto sm:rounded-xl sm:border">
       <div className="px-4 py-3 border-b border-border bg-background/50 shrink-0">
         {/* Header Row: Avatar + From info on LEFT, Back button on RIGHT */}
         <div className="flex items-center justify-between">

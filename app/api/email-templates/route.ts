@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getTemplates, saveTemplate } from '@/lib/email-template-store'
 
-export const runtime = 'nodejs'
+
 
 export async function GET() {
   try {

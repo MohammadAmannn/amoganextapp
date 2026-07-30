@@ -7,6 +7,8 @@ import { GoogleAnalytics } from '@next/third-parties/google'
 import { Suspense } from 'react'
 import { AnalyticsReporter } from '@/components/analytics-reporter'
 
+export const instant = false
+
 const openSans = Open_Sans({
   subsets: ['latin'],
   display: 'swap',

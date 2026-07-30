@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getConversationMessages, createMessage } from '@/features/chattemplate/chat/repositories/message-repository'
 import { getOrCreateDirectConversation } from '@/features/chattemplate/chat/repositories/conversation-repository'
 
-export const runtime = 'nodejs'
+
 
 export async function GET(request: NextRequest) {
   try {

@@ -136,12 +136,19 @@ export function ChatSidebar({
               const lastMsgTime = convo.lastMessage?.created_at
 
               return (
-                <button
+                <div
                   key={convo.id}
-                  type='button'
+                  role='button'
+                  tabIndex={0}
                   onClick={() => onSelectConversation(convo)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      onSelectConversation(convo)
+                    }
+                  }}
                   className={cn(
-                    'w-full flex items-center transition-all duration-200 cursor-pointer relative group',
+                    'w-full flex items-center transition-all duration-200 cursor-pointer relative group select-none',
                     isCollapsed 
                       ? 'p-3 gap-3 text-left lg:p-2 lg:py-3.5 lg:justify-center lg:gap-0 lg:group/item' 
                       : 'gap-3 p-3 text-left',
@@ -273,7 +280,7 @@ export function ChatSidebar({
                       ) : null}
                     </div>
                   </div>
-                </button>
+                </div>
               )
             })}
           </div>

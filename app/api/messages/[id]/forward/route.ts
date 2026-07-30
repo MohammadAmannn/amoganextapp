@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { forwardMessage } from '@/features/chattemplate/chat/repositories/message-repository'
 
-export const runtime = 'nodejs'
+
 
 /**
  * POST /api/messages/[id]/forward

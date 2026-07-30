@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { clearConversationUnreadCount } from '@/features/chattemplate/chat/repositories/conversation-repository'
 
-export const runtime = 'nodejs'
+
 
 /**
  * PATCH /api/conversations/[id]/read

@@ -1,11 +1,17 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowLeft, Mail, MessageSquare, Plus } from 'lucide-react'
+import { ArrowLeft, Mail, MessageSquare, Plus, MoreVertical } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { cn } from '@/lib/utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { ComingSoon } from '@/components/coming-soon'
 import { AppHeader } from '@/components/layout/app-header'
 import { Main } from '@/components/layout/main'
@@ -433,8 +439,8 @@ export default function MessageFeature() {
           onValueChange={setActiveTab}
           className='flex min-h-0 flex-1 flex-col overflow-hidden'
         >
-          {/* ── Tab navigation bar ──────────────────────────────────── */}
-          <div className='sticky top-0 z-10 flex w-full shrink-0 items-center gap-4 overflow-x-auto border-b border-border bg-background pb-2'>
+          {/* ── Desktop Tab navigation bar ───────────────────────────── */}
+          <div className='sticky top-0 z-10 hidden md:flex w-full shrink-0 items-center gap-4 overflow-x-auto border-b border-border bg-background pb-2'>
             <TabsList className='h-auto gap-6 rounded-none border-0 bg-transparent p-0 shadow-none'>
               {(
                 [
@@ -471,6 +477,92 @@ export default function MessageFeature() {
               <span>New</span>
               <Plus className='h-3 w-3' />
             </button>
+          </div>
+
+          {/* ── Mobile Tab navigation bar ────────────────────────────── */}
+          <div className='sticky top-0 z-10 flex md:hidden w-full shrink-0 items-center justify-between border-b border-border bg-background pb-2 select-none'>
+            <TabsList className='flex-1 flex items-center justify-start gap-4.5 rounded-none border-0 bg-transparent p-0 shadow-none overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
+              <TabsTrigger
+                value='inbox'
+                onClick={() => setIsComposing(false)}
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors'
+              >
+                Inbox
+              </TabsTrigger>
+              <TabsTrigger
+                value='send'
+                onClick={() => setIsComposing(false)}
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors'
+              >
+                Send
+              </TabsTrigger>
+              <TabsTrigger
+                value='contact'
+                onClick={() => setIsComposing(false)}
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors'
+              >
+                Contact
+              </TabsTrigger>
+              <TabsTrigger
+                value='groups'
+                onClick={() => setIsComposing(false)}
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors'
+              >
+                Grp
+              </TabsTrigger>
+            </TabsList>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type='button'
+                  className='ml-2 p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md shrink-0 cursor-pointer transition-colors'
+                  aria-label='More tabs'
+                >
+                  <MoreVertical className='h-4.5 w-4.5' />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align='end'
+                className='w-36 border border-border bg-background shadow-md'
+              >
+                <DropdownMenuItem
+                  onClick={() => {
+                    setIsComposing(true)
+                  }}
+                  className='cursor-pointer text-xs font-semibold'
+                >
+                  New
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setIsComposing(false)
+                    setActiveTab('folder')
+                  }}
+                  className='cursor-pointer text-xs font-semibold'
+                >
+                  Folder
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setIsComposing(false)
+                    setActiveTab('new-contact')
+                  }}
+                  className='cursor-pointer text-xs font-semibold'
+                >
+                  New Contact
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setIsComposing(false)
+                    setActiveTab('new-group')
+                  }}
+                  className='cursor-pointer text-xs font-semibold'
+                >
+                  New Group
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* ── Compose view ──────────────────────────────────────────── */}

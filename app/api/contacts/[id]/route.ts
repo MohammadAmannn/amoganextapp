@@ -4,7 +4,7 @@ import {
   deleteContact,
 } from '@/features/chattemplate/contacts/repositories/contact-repository'
 
-export const runtime = 'nodejs'
+
 
 /**
  * PATCH /api/contacts/[id]

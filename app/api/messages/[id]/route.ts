@@ -4,7 +4,7 @@ import {
   deleteMessageForMe,
 } from '@/features/chattemplate/chat/repositories/message-repository'
 
-export const runtime = 'nodejs'
+
 
 /**
  * PATCH /api/messages/[id]

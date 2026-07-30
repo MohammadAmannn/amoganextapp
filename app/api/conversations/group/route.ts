@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createGroupConversation } from '@/features/chattemplate/chat/repositories/conversation-repository'
 
-export const runtime = 'nodejs'
+
 
 /**
  * POST /api/conversations/group

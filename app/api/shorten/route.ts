@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { saveShortUrl } from '@/lib/short-url-store'
 
-export const runtime = 'nodejs'
+
 
 function getOrigin(request: NextRequest): string {
   const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host')

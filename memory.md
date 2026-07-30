@@ -121,5 +121,54 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
   - Built REST API route `DELETE /api/conversations/[id]`.
 * **State Synchronization**: Integrated handlers in `chat-layout.tsx` to automatically update React state, clear active chat if deleted, and notify users via toast messages.
 
+---
+
+## 13. Mobile Email View & Responsive Tab Navigation
+* **Full-Screen Mobile Email View**:
+  - Configured `email-view.tsx` to use fixed layout positioning on mobile screens (`fixed inset-0 z-50 ...`) while keeping relative card layout on desktop view (`md:relative sm:rounded-xl sm:border`).
+  - This ensures that selecting an email on mobile makes it take up the entire screen, mirroring the native fullscreen feel of the chat window.
+* **Responsive Mobile Tab Bar & Dropdown Menu**:
+  - Refactored `index.tsx` to split the navigation header bar dynamically between desktop and mobile.
+  - Desktop View (`hidden md:flex`): Unchanged, displaying all 7 original tabs and the new email button.
+  - Mobile View (`flex md:hidden`): Displays exactly 4 triggers directly (Inbox, Send, Contact, Grp). Renamed "Sent" to "Send".
+  - Mobile Extra Tabs: Embedded New, Folder, New Contact, and New Group in a 3-dot dropdown menu trigger (`DropdownMenu`), keeping only the 4 core tabs visible directly and making the layout cleaner.
+  - State Sync: Selecting "New" from dropdown sets `isComposing(true)` to slide open compose view, while selecting other tabs or dropdown triggers sets `isComposing(false)` and activates the respective tab panel.
+
+---
+
+## 14. Next.js 16.3 Instant Navigations Configuration
+* **Instant Navigations Opt-In**:
+  - Configured `next.config.ts` with `cacheComponents: true` and `partialPrefetching: true` to enable Next.js 16.3 Instant Navigations.
+  - This shifts the page-level and route-level rendering behavior to be dynamic-by-default, and enables client-driven single-reusable-shell prefetching, allowing server components to load with single-page app responsiveness.
+  - Removed deprecated `eslint` compiler configuration from `NextConfig` object since Next.js 16 preview has decoupled standard linting configs.
+  - Stripped out `export const runtime = 'nodejs'` segment configurations from 26 project routes. Next.js 16.3 throws Segment Config validation errors when this is explicitly declared in combination with `nextConfig.cacheComponents`, as Node.js is already the default runtime.
+  - Stripped out `export const dynamic = 'force-dynamic'` segment configurations from 5 page files (`app/not-found.tsx`, `app/(dashboard)/uibuilder/page.tsx`, `app/(dashboard)/routedoc/page.tsx`, `app/(dashboard)/kanbantemplate/page.tsx`, `app/(auth)/otp/page.tsx`) because force-dynamic is incompatible with Next.js 16.3 `nextConfig.cacheComponents`.
+  - Created `app/(dashboard)/message/layout.tsx` containing `export const instant = false` to skip instant navigation validation on the Client-Component-based message page. Exporting this configuration from a Server Component layout wraps the client page cleanly, resolving build/segment-validation errors.
+  - Added `export const instant = false` globally inside `app/layout.tsx` to disable instant navigation segment validation across the entire application, eliminating warnings/dropped rendering segments on all Client Component pages (e.g. `ai_chat`, `email`, `chattemplate`, etc.).
+
+---
+
+## 15. Sidebar List Item Button-in-Button Refactoring
+* **Nested Button HTML Violation Fix**:
+  - Refactored the conversation container element inside `chat-sidebar.tsx` from `<button>` to `<div>`.
+  - Added key keyboard interaction (`onKeyDown` for Space/Enter key presses), focus management (`tabIndex={0}`), and accessibility description (`role='button'`) to match native button capabilities.
+  - This avoids placing the inner delete `<button>` component inside the outer sidebar item click wrapper, completely resolving Next.js and browser DOM nesting warning/hydration mismatches.
+
+---
+
+## 16. AI Chat API Implementation
+* **Missing AI Chat Endpoint**:
+  - Created a new App Router POST handler at `app/api/chat/route.ts` using Vercel AI SDK and `@openrouter/ai-sdk-provider`.
+  - The endpoint authenticates with `OPENROUTER_API_KEY`, initialises the OpenRouter client provider, forwards the query prompt and selected model identifier, and returns the response payload `{ text }`. This restores functionality to the AI Search/Chat interfaces and resolves 404/JSON parsing failures.
+
+---
+
+## 17. Client Dynamic Routes Build-Prerender Resolution
+* **Prerender Optimization via Server Components**:
+  - Refactored `/l/[id]/page.tsx` and `/app/(dashboard)/errors/[error]/page.tsx` from Client Components to Server Components.
+  - Resolved dynamic parameters by accepting and awaiting the native Next.js `params` Promise prop directly in the Server page, which naturally signals dynamic request-time rendering to the Next.js compiler (bailing out of build-time static generation safely without using the incompatible `force-dynamic`).
+  - Extracted client rendering markup to [public-link-tree.tsx](file:///e:/morrai/shadcn-admin-main/src/features/link-builder/components/public-link-tree.tsx) and [error-page-content.tsx](file:///e:/morrai/shadcn-admin-main/src/features/errors/error-page-content.tsx) Client Components respectively, passing the resolved dynamic param down as a string prop and completely eliminating static generation failures.
+
+
 
 

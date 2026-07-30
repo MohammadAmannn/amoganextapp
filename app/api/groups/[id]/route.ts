@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { saveGroup, deleteGroup } from '@/features/chattemplate/groups/repositories/group-repository'
 
-export const runtime = 'nodejs'
+
 
 export async function PUT(
   request: NextRequest,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { apiClient } from '@/features/chattemplate/shared/api/apiClient'
 
-export const runtime = 'nodejs'
+
 
 /**
  * PATCH /api/notifications/[id]

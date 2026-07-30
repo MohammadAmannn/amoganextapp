@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserConversations } from '@/features/chattemplate/chat/repositories/conversation-repository'
 
-export const runtime = 'nodejs'
+
 
 /**
  * GET /api/conversations?userId=YOUR_USER_ID

@@ -4,7 +4,7 @@ import {
   markMessagesAsRead,
 } from '@/features/chattemplate/chat/repositories/delivery-repository'
 
-export const runtime = 'nodejs'
+
 
 /**
  * PATCH /api/messages/delivery

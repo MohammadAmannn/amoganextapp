@@ -4,7 +4,7 @@ import {
   getProfileByEmail,
 } from '@/features/chattemplate/chat/repositories/profile-repository'
 
-export const runtime = 'nodejs'
+
 
 /**
  * GET /api/profiles

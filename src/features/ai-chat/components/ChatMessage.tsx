@@ -20,11 +20,7 @@ export function ChatMessage({
   const isUser = message.role === 'user'
 
   return (
-    <div
-      className={`flex w-full gap-3 ${
-        isUser ? 'flex-row-reverse' : 'flex-row'
-      }`}
-    >
+    <div className='flex w-full gap-3 flex-row justify-start'>
       {/* Avatar */}
       <div
         className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full border shadow-sm ${
@@ -41,20 +37,14 @@ export function ChatMessage({
       </div>
 
       {/* Bubble Container */}
-      <div className={`flex flex-col max-w-[85%] sm:max-w-[78%] gap-1.5`}>
+      <div className='flex flex-col max-w-[85%] sm:max-w-[78%] gap-1 items-start'>
         {/* Author Label */}
-        <span className={`text-[10px] font-bold text-muted-foreground/80 px-1 ${isUser ? 'text-right' : 'text-left'}`}>
+        <span className='text-[10px] font-bold text-muted-foreground/80 px-1 text-left'>
           {isUser ? 'You' : 'AI Assistant'}
         </span>
 
-        {/* Text/Markdown Bubble */}
-        <div
-          className={`rounded-2xl px-4 py-3 text-sm sm:text-base border transition-shadow duration-200 ${
-            isUser
-              ? 'bg-primary text-primary-foreground border-primary/10 shadow-sm'
-              : 'bg-card text-card-foreground border-border/80 shadow-sm'
-          }`}
-        >
+        {/* Text/Markdown Content - No background same as chats */}
+        <div className='px-1 py-0.5 text-sm sm:text-base text-foreground'>
           {isUser ? (
             <div className='whitespace-pre-wrap leading-relaxed'>{message.content}</div>
           ) : (

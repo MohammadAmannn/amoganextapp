@@ -505,8 +505,8 @@ export function EmailList({
                     className={cn(
                       'group relative flex cursor-pointer transition-all duration-200 select-none',
                       isCollapsed
-                        ? 'mx-1.5 my-0.5 justify-center rounded-lg p-2 hover:bg-muted/30'
-                        : 'mx-1.5 my-0.5 flex-col gap-0.5 rounded-lg px-3 py-2 hover:bg-muted/40 hover:shadow-xs',
+                        ? 'mx-3 my-0.5 justify-center rounded-lg p-2 hover:bg-muted/30'
+                        : 'mx-3 my-0.5 flex-col gap-0.5 rounded-lg px-3 py-2 hover:bg-muted/40 hover:shadow-xs',
                       isSelected
                         ? 'border-indigo-200/50 bg-indigo-500/10 dark:border-indigo-900/30 dark:bg-indigo-950/20'
                         : 'bg-background hover:bg-muted/30',
@@ -794,7 +794,7 @@ export function EmailList({
                         id='ai-chat-card'
                         onClick={onSelectAiChat}
                         className={[
-                          'group relative mx-1.5 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
+                          'group relative mx-3 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
                           isAiChatSelected
                             ? 'border-indigo-200/50 bg-indigo-500/10 dark:border-indigo-900/30 dark:bg-indigo-950/20'
                             : 'border-transparent bg-background hover:bg-indigo-500/5 hover:border-indigo-200/30',
@@ -840,7 +840,7 @@ export function EmailList({
                         id='calendar-card'
                         onClick={onSelectCalendar}
                         className={[
-                          'group relative mx-1.5 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
+                          'group relative mx-3 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
                           isCalendarSelected
                             ? 'border-amber-200/50 bg-amber-500/10 dark:border-amber-900/30 dark:bg-amber-950/20'
                             : 'border-transparent bg-background hover:bg-amber-500/5 hover:border-amber-200/30',
@@ -886,7 +886,7 @@ export function EmailList({
                         id='task-card'
                         onClick={onSelectTask}
                         className={[
-                          'group relative mx-1.5 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
+                          'group relative mx-3 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
                           isTaskSelected
                             ? 'border-purple-200/50 bg-purple-500/10 dark:border-purple-900/30 dark:bg-purple-950/20'
                             : 'border-transparent bg-background hover:bg-purple-500/5 hover:border-purple-200/30',
@@ -932,7 +932,7 @@ export function EmailList({
                         id='file-card'
                         onClick={onSelectFile}
                         className={[
-                          'group relative mx-1.5 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
+                          'group relative mx-3 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
                           isFileSelected
                             ? 'border-red-200/50 bg-red-500/10 dark:border-red-900/30 dark:bg-red-950/20'
                             : 'border-transparent bg-background hover:bg-red-500/5 hover:border-red-200/30',

@@ -1,8 +1,9 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { X, Download, Loader2 } from 'lucide-react'
+import { X, Download, Loader2, ArrowLeft, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { HeaderActions } from './header-actions'
 
 const DynamicDocViewer = dynamic(
   () =>
@@ -51,9 +52,9 @@ interface DocViewerPanelProps {
 
 export function DocViewerPanel({
   onBack,
-  fileName = 'file_upload.csv',
+  fileName = 'demo.pdf',
 }: DocViewerPanelProps) {
-  // Use path to the CSV in public/file_upload.csv
+  // Use path to the PDF in public
   const documents = [
     {
       uri: '/project.pdf',
@@ -63,41 +64,42 @@ export function DocViewerPanel({
   ]
 
   return (
-    <div className='animate-in fade-in flex h-full w-full flex-col overflow-hidden bg-card duration-200'>
-      {/* Preview Header */}
-      <div className='flex flex-none shrink-0 items-center justify-between border-b border-border bg-muted/10 p-4 select-none'>
-        <div className='flex min-w-0 items-center gap-3'>
-          <Button
-            size='icon'
-            variant='ghost'
+    <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-background overflow-hidden animate-in fade-in duration-200 md:relative md:z-auto'>
+      {/* Preview Header formatted like chat header with file icon */}
+      <div className='flex flex-none shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3 select-none gap-3'>
+        <div className='flex min-w-0 items-center gap-3 flex-1'>
+          <button
             onClick={onBack}
-            className='h-8.5 w-8.5 shrink-0 cursor-pointer rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground'
-            title='Close Preview'
+            className='-ml-1 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+            title='Close'
           >
             <X className='h-5 w-5' />
-          </Button>
-          <span className='truncate text-sm font-bold text-foreground'>
-            {fileName}
-          </span>
+          </button>
+
+          <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-200/40 bg-gradient-to-br from-red-500/20 to-rose-500/20 text-red-600 dark:border-red-800/40 dark:text-red-400'>
+            <FileText className='h-4.5 w-4.5' />
+          </div>
+
+          <div className='min-w-0 flex-1'>
+            <p className='truncate text-sm font-semibold text-foreground'>
+              {fileName}
+            </p>
+            <p className='truncate text-xs text-muted-foreground'>
+              Document Specification · PDF File · July 30, 2026
+            </p>
+          </div>
         </div>
+
         {/* Action buttons */}
-        <div className='flex shrink-0 items-center gap-1.5'>
-          <a
-            href='/file_upload.csv'
-            download={fileName}
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            <Button
-              size='icon'
-              variant='ghost'
-              className='h-8.5 w-8.5 cursor-pointer rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground'
-              title='Download Document'
-            >
-              <Download className='h-4.5 w-4.5' />
-            </Button>
-          </a>
-        </div>
+        <HeaderActions
+          onDelete={onBack}
+          onDownload={() => {
+            const link = document.createElement('a')
+            link.href = '/project.pdf'
+            link.download = fileName
+            link.click()
+          }}
+        />
       </div>
 
       {/* Doc Viewer Container */}

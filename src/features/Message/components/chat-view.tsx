@@ -43,6 +43,7 @@ import { ChatProfilePage } from '@/features/chattemplate/chat/components/chat-pr
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { getDisplayNameInitials } from '@/lib/utils'
+import { HeaderActions } from './header-actions'
 
 const DynamicDocViewer = dynamic(
   () =>

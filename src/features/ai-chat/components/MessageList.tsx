@@ -48,7 +48,7 @@ export function MessageList({
     : -1
 
   return (
-    <div className='mx-auto max-w-4xl space-y-6 py-6 px-1 sm:px-4'>
+    <div className='mx-auto max-w-4xl space-y-3.5 py-3 px-1 sm:px-4'>
       {messages.map((message, index) => (
         <ChatMessage
           key={index}
@@ -65,11 +65,11 @@ export function MessageList({
           <div className='flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full border border-indigo-100 dark:border-indigo-900/30 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 shadow-sm'>
             <Bot className='w-4 h-4' />
           </div>
-          <div className='flex flex-col gap-1.5 max-w-[85%] sm:max-w-[78%]'>
+          <div className='flex flex-col gap-1 max-w-[85%] sm:max-w-[78%]'>
             <span className='text-[10px] font-bold text-muted-foreground/80 px-1'>
               AI Assistant
             </span>
-            <div className='rounded-2xl px-4 py-3 bg-card text-muted-foreground border border-border/80 shadow-sm flex items-center gap-2'>
+            <div className='px-1 py-0.5 text-muted-foreground flex items-center gap-2'>
               <div className='flex gap-1.5 items-center'>
                 <span className='w-1.5 h-1.5 bg-primary/70 rounded-full animate-bounce' style={{ animationDelay: '0ms' }}></span>
                 <span className='w-1.5 h-1.5 bg-primary/70 rounded-full animate-bounce' style={{ animationDelay: '150ms' }}></span>
@@ -87,7 +87,7 @@ export function MessageList({
         </div>
       )}
 
-      <div ref={messagesEndRef} className='h-2' />
+      <div ref={messagesEndRef} className='h-1' />
     </div>
   )
 }

@@ -499,7 +499,7 @@ export default function MessageFeature() {
 
       <Main
         fixed
-        className='flex min-h-0 flex-1 flex-col overflow-hidden bg-background p-4 pt-2 sm:p-6 sm:pt-2'
+        className='flex min-h-0 flex-1 flex-col overflow-hidden bg-background p-0 sm:px-4 sm:py-1.5'
       >
         <Tabs
           value={activeTab}
@@ -547,7 +547,18 @@ export default function MessageFeature() {
           </div>
 
           {/* ── Mobile Tab navigation bar ────────────────────────────── */}
-          <div className='sticky top-0 z-10 flex md:hidden w-full shrink-0 items-center justify-between border-b border-border bg-background pb-2 select-none'>
+          <div
+            className={cn(
+              'sticky top-0 z-10 flex md:hidden w-full shrink-0 items-center justify-between border-b border-border bg-background px-3 pb-2 select-none',
+              (selectedEmail ||
+                selectedDirectoryChat ||
+                isAiChatOpen ||
+                isCalendarOpen ||
+                isKanbanOpen ||
+                isFileOpen) &&
+                'hidden'
+            )}
+          >
             <TabsList className='flex-1 flex items-center justify-start gap-4.5 rounded-none border-0 bg-transparent p-0 shadow-none overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
               <TabsTrigger
                 value='inbox'

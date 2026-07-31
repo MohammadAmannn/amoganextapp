@@ -22,6 +22,7 @@ import { AppHeader } from '@/components/layout/app-header'
 import { Main } from '@/components/layout/main'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ComingSoon } from '@/components/coming-soon'
+import { HeaderActions } from '@/features/Message/components/header-actions'
 
 interface Assignee {
   id: string
@@ -341,15 +342,15 @@ export default function KanbanTemplate({
 
   if (embedded) {
     return (
-      <div className='flex h-full flex-col w-full overflow-hidden bg-background text-foreground animate-fade-in'>
+      <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-background text-foreground overflow-hidden animate-fade-in md:relative md:z-auto'>
         {/* Header */}
-        <div className='flex shrink-0 items-center gap-3 border-b border-border bg-background px-4 py-3'>
+        <div className='flex shrink-0 items-center gap-3 border-b border-border bg-background px-4 py-3 select-none'>
           <button
             onClick={onBack}
-            className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden'
-            title='Back'
+            className='-ml-1 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden'
+            title='Close'
           >
-            <ArrowLeft className='h-4 w-4' />
+            <X className='h-5 w-5' />
           </button>
           <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-purple-200/45 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 text-purple-600 dark:border-purple-800/40 dark:text-purple-400'>
             <ClipboardList className='h-4.5 w-4.5' />
@@ -358,14 +359,7 @@ export default function KanbanTemplate({
             <p className='truncate text-sm font-semibold text-foreground'>Sprint Board</p>
             <p className='truncate text-xs text-muted-foreground'>Kanban Tasks</p>
           </div>
-          {onBack && (
-            <button
-              onClick={onBack}
-              className='hidden md:flex h-8 px-3 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-background text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-            >
-              Close
-            </button>
-          )}
+          <HeaderActions onDelete={onBack} />
         </div>
 
         <div className='flex-grow min-h-0 overflow-y-auto p-4 flex flex-col h-full'>

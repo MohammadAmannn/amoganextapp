@@ -35,8 +35,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Email } from "../data/emails"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { HeaderActions } from "./header-actions"
 import { cn } from "@/lib/utils"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface EmailRecipient {
   name: string
@@ -153,9 +153,17 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
   return (
     <div className="fixed inset-0 z-50 flex h-full w-full flex-col bg-card overflow-y-auto rounded-none border-0 border-border shadow-xs md:relative md:z-auto sm:rounded-xl sm:border">
       <div className="px-4 py-3 border-b border-border bg-background/50 shrink-0">
-        {/* Header Row: Avatar + From info on LEFT, Back button on RIGHT */}
-        <div className="flex items-center justify-between">
+        {/* Header Row: Back/Close + Avatar + From info on LEFT, HeaderActions on RIGHT */}
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
+            <button
+              type="button"
+              onClick={onBack}
+              className="-ml-1 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden"
+              title="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
             <div
               className={cn(
                 "w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold border border-border shrink-0",
@@ -175,10 +183,13 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
             </div>
           </div>
           
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-xs hover:bg-muted cursor-pointer shrink-0 ml-2 h-8">
-            <ArrowLeft className="h-3.5 w-3.5 mr-1" />
-            Back to Message
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button variant="ghost" size="sm" onClick={onBack} className="hidden md:flex text-xs hover:bg-muted cursor-pointer shrink-0 h-8">
+              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+              Back
+            </Button>
+            <HeaderActions onDelete={() => onDelete(email.id)} />
+          </div>
         </div>
 
         {/* Second Row: CC, BCC, Date, and Action Icons */}
@@ -199,82 +210,13 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
             </div>
           )}
           
-          {/* Date and Action Icons on same row */}
+          {/* Date row */}
           <div className="flex items-center justify-between flex-wrap gap-1 mt-1">
             <div className="flex items-center text-xs text-muted-foreground">
               <span className="mr-1.5">to me</span>
               <span>
                 {formattedDate} - {relativeTime}
               </span>
-            </div>
-
-            <div className="flex items-center space-x-0.5">
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10" title="Mark as important">
-                <Flag className={cn("h-3.5 w-3.5", email.important ? "fill-destructive" : "")} />
-                <span className="sr-only">Important</span>
-              </Button>
-
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-500 hover:bg-amber-500/10" title="Action item">
-                <AlertTriangle className={cn("h-3.5 w-3.5", email.actionItem ? "fill-amber-500" : "")} />
-                <span className="sr-only">Action item</span>
-              </Button>
-
-              {onStartChat && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-primary hover:bg-primary/10 cursor-pointer"
-                  onClick={onStartChat}
-                  title="Chat about this email"
-                >
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  <span className="sr-only">Chat</span>
-                </Button>
-              )}
-
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-500 hover:bg-emerald-500/10" title="View as document">
-                <FileText className="h-3.5 w-3.5" />
-                <span className="sr-only">View as document</span>
-              </Button>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 cursor-pointer">
-                    <MoreVertical className="h-3.5 w-3.5" />
-                    <span className="sr-only">More options</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[170px] bg-background border border-border">
-                  <DropdownMenuItem className="cursor-pointer text-xs">
-                    <Reply className="h-3.5 w-3.5 mr-2" />
-                    Reply
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer text-xs">
-                    <Forward className="h-3.5 w-3.5 mr-2" />
-                    Forward
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer text-xs">
-                    <Archive className="h-3.5 w-3.5 mr-2" />
-                    Archive
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer text-xs">
-                    <Share2 className="h-3.5 w-3.5 mr-2" />
-                    Share
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer text-xs">
-                    <Printer className="h-3.5 w-3.5 mr-2" />
-                    Print
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer text-xs">
-                    <Download className="h-3.5 w-3.5 mr-2" />
-                    Download
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onDelete(email.id)} className="text-destructive cursor-pointer focus:bg-destructive/10 focus:text-destructive text-xs">
-                    <Trash2 className="h-3.5 w-3.5 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
         </div>

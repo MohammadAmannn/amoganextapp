@@ -2,11 +2,13 @@
 
 /* eslint-disable no-console */
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { ArrowLeft, Bot, Sparkles } from 'lucide-react'
+import { ArrowLeft, Bot, Sparkles, X } from 'lucide-react'
 import { MessageList } from '@/features/ai-chat/components/MessageList'
 import { MessageInput } from '@/features/ai-chat/components/MessageInput'
 import { ImageModal } from '@/features/ai-chat/components/ImageModal'
 import { Message } from '@/features/ai-chat/types'
+
+import { HeaderActions } from './header-actions'
 
 const TAVILY_API_KEY = process.env.NEXT_PUBLIC_TAVILY_API_KEY ?? ''
 
@@ -199,16 +201,23 @@ export function AiChatPanel({ onBack }: AiChatPanelProps) {
     [sendMessage]
   )
 
+  const handleNewChat = useCallback(() => {
+    setMessages([])
+    setInput('')
+    setTool('chat')
+    initialSentRef.current = true
+  }, [])
+
   return (
-    <div className='flex h-full flex-col overflow-hidden'>
+    <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-background overflow-hidden md:relative md:z-auto'>
       {/* Header */}
-      <div className='flex shrink-0 items-center gap-3 border-b border-border bg-background px-4 py-3'>
+      <div className='flex shrink-0 items-center gap-3 border-b border-border bg-background px-4 py-3 select-none'>
         <button
           onClick={onBack}
-          className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden'
-          title='Back'
+          className='-ml-1 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden'
+          title='Close'
         >
-          <ArrowLeft className='h-4 w-4' />
+          <X className='h-5 w-5' />
         </button>
 
         <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-200/40 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-600 dark:border-indigo-800/40 dark:text-indigo-400'>
@@ -224,6 +233,8 @@ export function AiChatPanel({ onBack }: AiChatPanelProps) {
             Powered by AI · Ask anything
           </p>
         </div>
+
+        <HeaderActions onDelete={onBack} />
       </div>
 
       {/* Messages */}
@@ -265,6 +276,7 @@ export function AiChatPanel({ onBack }: AiChatPanelProps) {
           onVoiceToggle={toggleVoice}
           onHistorySelect={() => setShowHistory(false)}
           onClearSources={() => {}}
+          onNewChat={handleNewChat}
           inputRef={inputRef}
         />
       </div>

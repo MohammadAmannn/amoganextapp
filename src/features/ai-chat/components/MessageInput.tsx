@@ -34,6 +34,7 @@ interface MessageInputProps {
   onVoiceToggle: () => void
   onHistorySelect: (option: string) => void
   onClearSources: () => void
+  onNewChat?: () => void
   inputRef: React.RefObject<HTMLTextAreaElement | null>
 }
 
@@ -59,6 +60,7 @@ export function MessageInput({
   onVoiceToggle,
   onHistorySelect,
   onClearSources,
+  onNewChat,
   inputRef,
 }: MessageInputProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -69,7 +71,7 @@ export function MessageInput({
   }
 
   return (
-    <div className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 pt-1.5 pb-1.5 sm:px-6'>
+    <div className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 py-1 sm:px-4'>
       <div className='mx-auto max-w-4xl'>
         {/* Message input with send button */}
         <div className='relative rounded-2xl border border-border/80 bg-background shadow-sm hover:border-border transition-colors focus-within:border-primary'>
@@ -202,8 +204,13 @@ export function MessageInput({
               )}
             </div>
 
-            <button className='p-1 rounded-lg border border-border/80 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground'>
-              <Plus className='w-3 h-3 sm:w-3.5 sm:h-3.5' />
+            <button
+              type='button'
+              onClick={onNewChat}
+              className='p-1.5 rounded-lg border border-border/80 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer'
+              title='New Chat'
+            >
+              <Plus className='w-3.5 h-3.5' />
             </button>
           </div>
         </div>

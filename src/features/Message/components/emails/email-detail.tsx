@@ -13,7 +13,7 @@ import { format } from 'date-fns'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Email } from '../data/emails'
+import { Email } from '../../data/emails'
 import { EmailEditor } from './email-editor'
 
 interface EmailDetailProps {

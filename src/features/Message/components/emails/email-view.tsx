@@ -33,9 +33,9 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Email } from "../data/emails"
+import { Email } from "../../data/emails"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { HeaderActions } from "./header-actions"
+import { HeaderActions } from "../chat/header-actions"
 import { cn } from "@/lib/utils"
 
 interface EmailRecipient {

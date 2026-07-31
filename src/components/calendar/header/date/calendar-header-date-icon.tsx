@@ -4,11 +4,11 @@ export default function CalendarHeaderDateIcon() {
   const { calendarIconIsToday, date: calendarDate } = useCalendarContext()
   const date = calendarIconIsToday ? new Date() : calendarDate
   return (
-    <div className="flex size-14 flex-col items-start overflow-hidden rounded-lg border">
-      <p className="flex h-6 w-full items-center justify-center bg-primary text-center text-xs font-semibold text-background uppercase">
+    <div className="flex size-14 flex-col items-start overflow-hidden rounded-lg border font-sans">
+      <p className="flex h-6 w-full items-center justify-center bg-primary text-center text-xs font-semibold text-background uppercase font-sans">
         {format(date, 'MMM')}
       </p>
-      <p className="flex w-full items-center justify-center text-lg font-bold">
+      <p className="flex w-full items-center justify-center text-lg font-bold font-sans">
         {format(date, 'dd')}
       </p>
     </div>

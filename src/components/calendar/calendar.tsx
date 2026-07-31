@@ -25,7 +25,7 @@ export default function Calendar({
       setDate={setDate}
       calendarIconIsToday={calendarIconIsToday}
     >
-      <div className="flex flex-col gap-4 h-full">
+      <div className="flex flex-col gap-4 h-full font-sans">
         {/* Customized Premium Header combining dashboard tabs, navigation chevrons, and add event actions */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-border pb-4 gap-4 flex-shrink-0">
           <Tabs

@@ -8,7 +8,8 @@ import { MessageInput } from '@/features/ai-chat/components/MessageInput'
 import { ImageModal } from '@/features/ai-chat/components/ImageModal'
 import { Message } from '@/features/ai-chat/types'
 
-import { HeaderActions } from './header-actions'
+import { HeaderActions } from '../chat/header-actions'
+import { FileUploadProgress } from '../chat/file-upload-progress'
 
 const TAVILY_API_KEY = process.env.NEXT_PUBLIC_TAVILY_API_KEY ?? ''
 
@@ -33,6 +34,36 @@ export function AiChatPanel({ onBack }: AiChatPanelProps) {
   const [isSpeechSupported, setIsSpeechSupported] = useState(true)
   const [showImageModal, setShowImageModal] = useState(false)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [aiUploadState, setAiUploadState] = useState<{
+    fileName: string
+    fileSize: number
+    progress: number
+    status: 'uploading' | 'completed' | 'error'
+  } | null>(null)
+
+  const handleAiFileSelect = (file: File) => {
+    setAiUploadState({
+      fileName: file.name,
+      fileSize: file.size,
+      progress: 10,
+      status: 'uploading',
+    })
+
+    const interval = setInterval(() => {
+      setAiUploadState((prev) => {
+        if (!prev) return null
+        if (prev.progress >= 90) {
+          clearInterval(interval)
+          setTimeout(() => {
+            void sendMessage(`[Attached File: ${file.name}]`, 'chat')
+            setAiUploadState(null)
+          }, 350)
+          return { ...prev, progress: 100, status: 'completed' }
+        }
+        return { ...prev, progress: prev.progress + 25 }
+      })
+    }, 180)
+  }
 
   const recognitionRef = useRef<any>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -164,13 +195,7 @@ export function AiChatPanel({ onBack }: AiChatPanelProps) {
     [input, loading, model, api, tool]
   )
 
-  // Auto-send initial prompt on mount (once only)
-  useEffect(() => {
-    if (!initialSentRef.current) {
-      initialSentRef.current = true
-      void sendMessage(INITIAL_PROMPT, 'chat')
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // Do not auto-send prompt on mount - open clean chat window
 
   const toggleVoice = () => {
     if (!isSpeechSupported) return
@@ -254,6 +279,17 @@ export function AiChatPanel({ onBack }: AiChatPanelProps) {
 
       {/* Input */}
       <div className='shrink-0 border-t border-border bg-background'>
+        {aiUploadState && (
+          <div className='px-4 pt-3 pb-1'>
+            <FileUploadProgress
+              fileName={aiUploadState.fileName}
+              fileSize={aiUploadState.fileSize}
+              progress={aiUploadState.progress}
+              status={aiUploadState.status}
+              onCancel={() => setAiUploadState(null)}
+            />
+          </div>
+        )}
         <MessageInput
           input={input}
           setInput={setInput}
@@ -277,6 +313,7 @@ export function AiChatPanel({ onBack }: AiChatPanelProps) {
           onHistorySelect={() => setShowHistory(false)}
           onClearSources={() => {}}
           onNewChat={handleNewChat}
+          onFileSelect={handleAiFileSelect}
           inputRef={inputRef}
         />
       </div>

@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 import { X, Download, Loader2, ArrowLeft, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { HeaderActions } from './header-actions'
+import { HeaderActions } from '../chat/header-actions'
 
 const DynamicDocViewer = dynamic(
   () =>
@@ -70,7 +70,7 @@ export function DocViewerPanel({
         <div className='flex min-w-0 items-center gap-3 flex-1'>
           <button
             onClick={onBack}
-            className='-ml-1 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+            className='-ml-1 flex md:hidden h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
             title='Close'
           >
             <X className='h-5 w-5' />

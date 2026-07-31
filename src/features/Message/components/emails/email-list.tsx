@@ -36,7 +36,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Conversation } from '@/features/chattemplate/chat/types/chat.types'
 import { Contact } from '@/features/chattemplate/contacts/types/contact.types'
-import { Email } from '../data/emails'
+import { Email } from '../../data/emails'
 
 interface EmailListProps {
   emails: Email[]

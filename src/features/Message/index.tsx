@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { ArrowLeft, Mail, MessageSquare, Plus, MoreVertical } from 'lucide-react'
+import { LinksTab } from '@/features/email-settings/components/accounts-tab'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { cn } from '@/lib/utils'
@@ -12,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ComingSoon } from '@/components/coming-soon'
+
 import { AppHeader } from '@/components/layout/app-header'
 import { Main } from '@/components/layout/main'
 import { useConversation } from '@/features/chattemplate/chat/hooks/use-conversation'
@@ -28,20 +29,18 @@ import {
   Conversation,
   Message,
 } from '@/features/chattemplate/chat/types/chat.types'
-import { ContactList } from '@/features/chattemplate/contacts/components/contact-list'
-import { NewContactForm } from '@/features/chattemplate/contacts/components/new-contact-form'
 import { getUserContacts } from '@/features/chattemplate/contacts/repositories/contact-repository'
 import { Contact } from '@/features/chattemplate/contacts/types/contact.types'
-import { GroupList } from '@/features/chattemplate/groups/components/group-list'
-import { NewGroupForm } from '@/features/chattemplate/groups/components/new-group-form'
 import { Group } from '@/features/chattemplate/groups/types/group.types'
-import { ChatAttachment, ChatMessage, ChatView } from './components/chat-view'
-import { EmailList } from './components/email-list'
-import { EmailView } from './components/email-view'
-import { NewEmail } from './components/new-email'
-import { AiChatPanel } from './components/ai-chat-panel'
-import { DocViewerPanel } from './components/doc-viewer-panel'
-import { RealtimeChatView } from './components/realtime-chat-view'
+import { ChatAttachment, ChatMessage, ChatView } from './components/chat/chat-view'
+import { RealtimeChatView } from './components/chat/realtime-chat-view'
+import { EmailList } from './components/emails/email-list'
+import { EmailView } from './components/emails/email-view'
+import { NewEmail } from './components/emails/new-email'
+import { ContactManagerTab } from './components/tabs/contact-manager-tab'
+import { GroupManagerTab } from './components/tabs/group-manager-tab'
+import { AiChatPanel } from './components/panels/ai-chat-panel'
+import { DocViewerPanel } from './components/panels/doc-viewer-panel'
 import CalendarTemplate from '@/features/calendartemplate'
 import KanbanTemplate from '@/features/kanbantemplate'
 import { emails as initialEmails, Email } from './data/emails'
@@ -515,9 +514,7 @@ export default function MessageFeature() {
                   'send',
                   'folder',
                   'contact',
-                  'new-contact',
                   'groups',
-                  'new-group',
                 ] as const
               ).map((tab) => (
                 <TabsTrigger
@@ -525,31 +522,16 @@ export default function MessageFeature() {
                   value={tab}
                   className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none'
                 >
-                  {tab === 'new-contact'
-                    ? 'New Contact'
-                    : tab === 'new-group'
-                      ? 'New Group'
-                      : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </TabsTrigger>
               ))}
             </TabsList>
-
-            {/* Compose button */}
-            <button
-              onClick={() => setIsComposing(true)}
-              className='ml-auto inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-transparent bg-white px-3 py-1.5 text-xs font-semibold text-black shadow-sm transition-all select-none hover:opacity-90 active:scale-95 dark:bg-primary dark:text-white'
-              title='Compose New Message'
-            >
-              <Mail className='h-3.5 w-3.5' />
-              <span>New</span>
-              <Plus className='h-3 w-3' />
-            </button>
           </div>
 
           {/* ── Mobile Tab navigation bar ────────────────────────────── */}
           <div
             className={cn(
-              'sticky top-0 z-10 flex md:hidden w-full shrink-0 items-center justify-between border-b border-border bg-background px-3 pb-2 select-none',
+              'sticky top-0 z-10 flex md:hidden w-full shrink-0 items-center justify-start border-b border-border bg-background px-3 pb-2 select-none',
               (selectedEmail ||
                 selectedDirectoryChat ||
                 isAiChatOpen ||
@@ -559,32 +541,32 @@ export default function MessageFeature() {
                 'hidden'
             )}
           >
-            <TabsList className='flex-1 flex items-center justify-start gap-4.5 rounded-none border-0 bg-transparent p-0 shadow-none overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
+            <TabsList className='flex-1 flex items-center justify-start gap-5 rounded-none border-0 bg-transparent p-0 shadow-none overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
               <TabsTrigger
                 value='inbox'
                 onClick={() => setIsComposing(false)}
-                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors'
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors shrink-0'
               >
                 Inbox
               </TabsTrigger>
               <TabsTrigger
                 value='send'
                 onClick={() => setIsComposing(false)}
-                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors'
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors shrink-0'
               >
                 Send
               </TabsTrigger>
               <TabsTrigger
                 value='contact'
                 onClick={() => setIsComposing(false)}
-                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors'
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors shrink-0'
               >
                 Contact
               </TabsTrigger>
               <TabsTrigger
                 value='groups'
                 onClick={() => setIsComposing(false)}
-                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors'
+                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors shrink-0'
               >
                 Grp
               </TabsTrigger>
@@ -606,38 +588,12 @@ export default function MessageFeature() {
               >
                 <DropdownMenuItem
                   onClick={() => {
-                    setIsComposing(true)
-                  }}
-                  className='cursor-pointer text-xs font-semibold'
-                >
-                  New
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
                     setIsComposing(false)
                     setActiveTab('folder')
                   }}
                   className='cursor-pointer text-xs font-semibold'
                 >
                   Folder
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setIsComposing(false)
-                    setActiveTab('new-contact')
-                  }}
-                  className='cursor-pointer text-xs font-semibold'
-                >
-                  New Contact
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setIsComposing(false)
-                    setActiveTab('new-group')
-                  }}
-                  className='cursor-pointer text-xs font-semibold'
-                >
-                  New Group
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -694,58 +650,33 @@ export default function MessageFeature() {
 
               <TabsContent
                 value='folder'
-                className='mt-0 flex min-h-[400px] flex-1 items-center justify-center rounded-xl border border-dashed bg-muted/5 focus-visible:outline-none'
+                className='mt-0 flex flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8'
               >
-                <ComingSoon />
+                <div className='w-full max-w-3xl mx-auto'>
+                  <LinksTab />
+                </div>
               </TabsContent>
 
               <TabsContent
                 value='contact'
-                className='mt-0 flex min-h-0 flex-1 flex-col overflow-y-auto bg-transparent focus-visible:outline-none'
+                className='mt-0 flex min-h-0 flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8'
               >
-                <ContactList
+                <ContactManagerTab
                   contacts={contacts}
                   onRefresh={fetchContactsAndGroups}
-                  onAddContactClick={() => setActiveTab('new-contact')}
                   onSelectContact={handleSelectContact}
                 />
               </TabsContent>
 
               <TabsContent
-                value='new-contact'
-                className='mt-0 flex min-h-0 flex-1 flex-col overflow-y-auto bg-transparent focus-visible:outline-none'
-              >
-                <NewContactForm
-                  onSuccess={() => {
-                    void fetchContactsAndGroups()
-                    setActiveTab('contact')
-                  }}
-                />
-              </TabsContent>
-
-              <TabsContent
                 value='groups'
-                className='mt-0 flex min-h-0 flex-1 flex-col overflow-y-auto bg-transparent focus-visible:outline-none'
+                className='mt-0 flex min-h-0 flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8'
               >
-                <GroupList
+                <GroupManagerTab
                   groups={groups}
                   contacts={contacts}
                   onRefresh={fetchContactsAndGroups}
                   onSelectGroup={handleSelectGroup}
-                  onAddGroupClick={() => setActiveTab('new-group')}
-                />
-              </TabsContent>
-
-              <TabsContent
-                value='new-group'
-                className='mt-0 flex min-h-0 flex-1 flex-col overflow-y-auto bg-transparent focus-visible:outline-none'
-              >
-                <NewGroupForm
-                  contacts={contacts}
-                  onSuccess={() => {
-                    void fetchContactsAndGroups()
-                    setActiveTab('groups')
-                  }}
                 />
               </TabsContent>
             </>

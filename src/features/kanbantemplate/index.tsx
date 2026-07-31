@@ -22,7 +22,7 @@ import { AppHeader } from '@/components/layout/app-header'
 import { Main } from '@/components/layout/main'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ComingSoon } from '@/components/coming-soon'
-import { HeaderActions } from '@/features/Message/components/header-actions'
+import { HeaderActions } from '@/features/Message/components/chat/header-actions'
 
 interface Assignee {
   id: string

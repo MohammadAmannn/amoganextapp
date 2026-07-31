@@ -43,7 +43,7 @@ export default function CalendarHeaderDateChevrons() {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 font-sans">
       <Button
         variant="outline"
         className="h-7 w-7 p-1"
@@ -52,7 +52,7 @@ export default function CalendarHeaderDateChevrons() {
         <ChevronLeft className="min-w-5 min-h-5" />
       </Button>
 
-      <span className="min-w-[140px] text-center font-medium">
+      <span className="min-w-[140px] text-center font-medium font-sans text-sm text-foreground">
         {format(date, 'MMMM d, yyyy')}
       </span>
 

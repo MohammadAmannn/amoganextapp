@@ -1,4 +1,5 @@
-import { ArrowUp, Mic, History, Plus } from 'lucide-react'
+import { useRef } from 'react'
+import { ArrowUp, Mic, History, Plus, Paperclip } from 'lucide-react'
 import { ModelSelector } from './ModelSelector'
 import { ToolSelector } from './ToolSelector'
 
@@ -35,6 +36,7 @@ interface MessageInputProps {
   onHistorySelect: (option: string) => void
   onClearSources: () => void
   onNewChat?: () => void
+  onFileSelect?: (file: File) => void
   inputRef: React.RefObject<HTMLTextAreaElement | null>
 }
 
@@ -61,8 +63,11 @@ export function MessageInput({
   onHistorySelect,
   onClearSources,
   onNewChat,
+  onFileSelect,
   inputRef,
 }: MessageInputProps) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -114,6 +119,32 @@ export function MessageInput({
               >
                 <Mic className='w-4 h-4' />
               </button>
+            )}
+
+            {onFileSelect && (
+              <>
+                <button
+                  type='button'
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={loading}
+                  className='p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50 cursor-pointer'
+                  title='Attach file'
+                >
+                  <Paperclip className='w-4 h-4' />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type='file'
+                  className='hidden'
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      onFileSelect(file)
+                      e.target.value = ''
+                    }
+                  }}
+                />
+              </>
             )}
 
             <button

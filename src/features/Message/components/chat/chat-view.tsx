@@ -44,6 +44,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { getDisplayNameInitials } from '@/lib/utils'
 import { HeaderActions } from './header-actions'
+import { FileUploadProgress } from './file-upload-progress'
 
 const DynamicDocViewer = dynamic(
   () =>
@@ -319,6 +320,13 @@ export function ChatView({
     }
   }
 
+  const [uploadState, setUploadState] = useState<{
+    fileName: string
+    fileSize: number
+    progress: number
+    status: 'uploading' | 'completed' | 'error'
+  } | null>(null)
+
   useEffect(() => {
     return () => {
       discardRecordingRef.current = true
@@ -335,14 +343,35 @@ export function ChatView({
     const file = event.target.files?.[0]
     if (!file || file.size === 0) return
 
-    onSendMessage('', {
-      type,
-      name: file.name,
-      size: file.size,
-      url: URL.createObjectURL(file),
-      mimeType: file.type,
-      file,
+    setUploadState({
+      fileName: file.name,
+      fileSize: file.size,
+      progress: 15,
+      status: 'uploading',
     })
+
+    const interval = setInterval(() => {
+      setUploadState((prev) => {
+        if (!prev) return null
+        if (prev.progress >= 90) {
+          clearInterval(interval)
+          setTimeout(() => {
+            onSendMessage('', {
+              type,
+              name: file.name,
+              size: file.size,
+              url: URL.createObjectURL(file),
+              mimeType: file.type,
+              file,
+            })
+            setUploadState(null)
+          }, 350)
+          return { ...prev, progress: 100, status: 'completed' }
+        }
+        return { ...prev, progress: prev.progress + 25 }
+      })
+    }, 180)
+
     event.target.value = ''
   }
 
@@ -588,46 +617,7 @@ export function ChatView({
           </div>
         </div>
 
-        <div className='flex shrink-0 items-center gap-1.5'>
-          <Button
-            size='icon'
-            variant='ghost'
-            onClick={() => setShowProfile(true)}
-            className={cn(
-              'h-8.5 w-8.5 rounded-full transition-colors',
-              showProfile
-                ? 'bg-primary/15 text-primary'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-            )}
-            title='View Details'
-          >
-            <Info className='h-4.5 w-4.5' />
-          </Button>
-          <Button
-            size='icon'
-            variant='ghost'
-            className='h-8.5 w-8.5 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground'
-            title='Voice Call'
-          >
-            <Phone className='h-4 w-4' />
-          </Button>
-          <Button
-            size='icon'
-            variant='ghost'
-            className='h-8.5 w-8.5 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground'
-            title='Video Call'
-          >
-            <Video className='h-4 w-4' />
-          </Button>
-          <Button
-            size='icon'
-            variant='ghost'
-            className='h-8.5 w-8.5 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground'
-            title='More options'
-          >
-            <MoreVertical className='h-4 w-4' />
-          </Button>
-        </div>
+        <HeaderActions onDelete={onBack} />
       </div>
 
       {/* Messages */}
@@ -851,6 +841,19 @@ export function ChatView({
           ))
         )}
       </div>
+
+      {/* File Upload Progress Bar */}
+      {uploadState && (
+        <div className='border-t border-border bg-muted/20 px-3 py-2'>
+          <FileUploadProgress
+            fileName={uploadState.fileName}
+            fileSize={uploadState.fileSize}
+            progress={uploadState.progress}
+            status={uploadState.status}
+            onCancel={() => setUploadState(null)}
+          />
+        </div>
+      )}
 
       {/* Input bar */}
       {replyingTo && (

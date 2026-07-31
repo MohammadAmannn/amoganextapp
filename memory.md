@@ -363,3 +363,10 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
   - Fixed the embedded `KanbanTemplate` (used inside the Message page sidebar) to include all 4 tabs matching the full Kanban page: **Board**, **Kanban List**, **Analytics**, and **History**.
   - Previously the embedded view only showed "Board" and "List" tabs, making it visually incomplete compared to the standalone `/kanbantemplate` page.
   - The three non-Board tabs all render `<ComingSoon />` with consistent `border border-dashed` container styling to match the full page.
+
+---
+
+## 20. Message Contact & Group Tabs Sizing & Centering Fix
+* **Constrained Card Max-Width**: Added `max-w-3xl mx-auto shadow-md rounded-2xl` to both `ContactManagerTab` ([contact-manager-tab.tsx](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/tabs/contact-manager-tab.tsx)) and `GroupManagerTab` ([group-manager-tab.tsx](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/tabs/group-manager-tab.tsx)).
+* **Prevented Fullscreen Stretching**: Resolved the issue where contact and group cards stretched awkwardly across ultra-wide monitors.
+* **Centered Alignment & Mobile Responsiveness**: Updated `TabsContent` containers in [index.tsx](file:///e:/morrai/shadcn-admin-main/src/features/Message/index.tsx) with flex alignment (`items-center justify-start`) and responsive padding (`p-3 sm:p-6 lg:p-8`), ensuring a clean, perfectly proportioned centered layout on desktop while remaining 100% responsive on mobile screens.

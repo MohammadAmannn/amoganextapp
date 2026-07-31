@@ -18,6 +18,7 @@ import {
   Download,
   X,
   Loader2,
+  FileText,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
+import { FileUploadProgress } from "../chat/file-upload-progress"
 
 interface NewEmailProps {
   onCancel: () => void
@@ -81,6 +83,13 @@ export function NewEmail({ onCancel, onSend, onSaveDraft }: NewEmailProps) {
     },
   ])
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadingFile, setUploadingFile] = useState<{
+    fileName: string
+    fileSize: number
+    progress: number
+    status: 'uploading' | 'completed' | 'error'
+  } | null>(null)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleSend = () => {
@@ -111,25 +120,41 @@ export function NewEmail({ onCancel, onSend, onSaveDraft }: NewEmailProps) {
     onSaveDraft(emailData)
   }
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0]
       setIsUploading(true)
 
-      // Create array of file metadata
-      const newFiles = Array.from(e.target.files).map((file) => ({
+      setUploadingFile({
+        fileName: file.name,
+        fileSize: file.size,
+        progress: 15,
+        status: 'uploading',
+      })
+
+      const newAttachment = {
         id: Date.now() + Math.random().toString(36).substring(2, 9),
         name: file.name,
         type: file.type,
         size: formatFileSize(file.size),
-      }))
+      }
 
-      // Simulate network delay for upload
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const interval = setInterval(() => {
+        setUploadingFile((prev) => {
+          if (!prev) return null
+          if (prev.progress >= 90) {
+            clearInterval(interval)
+            setTimeout(() => {
+              setAttachments((a) => [...a, newAttachment])
+              setUploadingFile(null)
+              setIsUploading(false)
+            }, 350)
+            return { ...prev, progress: 100, status: 'completed' }
+          }
+          return { ...prev, progress: prev.progress + 25 }
+        })
+      }, 200)
 
-      setAttachments((prev) => [...prev, ...newFiles])
-      setIsUploading(false)
-
-      // Reset the input value so the same file can be selected again
       e.target.value = ""
     }
   }
@@ -370,29 +395,36 @@ export function NewEmail({ onCancel, onSend, onSaveDraft }: NewEmailProps) {
         <div className="space-y-2 pt-2 border-t border-border/60">
           <div className="flex items-center">
             <h3 className="text-sm font-semibold">Attachments ({attachments.length})</h3>
-            {isUploading && (
-              <div className="ml-3 flex items-center text-primary text-xs font-semibold">
-                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                Uploading...
-              </div>
-            )}
           </div>
 
+          {uploadingFile && (
+            <FileUploadProgress
+              fileName={uploadingFile.fileName}
+              fileSize={uploadingFile.fileSize}
+              progress={uploadingFile.progress}
+              status={uploadingFile.status}
+              onCancel={() => {
+                setUploadingFile(null)
+                setIsUploading(false)
+              }}
+            />
+          )}
+
           {attachments.length > 0 && (
-            <div className="border border-border rounded-lg overflow-hidden bg-background">
+            <div className="border border-border rounded-xl overflow-hidden bg-background">
               {attachments.map((attachment) => (
-                <div key={attachment.id} className="flex items-center justify-between p-3 border-b border-border last:border-b-0">
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-muted w-10 h-10 flex items-center justify-center rounded-lg border border-border">
-                      <span className="text-[10px] text-muted-foreground font-bold">{getFileTypeIcon(attachment.type)}</span>
+                <div key={attachment.id} className="flex items-center justify-between p-3 border-b border-border last:border-b-0 select-none">
+                  <div className="flex items-center space-x-3 min-w-0 flex-1">
+                    <div className="bg-primary/10 w-9 h-9 flex items-center justify-center rounded-lg border border-primary/20 shrink-0 text-primary">
+                      <FileText className="h-4.5 w-4.5" />
                     </div>
-                    <div>
-                      <p className="text-xs font-semibold text-foreground">{attachment.name}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-foreground truncate">{attachment.name}</p>
                       <p className="text-[10px] text-muted-foreground">{attachment.size}</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                  <div className="flex items-center space-x-1 shrink-0">
+                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer" title="Download">
                       <Download className="h-3.5 w-3.5" />
                       <span className="sr-only">Download</span>
                     </Button>
@@ -400,8 +432,9 @@ export function NewEmail({ onCancel, onSend, onSaveDraft }: NewEmailProps) {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive cursor-pointer"
                       onClick={() => removeAttachment(attachment.id)}
+                      title="Remove attachment"
                     >
                       <X className="h-3.5 w-3.5" />
                       <span className="sr-only">Remove</span>

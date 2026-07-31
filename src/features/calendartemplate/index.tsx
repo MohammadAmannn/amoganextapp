@@ -8,7 +8,7 @@ import { Main } from '@/components/layout/main'
 import { ArrowLeft, Calendar as CalendarIcon, X } from 'lucide-react'
 import initialEventsData from './data/events.json'
 
-import { HeaderActions } from '@/features/Message/components/header-actions'
+import { HeaderActions } from '@/features/Message/components/chat/header-actions'
 
 // Parse JSON ISO date strings to javascript Date objects
 const parsedInitialEvents: CalendarEvent[] = initialEventsData.map((event) => ({

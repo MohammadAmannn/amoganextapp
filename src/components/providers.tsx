@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { AxiosError } from 'axios'
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
@@ -74,9 +73,6 @@ function QueryProviderWrapper({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {process.env.NODE_ENV === 'development' && (
-        <ReactQueryDevtools buttonPosition='bottom-left' />
-      )}
     </QueryClientProvider>
   )
 }

@@ -3,12 +3,14 @@ import { useLayout } from '@/context/layout-provider'
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { sidebarData } from './data/sidebar-data'
 import { NavGroup } from './nav-group'
 import { TeamSwitcher } from './team-switcher'
+import { NavUser } from './nav-user'
 import { useAuthStore } from '@/stores/auth-store'
 import { useNotificationStore } from '@/stores/notification-store'
 
@@ -69,6 +71,11 @@ export function AppSidebar() {
           <NavGroup key={props.title} {...props} />
         ))}
       </SidebarContent>
+
+      {/* User Profile */}
+      <SidebarFooter>
+        <NavUser user={dynamicSidebarData.user} />
+      </SidebarFooter>
     </Sidebar>
   )
 }

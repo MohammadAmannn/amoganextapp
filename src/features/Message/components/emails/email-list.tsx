@@ -25,6 +25,10 @@ import {
   FileText,
   FolderOpen,
 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useNotificationStore } from '@/stores/notification-store'
+import { Search as HeaderSearch } from '@/components/search'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -34,6 +38,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Conversation } from '@/features/chattemplate/chat/types/chat.types'
 import { Contact } from '@/features/chattemplate/contacts/types/contact.types'
 import { Email } from '../../data/emails'
@@ -46,8 +51,8 @@ interface EmailListProps {
   setSearchQuery: (query: string) => void
   mode: 'inbox' | 'done'
   setMode: (mode: 'inbox' | 'done') => void
-  isCollapsed: boolean
-  onToggleCollapse: () => void
+  isCollapsed?: boolean
+  onToggleCollapse?: () => void
   contacts?: Contact[]
   selectedContactId?: string | null
   onSelectContact?: (contact: Contact) => void
@@ -61,6 +66,10 @@ interface EmailListProps {
   isTaskSelected?: boolean
   onSelectFile?: () => void
   isFileSelected?: boolean
+  onSelectEmailSettings?: () => void
+  isEmailSettingsSelected?: boolean
+  activeTab?: string
+  onTabChange?: (tab: string) => void
 }
 
 function getLabelVariant(
@@ -105,7 +114,13 @@ export function EmailList({
   isTaskSelected,
   onSelectFile,
   isFileSelected,
+  onSelectEmailSettings,
+  isEmailSettingsSelected,
+  activeTab,
+  onTabChange,
 }: EmailListProps) {
+  const router = useRouter()
+  const { unreadCount } = useNotificationStore()
   const [selectedAccount, setSelectedAccount] = useState<string>('all')
 
   const emailAccounts = React.useMemo(() => {
@@ -232,153 +247,142 @@ export function EmailList({
   }, [conversations, contacts, searchQuery])
 
   return (
-    <div className='flex h-full w-full shrink-0 flex-col overflow-hidden bg-background'>
-      {!isCollapsed && (
-        <div className='shrink-0 border-b border-border bg-background px-3 pt-3 pb-2'>
-          {/* Horizontal Icon Navigation instead of a dropdown */}
-          <div className='mb-2 rounded-xl border border-border/80 bg-muted/10 p-1 flex items-center justify-between gap-1'>
-            {/* Mail Icon */}
-            <button
-              onClick={() => {
-                const firstMail = mailItems[0]
-                if (firstMail) onSelectEmail(firstMail)
-              }}
-              className={cn(
-                'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-                selectedEmailId !== null && mailItems.some((m) => m.id === selectedEmailId) &&
-                'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
-              )}
-              title='Mail List'
-            >
-              <Mail className='h-4 w-4' />
-            </button>
+    <div className='flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background'>
+      <div className='shrink-0 border-b border-border bg-background px-3 pt-2.5 pb-2 flex flex-col gap-2'>
+        {/* 1. Header: Messages title + Search + Bell (Desktop only to prevent mobile duplicate) */}
+        <div className='hidden md:flex items-center justify-between pb-1 border-b border-border/40'>
+          <h1 className='text-base font-bold tracking-tight text-foreground sm:text-lg'>
+            Messages
+          </h1>
+          <div className='flex items-center gap-1 sm:gap-1.5'>
+            <HeaderSearch iconOnly />
 
-            {/* Chat Icon */}
-            <button
-              onClick={() => {
-                const firstChat = chatItems[0]
-                if (firstChat) {
-                  if (firstChat.id.startsWith('conversation-')) {
-                    const convoId = firstChat.id.replace('conversation-', '')
-                    const convo = conversations.find((c) => c.id === convoId)
-                    if (convo) onSelectConversation?.(convo)
-                  } else if (firstChat.id.startsWith('contact-')) {
-                    const contactId = firstChat.id.replace('contact-', '')
-                    const contact = contacts.find((c) => c.id === contactId)
-                    if (contact) onSelectContact?.(contact)
-                  }
-                }
-              }}
-              className={cn(
-                'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-                (selectedContactId !== null || (selectedEmailId !== null && chatItems.some((c) => c.id === selectedEmailId))) &&
-                'bg-background text-emerald-600 dark:text-emerald-400 shadow-sm border border-border/60 font-semibold'
-              )}
-              title='Chats & Direct Messages'
+            <Button
+              variant='ghost'
+              size='icon'
+              className='relative size-7 shrink-0'
+              aria-label='Notifications'
+              onClick={() => router.push('/notification')}
             >
-              <MessageSquare className='h-4 w-4' />
-            </button>
-
-            {/* AI Assistant Icon */}
-            <button
-              onClick={onSelectAiChat}
-              className={cn(
-                'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-                isAiChatSelected && 'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
+              <Bell className='size-4' />
+              {unreadCount > 0 && (
+                <span className='absolute -top-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-medium text-white shadow-xs'>
+                  {unreadCount > 5 ? '5+' : unreadCount}
+                </span>
               )}
-              title='AI Assistant'
-            >
-              <Bot className='h-4 w-4' />
-            </button>
-
-            {/* Calendar Icon */}
-            <button
-              onClick={onSelectCalendar}
-              className={cn(
-                'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-                isCalendarSelected && 'bg-background text-amber-600 dark:text-amber-400 shadow-sm border border-border/60 font-semibold'
-              )}
-              title='Calendar Schedule'
-            >
-              <Calendar className='h-4 w-4' />
-            </button>
-
-            {/* Tasks / Kanban Icon */}
-            <button
-              onClick={onSelectTask}
-              className={cn(
-                'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-                isTaskSelected && 'bg-background text-purple-600 dark:text-purple-400 shadow-sm border border-border/60 font-semibold'
-              )}
-              title='Tasks & Kanban Board'
-            >
-              <ClipboardList className='h-4 w-4' />
-            </button>
-
-            {/* File Icon */}
-            <button
-              onClick={onSelectFile}
-              className={cn(
-                'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-                isFileSelected && 'bg-background text-red-600 dark:text-red-400 shadow-sm border border-border/60 font-semibold'
-              )}
-              title='Document Specifications'
-            >
-              <FileText className='h-4 w-4' />
-            </button>
-          </div>
-
-          <div className='flex items-center gap-2'>
-            <div className='relative min-w-0 flex-1'>
-              <Search className='absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60' />
-              <Input
-                placeholder='Search...'
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className='h-8 w-full rounded-md border-border bg-muted/10 pr-7 pl-8 text-xs focus-visible:ring-1 focus-visible:ring-ring'
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className='absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-                >
-                  <X className='h-3 w-3' />
-                </button>
-              )}
-            </div>
-
-            <button
-              onClick={onToggleCollapse}
-              className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border border-border bg-background p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-              title={isCollapsed ? 'Expand list' : 'Collapse list'}
-            >
-              <PanelLeft
-                className={cn(
-                  'h-3.5 w-3.5 transition-transform duration-200',
-                  isCollapsed ? 'rotate-180' : ''
-                )}
-              />
-            </button>
+            </Button>
           </div>
         </div>
-      )}
 
-      {isCollapsed && (
-        <div className='flex shrink-0 justify-center border-b border-border bg-background px-3 pt-3 pb-2'>
+        {/* 2. Toolbar (Horizontal Icon Navigation) placed on top of search bar */}
+        <div className='rounded-xl border border-border/80 bg-muted/10 p-1 flex items-center justify-between gap-1'>
+          {/* Mail / Email Settings Icon */}
           <button
-            onClick={onToggleCollapse}
-            className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border border-border bg-background p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-            title={isCollapsed ? 'Expand list' : 'Collapse list'}
+            onClick={onSelectEmailSettings}
+            className={cn(
+              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
+              isEmailSettingsSelected &&
+              'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
+            )}
+            title='Email Settings'
           >
-            <PanelLeft
-              className={cn(
-                'h-3.5 w-3.5 transition-transform duration-200',
-                isCollapsed ? 'rotate-180' : ''
-              )}
-            />
+            <Mail className='h-4 w-4' />
+          </button>
+
+          {/* Chat Icon */}
+          <button
+            onClick={() => {
+              const firstChat = chatItems[0]
+              if (firstChat) {
+                if (firstChat.id.startsWith('conversation-')) {
+                  const convoId = firstChat.id.replace('conversation-', '')
+                  const convo = conversations.find((c) => c.id === convoId)
+                  if (convo) onSelectConversation?.(convo)
+                } else if (firstChat.id.startsWith('contact-')) {
+                  const contactId = firstChat.id.replace('contact-', '')
+                  const contact = contacts.find((c) => c.id === contactId)
+                  if (contact) onSelectContact?.(contact)
+                }
+              }
+            }}
+            className={cn(
+              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
+              (selectedContactId !== null || (selectedEmailId !== null && chatItems.some((c) => c.id === selectedEmailId))) &&
+              'bg-background text-emerald-600 dark:text-emerald-400 shadow-sm border border-border/60 font-semibold'
+            )}
+            title='Chats & Direct Messages'
+          >
+            <MessageSquare className='h-4 w-4' />
+          </button>
+
+          {/* AI Assistant Icon */}
+          <button
+            onClick={onSelectAiChat}
+            className={cn(
+              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
+              isAiChatSelected && 'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
+            )}
+            title='AI Assistant'
+          >
+            <Bot className='h-4 w-4' />
+          </button>
+
+          {/* Calendar Icon */}
+          <button
+            onClick={onSelectCalendar}
+            className={cn(
+              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
+              isCalendarSelected && 'bg-background text-amber-600 dark:text-amber-400 shadow-sm border border-border/60 font-semibold'
+            )}
+            title='Calendar Schedule'
+          >
+            <Calendar className='h-4 w-4' />
+          </button>
+
+          {/* Tasks / Kanban Icon */}
+          <button
+            onClick={onSelectTask}
+            className={cn(
+              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
+              isTaskSelected && 'bg-background text-purple-600 dark:text-purple-400 shadow-sm border border-border/60 font-semibold'
+            )}
+            title='Tasks & Kanban Board'
+          >
+            <ClipboardList className='h-4 w-4' />
+          </button>
+
+          {/* File Icon */}
+          <button
+            onClick={onSelectFile}
+            className={cn(
+              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
+              isFileSelected && 'bg-background text-red-600 dark:text-red-400 shadow-sm border border-border/60 font-semibold'
+            )}
+            title='Document Specifications'
+          >
+            <FileText className='h-4 w-4' />
           </button>
         </div>
-      )}
+
+        {/* 3. Search input (placed below toolbar icons) */}
+        <div className='relative min-w-0 flex-1'>
+          <Search className='absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60' />
+          <Input
+            placeholder='Search...'
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className='h-8 w-full rounded-md border-border bg-muted/10 pr-7 pl-8 text-xs focus-visible:ring-1 focus-visible:ring-ring'
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className='absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+            >
+              <X className='h-3 w-3' />
+            </button>
+          )}
+        </div>
+      </div>
 
       <div className='min-h-0 flex-1 scrollbar-thin overflow-y-auto bg-background'>
         <div className='flex flex-col gap-0.5 py-1'>

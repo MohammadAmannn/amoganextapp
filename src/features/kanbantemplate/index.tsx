@@ -725,8 +725,8 @@ export default function KanbanTemplate({
     <div className='flex h-[calc(100vh-56px)] flex-col w-full overflow-hidden bg-background text-foreground'>
       <AppHeader title='Kanban Template' />
       
-      <Main fixed className='flex flex-col h-full p-4 md:p-6 overflow-hidden'>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full overflow-hidden space-y-4">
+      <Main fixed className='flex flex-col h-full px-3 pt-2 pb-4 md:px-6 md:pt-2.5 md:pb-6 overflow-hidden'>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full overflow-hidden space-y-3">
           {/* Header Options */}
           <div className='flex items-center justify-between pb-2 shrink-0 border-b border-border gap-4'>
             <div className='overflow-x-auto pb-2 flex-1 no-scrollbar'>

@@ -1,12 +1,17 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowLeft, Mail, MessageSquare, Plus, MoreVertical } from 'lucide-react'
+import { ArrowLeft, Mail, MessageSquare, Plus, MoreVertical, Bell } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { LinksTab } from '@/features/email-settings/components/accounts-tab'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
+import { useNotificationStore } from '@/stores/notification-store'
 import { cn } from '@/lib/utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import { Search } from '@/components/search'
+import { ProfileDropdown } from '@/components/profile-dropdown'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +46,7 @@ import { ContactManagerTab } from './components/tabs/contact-manager-tab'
 import { GroupManagerTab } from './components/tabs/group-manager-tab'
 import { AiChatPanel } from './components/panels/ai-chat-panel'
 import { DocViewerPanel } from './components/panels/doc-viewer-panel'
+import { MessageEmailSettings } from './components/panels/message-email-settings'
 import CalendarTemplate from '@/features/calendartemplate'
 import KanbanTemplate from '@/features/kanbantemplate'
 import { emails as initialEmails, Email } from './data/emails'
@@ -74,7 +80,10 @@ export default function MessageFeature() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [isKanbanOpen, setIsKanbanOpen] = useState(false)
   const [isFileOpen, setIsFileOpen] = useState(false)
+  const [isEmailSettingsOpen, setIsEmailSettingsOpen] = useState(false)
   const currentUser = useAuthStore((state) => state.auth.user)
+  const router = useRouter()
+  const { unreadCount } = useNotificationStore()
   const { conversations, setConversations, loadConversations } =
     useConversation()
 
@@ -198,6 +207,7 @@ export default function MessageFeature() {
     setIsCalendarOpen(false)
     setIsKanbanOpen(false)
     setIsFileOpen(false)
+    setIsEmailSettingsOpen(false)
     const conversationId = await getOrCreateDirectConversation(
       currentUser.accountNo,
       contact.contactUserId
@@ -223,6 +233,7 @@ export default function MessageFeature() {
     setIsCalendarOpen(false)
     setIsKanbanOpen(false)
     setIsFileOpen(false)
+    setIsEmailSettingsOpen(false)
     setSelectedDirectoryChat({
       id: `conversation-${conversation.id}`,
       conversationId: conversation.id,
@@ -265,6 +276,7 @@ export default function MessageFeature() {
       toast.error('Unable to open this group conversation.')
       return
     }
+    setIsEmailSettingsOpen(false)
     setSelectedDirectoryChat({
       id: `group-${group.id}`,
       conversationId: conversation.id,
@@ -283,6 +295,7 @@ export default function MessageFeature() {
     setIsCalendarOpen(false)
     setIsKanbanOpen(false)
     setIsFileOpen(false)
+    setIsEmailSettingsOpen(false)
     setSelectedEmail(email)
     if (!email.read) {
       setEmails((prev) =>
@@ -348,12 +361,11 @@ export default function MessageFeature() {
 
   /* ── shared inbox panel ──────────────────────────────────── */
   const renderInboxPanel = (doneMode = false) => (
-    <div className='flex h-full w-full flex-1 overflow-hidden'>
-      {/* LEFT: message list */}
+    <div className='flex h-full min-h-0 w-full flex-1 flex-row overflow-hidden'>
       <div
         className={cn(
-          'flex h-full shrink-0 flex-col overflow-hidden border-r border-border transition-all duration-300 ease-in-out',
-          (selectedEmail || selectedDirectoryChat || isAiChatOpen || isCalendarOpen || isKanbanOpen || isFileOpen) && 'hidden md:flex',
+          'flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-r border-border transition-all duration-300 ease-in-out',
+          (selectedEmail || selectedDirectoryChat || isAiChatOpen || isCalendarOpen || isKanbanOpen || isFileOpen || isEmailSettingsOpen) && 'hidden md:flex',
           isSidebarCollapsed ? 'w-20' : 'w-full md:w-[340px] lg:w-[380px]'
         )}
       >
@@ -386,6 +398,7 @@ export default function MessageFeature() {
             setIsCalendarOpen(false)
             setIsKanbanOpen(false)
             setIsFileOpen(false)
+            setIsEmailSettingsOpen(false)
             setIsAiChatOpen(true)
           } : undefined}
           isAiChatSelected={isAiChatOpen}
@@ -395,6 +408,7 @@ export default function MessageFeature() {
             setIsAiChatOpen(false)
             setIsKanbanOpen(false)
             setIsFileOpen(false)
+            setIsEmailSettingsOpen(false)
             setIsCalendarOpen(true)
           } : undefined}
           isCalendarSelected={isCalendarOpen}
@@ -404,6 +418,7 @@ export default function MessageFeature() {
             setIsAiChatOpen(false)
             setIsCalendarOpen(false)
             setIsFileOpen(false)
+            setIsEmailSettingsOpen(false)
             setIsKanbanOpen(true)
           } : undefined}
           isTaskSelected={isKanbanOpen}
@@ -413,17 +428,30 @@ export default function MessageFeature() {
             setIsAiChatOpen(false)
             setIsCalendarOpen(false)
             setIsKanbanOpen(false)
+            setIsEmailSettingsOpen(false)
             setIsFileOpen(true)
           } : undefined}
           isFileSelected={isFileOpen}
+          onSelectEmailSettings={!doneMode ? () => {
+            setSelectedEmail(null)
+            setSelectedDirectoryChat(null)
+            setIsAiChatOpen(false)
+            setIsCalendarOpen(false)
+            setIsKanbanOpen(false)
+            setIsFileOpen(false)
+            setIsEmailSettingsOpen(true)
+          } : undefined}
+          isEmailSettingsSelected={isEmailSettingsOpen}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
         />
       </div>
 
       {/* RIGHT: detail / chat view */}
       <div
         className={cn(
-          'relative flex h-full flex-grow flex-col overflow-hidden',
-          !selectedEmail && !selectedDirectoryChat && !isAiChatOpen && !isCalendarOpen && !isKanbanOpen && !isFileOpen && 'hidden md:flex'
+          'relative flex h-full min-h-0 flex-1 flex-col overflow-hidden',
+          !selectedEmail && !selectedDirectoryChat && !isAiChatOpen && !isCalendarOpen && !isKanbanOpen && !isFileOpen && !isEmailSettingsOpen && 'hidden md:flex'
         )}
       >
         {/* Mobile back button (only for email view — chat has its own) */}
@@ -436,7 +464,17 @@ export default function MessageFeature() {
           </button>
         )}
 
-        {isAiChatOpen ? (
+        {isEmailSettingsOpen ? (
+          <MessageEmailSettings
+            contacts={contacts}
+            groups={groups}
+            onRefreshContactsAndGroups={fetchContactsAndGroups}
+            onSelectContact={handleSelectContact}
+            onSelectGroup={handleSelectGroup}
+            onBack={() => setIsEmailSettingsOpen(false)}
+            onClose={() => setIsEmailSettingsOpen(false)}
+          />
+        ) : isAiChatOpen ? (
           <AiChatPanel onBack={() => setIsAiChatOpen(false)} />
         ) : isCalendarOpen ? (
           <CalendarTemplate embedded onBack={() => setIsCalendarOpen(false)} />
@@ -494,111 +532,34 @@ export default function MessageFeature() {
 
   return (
     <>
-      <AppHeader title='Messages' />
+      {/* Mobile-only global top header */}
+      <div
+        className={cn(
+          'md:hidden',
+          (selectedEmail ||
+            selectedDirectoryChat ||
+            isAiChatOpen ||
+            isCalendarOpen ||
+            isKanbanOpen ||
+            isFileOpen ||
+            isEmailSettingsOpen) &&
+            'hidden'
+        )}
+      >
+        <AppHeader title='Messages' />
+      </div>
 
       <Main
         fixed
-        className='flex min-h-0 flex-1 flex-col overflow-hidden bg-background p-0 sm:px-4 sm:py-1.5'
+        className='flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background p-0 sm:px-4 sm:py-0'
       >
+
+
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
-          className='flex min-h-0 flex-1 flex-col overflow-hidden'
+          className='flex h-full min-h-0 flex-1 flex-col overflow-hidden'
         >
-          {/* ── Desktop Tab navigation bar ───────────────────────────── */}
-          <div className='sticky top-0 z-10 hidden md:flex w-full shrink-0 items-center gap-4 overflow-x-auto border-b border-border bg-background pb-2'>
-            <TabsList className='h-auto gap-6 rounded-none border-0 bg-transparent p-0 shadow-none'>
-              {(
-                [
-                  'inbox',
-                  'send',
-                  'folder',
-                  'contact',
-                  'groups',
-                ] as const
-              ).map((tab) => (
-                <TabsTrigger
-                  key={tab}
-                  value={tab}
-                  className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none'
-                >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
-
-          {/* ── Mobile Tab navigation bar ────────────────────────────── */}
-          <div
-            className={cn(
-              'sticky top-0 z-10 flex md:hidden w-full shrink-0 items-center justify-start border-b border-border bg-background px-3 pb-2 select-none',
-              (selectedEmail ||
-                selectedDirectoryChat ||
-                isAiChatOpen ||
-                isCalendarOpen ||
-                isKanbanOpen ||
-                isFileOpen) &&
-                'hidden'
-            )}
-          >
-            <TabsList className='flex-1 flex items-center justify-start gap-5 rounded-none border-0 bg-transparent p-0 shadow-none overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
-              <TabsTrigger
-                value='inbox'
-                onClick={() => setIsComposing(false)}
-                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors shrink-0'
-              >
-                Inbox
-              </TabsTrigger>
-              <TabsTrigger
-                value='send'
-                onClick={() => setIsComposing(false)}
-                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors shrink-0'
-              >
-                Send
-              </TabsTrigger>
-              <TabsTrigger
-                value='contact'
-                onClick={() => setIsComposing(false)}
-                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors shrink-0'
-              >
-                Contact
-              </TabsTrigger>
-              <TabsTrigger
-                value='groups'
-                onClick={() => setIsComposing(false)}
-                className='h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 capitalize shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors shrink-0'
-              >
-                Grp
-              </TabsTrigger>
-            </TabsList>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type='button'
-                  className='ml-2 p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md shrink-0 cursor-pointer transition-colors'
-                  aria-label='More tabs'
-                >
-                  <MoreVertical className='h-4.5 w-4.5' />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align='end'
-                className='w-36 border border-border bg-background shadow-md'
-              >
-                <DropdownMenuItem
-                  onClick={() => {
-                    setIsComposing(false)
-                    setActiveTab('folder')
-                  }}
-                  className='cursor-pointer text-xs font-semibold'
-                >
-                  Folder
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
           {/* ── Compose view ──────────────────────────────────────────── */}
           {isComposing ? (
             <div className='mt-0 flex h-full flex-grow flex-col overflow-hidden bg-background'>
@@ -636,14 +597,14 @@ export default function MessageFeature() {
             <>
               <TabsContent
                 value='inbox'
-                className='mt-0 flex flex-1 flex-row overflow-hidden bg-background focus-visible:outline-none'
+                className='mt-0 flex h-full min-h-0 flex-1 flex-row overflow-hidden bg-background focus-visible:outline-none'
               >
                 {renderInboxPanel()}
               </TabsContent>
 
               <TabsContent
                 value='send'
-                className='mt-0 flex flex-1 flex-row overflow-hidden bg-background focus-visible:outline-none'
+                className='mt-0 flex h-full min-h-0 flex-1 flex-row overflow-hidden bg-background focus-visible:outline-none'
               >
                 {renderInboxPanel(true)}
               </TabsContent>

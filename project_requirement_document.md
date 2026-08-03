@@ -40,3 +40,6 @@ This document outlines the core functional requirements and built features of th
 * **Supabase Auth**: Email/password authentication and callbacks.
 * **Security Rules & RLS**: Postgres Row Level Security (RLS) restricts message and contact access exclusively to conversation members.
 * **Profile Integration**: Autocreated client profiles inside public schemas mapped from Supabase Authentication records.
+
+cd android
+.\gradlew.bat assembleDebug

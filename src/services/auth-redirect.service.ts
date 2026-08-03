@@ -13,30 +13,50 @@ export function getFullRedirectUrl(pathname: string, searchParamsString?: string
 }
 
 export function handleAuthRedirect(router: any, redirectTo?: string | null) {
-  console.log('[DEBUG client] handleAuthRedirect received redirectTo:', redirectTo)
-  if (!redirectTo) {
-    console.log("[DEBUG client] handleAuthRedirect: no redirect target provided, replacing route to '/'")
-    router.replace('/')
-    return
+  console.log('[DEBUG client] handleAuthRedirect received raw redirectTo:', redirectTo)
+
+  let targetPath = '/'
+  if (redirectTo) {
+    try {
+      targetPath = decodeURIComponent(redirectTo)
+    } catch {
+      targetPath = redirectTo
+    }
   }
 
-  // Normalize absolute/relative redirect
-  let targetPath = redirectTo
+  // Normalize absolute URL to relative path if needed
   try {
-    if (redirectTo.startsWith('http://') || redirectTo.startsWith('https://')) {
-      const url = new URL(redirectTo)
+    if (targetPath.startsWith('http://') || targetPath.startsWith('https://')) {
+      const url = new URL(targetPath)
       targetPath = `${url.pathname}${url.search}${url.hash}` || '/'
-      console.log('[DEBUG client] handleAuthRedirect parsed absolute URL to relative:', targetPath)
     }
   } catch {
-    // Treat as relative path
+    // Relative path
   }
 
-  // Ensure leading slash if not absolute path
-  if (!targetPath.startsWith('/') && !targetPath.startsWith('http://') && !targetPath.startsWith('https://')) {
+  // Prevent redirect loops back to sign-in / sign-up
+  if (targetPath === '/sign-in' || targetPath === '/sign-up' || !targetPath || targetPath === '') {
+    targetPath = '/'
+  }
+
+  // Ensure leading slash
+  if (!targetPath.startsWith('/')) {
     targetPath = `/${targetPath}`
   }
 
-  console.log('[DEBUG client] handleAuthRedirect calling router.replace with targetPath:', targetPath)
-  router.replace(targetPath)
+  console.log('[DEBUG client] handleAuthRedirect executing navigation to targetPath:', targetPath)
+
+  if (router && typeof router.replace === 'function') {
+    router.replace(targetPath)
+  }
+
+  // Hard navigation fallback if client router.replace stays on sign-in page
+  if (typeof window !== 'undefined') {
+    setTimeout(() => {
+      if (window.location.pathname.startsWith('/sign-in') || window.location.pathname.startsWith('/sign-up')) {
+        console.log('[DEBUG client] Executing hard redirect to dashboard:', targetPath)
+        window.location.href = targetPath
+      }
+    }, 100)
+  }
 }

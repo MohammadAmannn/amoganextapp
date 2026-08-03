@@ -94,6 +94,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save message copies' }, { status: 500 })
     }
 
+    // Trigger FCM Push notification asynchronously for recipients
+    const host = request.headers.get('host') || 'localhost:3000'
+    const protocol = host.includes('localhost') ? 'http' : 'https'
+    fetch(`${protocol}://${host}/api/notifications/push`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        senderId: body.senderId,
+        recipientId: body.recipientId,
+        conversationId: targetConvoId,
+        message: body.message,
+        messageType: body.messageType,
+        fileName: body.fileName,
+      }),
+    }).catch(() => {})
+
     return NextResponse.json(saved, { status: 201 })
   } catch (err) {
     console.error('POST message error:', err)

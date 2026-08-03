@@ -57,7 +57,7 @@ export async function getOrCreateAlertConversation(): Promise<string | null> {
     if (profilesError) throw profilesError
 
     if (adminProfiles && adminProfiles.length > 0) {
-      const membersToInsert = adminProfiles.map((p) => ({
+      const membersToInsert = adminProfiles.map((p: { id: string; email?: string | null }) => ({
         conversation_id: newConvo.id,
         user_id: p.id,
         role: 'member',

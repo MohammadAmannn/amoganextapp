@@ -6,6 +6,7 @@ export async function ensureProfileExists(user: {
   email: string
   name?: string
   picture?: string
+  mobile?: string
 }): Promise<Profile | null> {
   return profilesApi.ensureProfileExists(user)
 }

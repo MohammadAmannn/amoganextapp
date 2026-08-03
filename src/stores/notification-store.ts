@@ -44,7 +44,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       if (error) throw error
 
       const notifications = data || []
-      const unreadCount = notifications.filter((n) => !n.read).length
+      const unreadCount = notifications.filter((n: DbNotification) => !n.read).length
       set({ notifications, unreadCount })
     } catch (e) {
       console.error('[NotificationStore] Failed to fetch notifications:', e)
@@ -132,7 +132,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
           table: 'notifications',
           filter: `user_id=eq.${userId}`,
         },
-        (payload) => {
+        (payload: any) => {
           const { eventType, new: newRecord, old: oldRecord } = payload
 
           if (eventType === 'INSERT') {

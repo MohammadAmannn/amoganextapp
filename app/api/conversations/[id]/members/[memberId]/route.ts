@@ -3,11 +3,10 @@ import { removeGroupMember } from '@/features/chattemplate/chat/repositories/con
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string; memberId: string } }
+  { params }: { params: Promise<{ id: string; memberId: string }> }
 ) {
   try {
-    const conversationId = params.id
-    const memberId = params.memberId
+    const { id: conversationId, memberId } = await params
 
     if (!conversationId || !memberId) {
       return NextResponse.json(

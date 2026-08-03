@@ -223,3 +223,39 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
   - Reduced container top padding and margins (`pt-2 sm:pt-2.5 md:pt-3`) between top headers and tab controls across Email Settings (`message-email-settings.tsx`), Tasks (`kanbantemplate/index.tsx`), and Calendar (`calendartemplate/index.tsx`).
 * **TanStack DevTools Cleanup**:
   - Removed `ReactQueryDevtools` permanently from `providers.tsx`.
+
+---
+
+## 22. Mobile & Login Tab Authentication Implementation
+* **Tabbed Authentication Interface**:
+  - Implemented dual tabs (**Mobile** and **Login / Google**) on both Sign In ([sign-in/index.tsx](file:///e:/morrai/shadcn-admin-main/src/features/auth/sign-in/index.tsx)) and Sign Up ([sign-up/index.tsx](file:///e:/morrai/shadcn-admin-main/src/features/auth/sign-up/index.tsx)) authentication pages.
+  - Styled tabs using the exact default tab system used in Contact/Group managers (`border-b border-border bg-transparent shadow-none data-[state=active]:border-primary data-[state=active]:font-semibold`).
+* **Mobile OTP Authentication Form**:
+  - Created [MobileAuthForm](file:///e:/morrai/shadcn-admin-main/src/features/auth/components/mobile-auth-form.tsx) rendering:
+    1. **First Name** (Input)
+    2. **Last Name** (Input)
+    3. **Email** (Input)
+    4. **Mobile No** (Input)
+    5. **Get OTP** (Button) — generates a 6-digit verification code with interactive toast feedback.
+    6. **Enter OTP** (Input) — validates against the generated OTP code (or `123456` fallback).
+    7. **Signup** (Button) — validates fields, saves user session in Zustand `useAuthStore`, syncs user profile to Supabase `profiles` table via `ensureProfileExists()`, opens the user session, and redirects to the application dashboard.
+* **Existing Login & Signup Preservation**:
+  - Preserved existing email/password and Google OAuth authentication flows inside the **Login** / **Login / Google** tab.
+
+---
+
+## 23. Firebase Cloud Messaging (FCM) HTTP v1 Push Notifications Implementation
+* **FCM HTTP v1 Migration & Firebase Admin SDK**:
+  - Upgraded push notification architecture to **FCM HTTP v1 API** using `firebase-admin` SDK.
+  - Implemented singleton initializer [firebase-admin.ts](file:///e:/morrai/shadcn-admin-main/src/lib/firebase-admin.ts) loading Service Account credentials (`amogaapp-56698-firebase-adminsdk-fbsvc-316c575199.json` / `FIREBASE_SERVICE_ACCOUNT_KEY`).
+* **Server-Side Push API**:
+  - Updated [app/api/notifications/push/route.ts](file:///e:/morrai/shadcn-admin-main/app/api/notifications/push/route.ts) to dispatch FCM payloads via `messaging().send()`.
+  - Configured media preview payloads (Text -> message, Image -> 📷 Photo, Voice -> 🎤 Voice Note, File -> 📄 Document) and deep-linking data payload (`conversationId`, `senderId`, `type: "chat_message"`).
+  - Enforced sender exclusion (`recipientId !== senderId`).
+* **Automatic Invalid Token Cleanup**:
+  - Added error interceptor in `/api/notifications/push` catching invalid or expired token codes (`messaging/invalid-registration-token` or `messaging/registration-token-not-registered`).
+  - Automatically purges expired FCM tokens from `public.profiles` (`fcm_token = null`).
+* **Client & Mobile Lifecycle**:
+  - Capacitor push notification service [push-notification.service.ts](file:///e:/morrai/shadcn-admin-main/src/services/push-notification.service.ts) auto-registers device FCM tokens, saves/refreshes tokens in `public.profiles`, displays foreground toasts, and routes background notification taps directly to `conversationId`.
+* **Security & Gitignore Rules**:
+  - Updated [.gitignore](file:///e:/morrai/shadcn-admin-main/.gitignore) to exclude all `*firebase-adminsdk*.json` and `*service-account*.json` files to protect credentials.

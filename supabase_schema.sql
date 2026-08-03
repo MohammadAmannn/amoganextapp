@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     email text,
     company text,
     mobile text,
+    fcm_token text,
     status text DEFAULT 'offline',
     online boolean DEFAULT false,
     offline boolean DEFAULT true,
@@ -100,8 +101,11 @@ RETURNS trigger AS $$
 DECLARE
   old_user_id uuid;
 BEGIN
-  -- Search for existing profile with the same email
-  SELECT id INTO old_user_id FROM public.profiles WHERE email = new.email LIMIT 1;
+  -- Search for existing profile with the same email or mobile
+  SELECT id INTO old_user_id FROM public.profiles 
+  WHERE (email IS NOT NULL AND email <> '' AND email = new.email)
+     OR (mobile IS NOT NULL AND mobile <> '' AND mobile = COALESCE(new.phone, new.raw_user_meta_data->>'mobile', new.raw_user_meta_data->>'phone'))
+  LIMIT 1;
 
   IF old_user_id IS NOT NULL THEN
     -- Reconcile only if the ID has changed (new UUID assigned by auth)
@@ -133,12 +137,20 @@ BEGIN
     END IF;
   ELSE
     -- If no profile exists, create a new one normally
-    INSERT INTO public.profiles (id, name, email, avatar)
+    INSERT INTO public.profiles (id, name, email, avatar, mobile)
     VALUES (
       new.id,
-      COALESCE(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
-      new.email,
-      new.raw_user_meta_data->>'avatar_url'
+      COALESCE(
+        new.raw_user_meta_data->>'display_name',
+        new.raw_user_meta_data->>'full_name',
+        new.raw_user_meta_data->>'name',
+        CASE WHEN new.email IS NOT NULL AND new.email <> '' THEN split_part(new.email, '@', 1) ELSE NULL END,
+        new.phone,
+        'User'
+      ),
+      COALESCE(new.email, new.raw_user_meta_data->>'email'),
+      new.raw_user_meta_data->>'avatar_url',
+      COALESCE(new.phone, new.raw_user_meta_data->>'mobile', new.raw_user_meta_data->>'phone')
     );
   END IF;
 

@@ -84,7 +84,20 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     initializeCapacitorHandlers(router)
+    import('@/services/push-notification.service').then(({ requestNativeAppPermissions }) => {
+      requestNativeAppPermissions()
+    }).catch(() => {})
   }, [router])
+
+  useEffect(() => {
+    if (auth?.user?.id) {
+      import('@/services/push-notification.service').then(({ initPushNotifications }) => {
+        initPushNotifications(auth.user!.id)
+      }).catch((err) => {
+        console.error('Failed to load push notification service:', err)
+      })
+    }
+  }, [auth?.user?.id])
 
   useEffect(() => {
     const supabase = createClient()
@@ -127,6 +140,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         if (!auth.user || auth.user.accountNo !== user.id) {
           console.log('[DEBUG client] Setting user object in store and syncing profile...')
           const userObj = {
+            id: user.id,
             accountNo: user.id,
             email: user.email!,
             name: user.user_metadata?.name || user.user_metadata?.full_name || user.email!.split('@')[0],

@@ -42,6 +42,7 @@ export async function middleware(request: NextRequest) {
 
   // Exclude public paths from middleware auth checks
   const isPublicPath =
+    pathname === '/' ||
     pathname.startsWith('/sign-in') ||
     pathname.startsWith('/sign-in-2') ||
     pathname.startsWith('/sign-up') ||
@@ -53,10 +54,35 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/auth/') ||
     pathname === '/_next/image' ||
     pathname.startsWith('/_next/static') ||
-    pathname === '/favicon.ico' ||
-    (pathname === '/' && authAction !== null)
+    pathname === '/favicon.ico'
 
   console.log(`[DEBUG server] Middleware checking path: ${pathname}. isPublicPath: ${isPublicPath}`)
+
+  const hasUserCookie = request.cookies.get('auth_user_data')?.value || request.cookies.get('thisisjustarandomstring')?.value
+  const isAuthUser = user || hasUserCookie
+
+  // If user is authenticated and accessing /sign-in or /sign-up, redirect to dashboard
+  if (isAuthUser && (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up'))) {
+    const rawRedirect = searchParams.get('redirect')
+    let target = '/'
+    if (rawRedirect) {
+      try {
+        target = decodeURIComponent(rawRedirect)
+      } catch {
+        target = rawRedirect
+      }
+      if (target.startsWith('/sign-in') || target.startsWith('/sign-up') || target === '/' || !target) {
+        target = '/dashboard'
+      }
+    }
+    const url = request.nextUrl.clone()
+    url.pathname = target.startsWith('/') ? target : `/${target}`
+    url.searchParams.delete('redirect')
+    console.log('[DEBUG server] Authenticated user on sign-in page. Redirecting to:', url.toString())
+    const redirectResponse = NextResponse.redirect(url)
+    redirectResponse.headers.set('x-middleware-cache', 'no-cache')
+    return redirectResponse
+  }
 
   if (!user && !isPublicPath) {
     const url = request.nextUrl.clone()

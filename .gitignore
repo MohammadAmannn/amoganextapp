@@ -56,3 +56,8 @@ android/captures/
 *.aab
 *.keystore
 *.jks
+
+# Firebase & Sensitive Service Account Credentials
+*firebase-adminsdk*.json
+*service-account*.json
+amogaapp-56698-firebase-adminsdk-*.json

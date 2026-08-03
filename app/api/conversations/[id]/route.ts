@@ -3,11 +3,11 @@ import { deleteConversation } from '@/features/chattemplate/chat/repositories/co
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url)
-    const conversationId = params.id
+    const { id: conversationId } = await params
     const userId = searchParams.get('userId')
 
     if (!conversationId || !userId) {

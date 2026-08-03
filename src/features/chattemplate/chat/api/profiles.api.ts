@@ -11,6 +11,7 @@ export async function ensureProfileExists(user: {
   email: string
   name?: string
   picture?: string
+  mobile?: string
 }): Promise<Profile | null> {
   const profile = await ensureProfileExistsInternal(user)
   if (profile) {
@@ -26,6 +27,7 @@ async function ensureProfileExistsInternal(user: {
   email: string
   name?: string
   picture?: string
+  mobile?: string
 }): Promise<Profile | null> {
   try {
     // 1. First, check if the profile exists by ID
@@ -34,52 +36,59 @@ async function ensureProfileExistsInternal(user: {
     const byId = profilesById[0] || null
 
     if (byId) {
+      // Update mobile if missing
+      if (user.mobile && !byId.mobile) {
+        updateProfile(byId.id, { mobile: user.mobile }).catch(() => {})
+      }
       return {
         id: byId.id,
-        name: byId.name || user.name || user.email.split('@')[0],
+        name: byId.name || user.name || (user.email ? user.email.split('@')[0] : user.mobile || 'User'),
         email: byId.email || user.email,
         avatar_url: byId.avatar || user.picture || undefined,
       }
     }
 
-    // 2. If not found by ID, check if a profile with this email already exists case-insensitively
-    const checkEmailQuery = createQuery().select('*').ilike('email', user.email.trim()).limit(1)
-    const profilesByEmail = await apiClient.get<any[]>(`/rest/v1/profiles${checkEmailQuery.toString()}`)
-    const byEmail = profilesByEmail[0] || null
+    // 2. If email is provided, check if a profile with this email already exists case-insensitively
+    if (user.email) {
+      const checkEmailQuery = createQuery().select('*').ilike('email', user.email.trim()).limit(1)
+      const profilesByEmail = await apiClient.get<any[]>(`/rest/v1/profiles${checkEmailQuery.toString()}`)
+      const byEmail = profilesByEmail[0] || null
 
-    if (byEmail) {
-      console.log(`[profiles.api] Profile with email ${user.email} already exists with ID: ${byEmail.id}. Attempting to update ID.`)
-      
-      const updateQuery = createQuery().eq('id', byEmail.id).limit(1)
-      try {
-        const updated = await apiClient.patch<any[]>(`/rest/v1/profiles${updateQuery.toString()}`, {
-          id: user.accountNo
-        })
-        const updatedProfile = updated[0] || null
+      if (byEmail) {
+        console.log(`[profiles.api] Profile with email ${user.email} already exists with ID: ${byEmail.id}. Attempting to update ID.`)
+        
+        const updateQuery = createQuery().eq('id', byEmail.id).limit(1)
+        try {
+          const updated = await apiClient.patch<any[]>(`/rest/v1/profiles${updateQuery.toString()}`, {
+            id: user.accountNo,
+            ...(user.mobile ? { mobile: user.mobile } : {})
+          })
+          const updatedProfile = updated[0] || null
 
-        if (updatedProfile) {
-          return {
-            id: updatedProfile.id,
-            name: updatedProfile.name || user.name || user.email.split('@')[0],
-            email: updatedProfile.email,
-            avatar_url: updatedProfile.avatar || user.picture || undefined,
+          if (updatedProfile) {
+            return {
+              id: updatedProfile.id,
+              name: updatedProfile.name || user.name || user.email.split('@')[0],
+              email: updatedProfile.email,
+              avatar_url: updatedProfile.avatar || user.picture || undefined,
+            }
           }
+        } catch (err) {
+          // If update failed (e.g. FK constraint block), return the existing profile
+          console.warn('[profiles.api] FK constraint prevent ID update, returning existing profile.')
         }
-      } catch (err) {
-        // If update failed (e.g. FK constraint block), return the existing profile
-        console.warn('[profiles.api] FK constraint prevent ID update, returning existing profile.')
-      }
 
-      return {
-        id: byEmail.id,
-        name: byEmail.name || user.name || user.email.split('@')[0],
-        email: byEmail.email,
-        avatar_url: byEmail.avatar || user.picture || undefined,
+        return {
+          id: byEmail.id,
+          name: byEmail.name || user.name || user.email.split('@')[0],
+          email: byEmail.email,
+          avatar_url: byEmail.avatar || user.picture || undefined,
+        }
       }
     }
 
     // 3. Insert new profile
-    const name = user.name || user.email.split('@')[0]
+    const name = user.name || (user.email ? user.email.split('@')[0] : user.mobile || 'User')
     const avatar = user.picture || null
 
     try {
@@ -88,6 +97,7 @@ async function ensureProfileExistsInternal(user: {
         name,
         avatar,
         email: user.email,
+        mobile: user.mobile || null,
       })
       const newProfile = inserted[0] || null
 
@@ -102,7 +112,7 @@ async function ensureProfileExistsInternal(user: {
         avatar_url: newProfile.avatar || undefined,
       }
     } catch (insertError: any) {
-      if (insertError.code === '23505') {
+      if (insertError.code === '23505' && user.email) {
         // Fallback select by email in case of race condition
         const fallbackQuery = createQuery().select('*').ilike('email', user.email.trim()).limit(1)
         const fallbacks = await apiClient.get<any[]>(`/rest/v1/profiles${fallbackQuery.toString()}`)
@@ -212,6 +222,7 @@ export async function updateProfile(
     avatar?: string | null
     company?: string | null
     mobile?: string | null
+    fcm_token?: string | null
   }
 ): Promise<boolean> {
   try {

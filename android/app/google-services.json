@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "21510992173",
+    "project_id": "amogaapp-56698",
+    "storage_bucket": "amogaapp-56698.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:21510992173:android:38f5210a9d9d00739363a4",
+        "android_client_info": {
+          "package_name": "com.aman.amoganextapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBK3a-n8oeu-eAP15cew0OgHpTeZBY0bQM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

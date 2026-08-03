@@ -362,6 +362,21 @@ export async function createMessage(msg: {
     // 3. Bulk insert copies into the DB
     if (records.length > 0) {
       await apiClient.post('/rest/v1/chat_messages', records)
+      
+      // Trigger FCM Push notification to offline/backgrounded recipient devices
+      if (typeof window !== 'undefined') {
+        fetch('/api/notifications/push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            senderId: msg.senderId,
+            conversationId: msg.conversationId,
+            message: msg.message,
+            messageType: msg.messageType,
+            fileName: msg.fileName,
+          }),
+        }).catch((err) => console.warn('[Messages API] Asynchronous FCM push dispatch error:', err))
+      }
     }
 
     // 4. Return the sender's own copy of the message, constructed locally

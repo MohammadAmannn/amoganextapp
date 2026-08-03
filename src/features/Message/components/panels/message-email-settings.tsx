@@ -120,7 +120,7 @@ export function MessageEmailSettings({
                 <TabsContent value='contact' className='mt-0 focus-visible:outline-none'>
                   <ContactManagerTab
                     contacts={contacts}
-                    onRefresh={onRefreshContactsAndGroups}
+                    onRefresh={onRefreshContactsAndGroups || (() => {})}
                     onSelectContact={onSelectContact}
                   />
                 </TabsContent>
@@ -128,7 +128,7 @@ export function MessageEmailSettings({
                   <GroupManagerTab
                     groups={groups}
                     contacts={contacts}
-                    onRefresh={onRefreshContactsAndGroups}
+                    onRefresh={onRefreshContactsAndGroups || (() => {})}
                     onSelectGroup={onSelectGroup}
                   />
                 </TabsContent>

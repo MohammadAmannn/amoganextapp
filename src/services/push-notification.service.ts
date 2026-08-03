@@ -1,6 +1,5 @@
 import { isCapacitor } from '@/lib/platform'
 import { updateProfile } from '@/features/chattemplate/chat/repositories/profile-repository'
-import { toast } from 'sonner'
 
 let isInitialized = false
 let cachedToken: string | null = null
@@ -58,7 +57,7 @@ export async function requestNativeAppPermissions() {
 
 /**
  * Initializes Firebase Push Notifications via @capacitor/push-notifications on native mobile devices.
- * Registers FCM device token with Supabase profile table and configures foreground toasts & background tap handlers.
+ * Registers FCM device token with Supabase profile table, enables status bar Quick Reply, and handles background tap navigation silently without in-app toasts.
  */
 export async function initPushNotifications(userId: string) {
   if (!isCapacitor()) {
@@ -101,7 +100,7 @@ export async function initPushNotifications(userId: string) {
       return
     }
 
-    // 2. Attach listeners FIRST so token registration events are captured reliably!
+    // 2. Attach listeners FIRST so token registration and actions are captured reliably!
 
     // Listener A: FCM Device Token Registration / Refresh
     PushNotifications.addListener('registration', async (token) => {
@@ -122,37 +121,46 @@ export async function initPushNotifications(userId: string) {
       console.error('[PushNotificationService] FCM Registration Error:', error)
     })
 
-    // Listener C: Push Notification Received (App in Foreground - Display Toast)
+    // Listener C: Push Notification Received (App in Foreground - Silent, NO TOAST)
     PushNotifications.addListener('pushNotificationReceived', (notification) => {
-      console.log('[PushNotificationService] Foreground Push Notification Received:', notification)
-
-      const title = notification.title || 'New Message'
-      const body = notification.body || 'You have received a new message'
-
-      toast(title, {
-        description: body,
-        duration: 5000,
-        action: {
-          label: 'View',
-          onClick: () => {
-            if (typeof window !== 'undefined') {
-              const convoId = notification.data?.conversationId
-              if (convoId) {
-                window.location.href = `/chattemplate?conversationId=${convoId}`
-              } else {
-                window.location.href = '/message'
-              }
-            }
-          },
-        },
-      })
+      console.log('[PushNotificationService] Foreground Push Notification Received (Silent):', notification.title)
     })
 
-    // Listener D: Notification Action Performed (App in Background / Closed - User Tapped Notification)
-    PushNotifications.addListener('pushNotificationActionPerformed', (notificationAction) => {
-      console.log('[PushNotificationService] Push Notification Tapped/Performed:', notificationAction)
+    // Listener D: Notification Action Performed (Quick Reply or Tap Notification)
+    PushNotifications.addListener('pushNotificationActionPerformed', async (notificationAction) => {
+      console.log('[PushNotificationService] Push Notification Action Performed:', notificationAction)
 
       const data = notificationAction.notification.data
+      const actionId = notificationAction.actionId
+      const inputValue = notificationAction.inputValue
+
+      // Case 1: Direct Quick Reply typed directly from Android Notification Bar
+      if (actionId === 'reply' && inputValue && inputValue.trim()) {
+        const convoId = data?.conversationId
+        const senderId = currentUserId
+        console.log(`[PushNotificationService] Quick reply submitted for convo ${convoId}: "${inputValue}"`)
+
+        if (convoId && senderId) {
+          try {
+            await fetch('/api/messages', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                conversationId: convoId,
+                senderId: senderId,
+                message: inputValue.trim(),
+                messageType: 'text',
+              }),
+            })
+            console.log('[PushNotificationService] Quick reply sent successfully!')
+          } catch (err) {
+            console.error('[PushNotificationService] Failed to post quick reply:', err)
+          }
+        }
+        return
+      }
+
+      // Case 2: Tap Notification Body -> Navigate to Conversation
       if (typeof window !== 'undefined') {
         const convoId = data?.conversationId
         if (convoId) {
@@ -163,11 +171,28 @@ export async function initPushNotifications(userId: string) {
       }
     })
 
-    // 3. Register device with FCM
+    // 3. Register Action Types for Android Notification Quick Reply
+    PushNotifications.registerActionTypes({
+      types: [
+        {
+          id: 'CHAT_MESSAGE',
+          actions: [
+            {
+              id: 'reply',
+              title: 'Reply',
+              input: true,
+              placeholder: 'Type a reply...',
+            },
+          ],
+        },
+      ],
+    }).catch((err) => console.warn('[PushNotificationService] registerActionTypes warning:', err))
+
+    // 4. Register device with FCM
     await PushNotifications.register()
 
     isInitialized = true
-    console.log('[PushNotificationService] Firebase Push Notification listeners attached successfully.')
+    console.log('[PushNotificationService] Firebase Push Notification listeners & Quick Reply attached successfully.')
   } catch (err) {
     console.error('[PushNotificationService] Failed to initialize push notifications:', err)
   }

@@ -12,7 +12,6 @@ dist
 dist-ssr
 *.local
 formm/
-.env
 
 # Editor directories and files
 .vscode/*
@@ -34,11 +33,9 @@ formm/
 .vitest-attachments/
 
 .vercel
-.env*
 .next/
 out/
 .next
-.next/
 *.tsbuildinfo
 
 # Capacitor & Android build artifacts
@@ -56,8 +53,19 @@ android/captures/
 *.aab
 *.keystore
 *.jks
+android/key.properties
 
-# Firebase & Sensitive Service Account Credentials
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+
+# Firebase, Google Services & Sensitive Service Account Credentials
+google-services.json
+**/google-services.json
+*google-services*.json
 *firebase-adminsdk*.json
 *service-account*.json
 amogaapp-56698-firebase-adminsdk-*.json
+*.pem
+*.key

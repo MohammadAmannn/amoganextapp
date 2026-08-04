@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'file is required (multipart/form-data)' }, { status: 400 })
     }
 
-    const validFolders = ['images', 'videos', 'documents', 'audio']
+    const validFolders = ['images', 'videos', 'documents', 'audio', 'converted']
     if (!validFolders.includes(folder)) {
       return NextResponse.json(
         { error: `folder must be one of: ${validFolders.join(', ')}` },

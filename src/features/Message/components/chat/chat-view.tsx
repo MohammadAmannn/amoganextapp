@@ -15,6 +15,8 @@ import {
   Download,
   Eye,
   FileText,
+  FileType,
+  RefreshCw,
   ImagePlus,
   Video as VideoIcon,
   X,
@@ -24,6 +26,8 @@ import {
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { toast } from 'sonner'
+import { ImageConverterDialog, ConvertedPdfResult } from '@/components/image-converter-dialog'
+import { DocConverterDialog, ConvertedDocResult } from '@/components/doc-converter-dialog'
 import { cn } from '@/lib/utils'
 import {
   DropdownMenu,
@@ -206,6 +210,29 @@ export function ChatView({
   const [previewDoc, setPreviewDoc] = useState<ChatAttachment | null>(null)
   const [mapPreview, setMapPreview] = useState<ChatLocation | null>(null)
   const [previewImage, setPreviewImage] = useState<ChatAttachment | null>(null)
+  const [isImageConverterOpen, setIsImageConverterOpen] = useState(false)
+  const [isDocConverterOpen, setIsDocConverterOpen] = useState(false)
+
+  const handlePdfConverted = (result: ConvertedPdfResult) => {
+    onSendMessage('', {
+      type: 'document',
+      name: result.fileName,
+      size: result.fileSize,
+      url: result.publicUrl,
+      mimeType: result.mimeType,
+    })
+  }
+
+  const handleDocConverted = (result: ConvertedDocResult) => {
+    onSendMessage('', {
+      type: 'document',
+      name: result.fileName,
+      size: result.fileSize,
+      url: result.publicUrl,
+      mimeType: result.mimeType,
+    })
+  }
+
   const [highlightedMessageId, setHighlightedMessageId] = useState<
     string | null
   >(null)
@@ -958,6 +985,18 @@ export function ChatView({
                   <MapPin className='h-4 w-4' /> Location
                 </DropdownMenuItem>
               )}
+              <DropdownMenuItem
+                onClick={() => setIsImageConverterOpen(true)}
+                className='cursor-pointer gap-2 font-semibold'
+              >
+                <FileType className='h-4 w-4' /> Image Converter
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setIsDocConverterOpen(true)}
+                className='cursor-pointer gap-2 font-semibold text-emerald-600 dark:text-emerald-400'
+              >
+                <RefreshCw className='h-4 w-4' /> Doc Converter
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -1059,6 +1098,16 @@ export function ChatView({
         accept='image/*'
         capture='environment'
         onChange={(event) => handleFileSelect(event, 'image')}
+      />
+      <ImageConverterDialog
+        open={isImageConverterOpen}
+        onOpenChange={setIsImageConverterOpen}
+        onConverted={handlePdfConverted}
+      />
+      <DocConverterDialog
+        open={isDocConverterOpen}
+        onOpenChange={setIsDocConverterOpen}
+        onConverted={handleDocConverted}
       />
     </div>
   )

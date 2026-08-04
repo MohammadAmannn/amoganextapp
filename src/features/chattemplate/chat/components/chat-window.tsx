@@ -20,6 +20,8 @@ import {
   ImagePlus,
   Video as VideoIcon,
   FileText,
+  FileType,
+  RefreshCw,
   Check,
   File as FileIcon,
   Volume2,
@@ -30,6 +32,8 @@ import {
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { toast } from 'sonner'
+import { ImageConverterDialog, ConvertedPdfResult } from '@/components/image-converter-dialog'
+import { DocConverterDialog, ConvertedDocResult } from '@/components/doc-converter-dialog'
 import { useAuthStore } from '@/stores/auth-store'
 import { cn, getDisplayNameInitials } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -251,6 +255,28 @@ export function ChatWindow({
 
   // Location states
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false)
+  const [isImageConverterOpen, setIsImageConverterOpen] = useState(false)
+  const [isDocConverterOpen, setIsDocConverterOpen] = useState(false)
+
+  const handlePdfConverted = (result: ConvertedPdfResult) => {
+    onSendMessage('', {
+      messageType: 'document',
+      fileUrl: result.publicUrl,
+      fileName: result.fileName,
+      fileSize: result.fileSize,
+      mimeType: result.mimeType,
+    })
+  }
+
+  const handleDocConverted = (result: ConvertedDocResult) => {
+    onSendMessage('', {
+      messageType: 'document',
+      fileUrl: result.publicUrl,
+      fileName: result.fileName,
+      fileSize: result.fileSize,
+      mimeType: result.mimeType,
+    })
+  }
   const [liveLocationInterval, setLiveLocationInterval] =
     useState<NodeJS.Timeout | null>(null)
   const {
@@ -1723,6 +1749,20 @@ export function ChatWindow({
                     <MapPin className='h-4 w-4' />
                     <span>Location</span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setIsImageConverterOpen(true)}
+                    className='cursor-pointer gap-2 font-semibold'
+                  >
+                    <FileType className='h-4 w-4' />
+                    <span>Image Converter</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setIsDocConverterOpen(true)}
+                    className='cursor-pointer gap-2 font-semibold text-emerald-600 dark:text-emerald-400'
+                  >
+                    <RefreshCw className='h-4 w-4' />
+                    <span>Doc Converter</span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -1919,6 +1959,20 @@ export function ChatWindow({
         onOpenChange={setIsLocationPickerOpen}
         onSendLocation={handleSendLocation}
         isLiveEnabled={true} // Enable live location sharing for both direct and group chats
+      />
+
+      {/* ========== IMAGE TO PDF CONVERTER DIALOG ========== */}
+      <ImageConverterDialog
+        open={isImageConverterOpen}
+        onOpenChange={setIsImageConverterOpen}
+        onConverted={handlePdfConverted}
+      />
+
+      {/* ========== DOCUMENT CONVERTER DIALOG ========== */}
+      <DocConverterDialog
+        open={isDocConverterOpen}
+        onOpenChange={setIsDocConverterOpen}
+        onConverted={handleDocConverted}
       />
     </div>
   )

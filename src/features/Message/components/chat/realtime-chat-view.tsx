@@ -324,11 +324,21 @@ export function RealtimeChatView({
     }
 
     if (!attachment?.file) {
+      const attachmentPayload = attachment?.url
+        ? {
+            messageType: attachment.type,
+            fileUrl: attachment.url,
+            fileName: attachment.name,
+            fileSize: attachment.size,
+            mimeType: attachment.mimeType,
+          }
+        : undefined
+
       const savedMessage = await sendMessage(
         conversationId,
         currentUser.accountNo,
         content,
-        undefined,
+        attachmentPayload,
         replyMetadata
       )
       if (savedMessage) {

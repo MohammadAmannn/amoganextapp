@@ -259,3 +259,36 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
   - Capacitor push notification service [push-notification.service.ts](file:///e:/morrai/shadcn-admin-main/src/services/push-notification.service.ts) auto-registers device FCM tokens, saves/refreshes tokens in `public.profiles`, displays foreground toasts, and routes background notification taps directly to `conversationId`.
 * **Security & Gitignore Rules**:
   - Updated [.gitignore](file:///e:/morrai/shadcn-admin-main/.gitignore) to exclude all `*firebase-adminsdk*.json` and `*service-account*.json` files to protect credentials.
+
+---
+
+## 24. Image to PDF Converter Implementation
+* **Server-Side Conversion API**:
+  - Built `POST /api/convert/photo-to-pdf` route handler in [route.ts](file:///e:/morrai/shadcn-admin-main/app/api/convert/photo-to-pdf/route.ts).
+  - Converts single or multiple uploaded image files (JPG, JPEG, PNG, WEBP) into a PDF document using `pdf-lib` and `photo-to-pdf`.
+  - Automatically uploads the resulting PDF buffer to Supabase Storage bucket `chat-files` under the `converted/` folder (`converted/<uuid>.pdf`).
+* **Reusable Modal Component**:
+  - Created [ImageConverterDialog](file:///e:/morrai/shadcn-admin-main/src/components/image-converter-dialog.tsx) featuring drag & drop photo upload, image thumbnail preview grid, individual photo deletion, custom PDF output filename input, and loading progress state.
+* **Attachment Dropup Parity**:
+  - Added "Image Converter" (`FileType` icon) item into attachment dropup menus in both **Chat Template** ([chat-window.tsx](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/chat/components/chat-window.tsx)) and **Message Template** ([chat-view.tsx](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/chat/chat-view.tsx)).
+* **Attachment Dispatch**:
+  - Upon conversion, passes the converted PDF metadata (`publicUrl`, `fileName`, `fileSize`, `mimeType: "application/pdf"`) to the chat component, sending it as a standard document message attachment.
+* **Documentation & Postman Reference**:
+  - Updated [chat.md](file:///e:/morrai/shadcn-admin-main/chat.md) with API status tracker row, Postman test checklist Step 44, and complete 2-step request examples for Postman testing.
+
+---
+
+## 25. Document Converter Implementation & Message Page Bug Fix
+* **Message Page Pre-Uploaded Attachment Fix**:
+  - Resolved bug in [realtime-chat-view.tsx](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/chat/realtime-chat-view.tsx) where attachments with pre-existing `url` properties (e.g. converted PDFs or documents) were dropping file metadata during `sendMessage` because `attachment.file` was undefined.
+  - Constructed fallback `attachmentPayload` using `attachment.url` when `attachment.file` is absent, restoring immediate sending for all converted files.
+* **Document Converter Server-Side API**:
+  - Created REST API route `POST /api/convert/doc` in [route.ts](file:///e:/morrai/shadcn-admin-main/app/api/convert/doc/route.ts) integrating `convertapi` library for multi-format conversions (PDF, DOCX, XLSX, PPTX, TXT, CSV, PNG, JPG).
+  - Automatically saves converted document buffers in Supabase Storage bucket `chat-files` under `converted/<uuid>.<targetFormat>`.
+* **DocConverterDialog Modal Component**:
+  - Implemented [DocConverterDialog](file:///e:/morrai/shadcn-admin-main/src/components/doc-converter-dialog.tsx) with identical UI styling to ImageConverterDialog: drag & drop dropzone, format badge display, target format dropdown selector (`.pdf`, `.docx`, `.xlsx`, `.txt`, `.png`), custom output document title input, and animated loading states.
+* **Attachment Dropup Parity**:
+  - Integrated "Doc Converter" (`RefreshCw` icon) item into attachment dropup menus in both **Chat Template** ([chat-window.tsx](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/chat/components/chat-window.tsx)) and **Message Template** ([chat-view.tsx](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/chat/chat-view.tsx)).
+* **Database & Postman Documentation**:
+  - Every converted document sent in chat creates a standard row entry in `chat_messages` table with `message_type = 'document'`, `file_url`, `file_name`, `file_size`, `mime_type`.
+  - Updated [chat.md](file:///e:/morrai/shadcn-admin-main/chat.md) with API status tracker entry, Step 45 checklist item, and complete Postman testing instructions.

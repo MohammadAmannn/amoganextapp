@@ -618,3 +618,56 @@ BEGIN
 END $$;
 
 
+-- 1. Ensure chat-files storage bucket exists and is public
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('chat-files', 'chat-files', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- 2. Ensure public read access policy for chat-files
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'objects' AND policyname = 'Allow public read access to chat-files'
+  ) THEN
+    CREATE POLICY "Allow public read access to chat-files"
+    ON storage.objects FOR SELECT
+    USING (bucket_id = 'chat-files');
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'objects' AND policyname = 'Allow public insert access to chat-files'
+  ) THEN
+    CREATE POLICY "Allow public insert access to chat-files"
+    ON storage.objects FOR INSERT
+    WITH CHECK (bucket_id = 'chat-files');
+  END IF;
+END $$;
+
+-- 1. Ensure chat-files storage bucket exists and is public
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('chat-files', 'chat-files', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- 2. Ensure public read access policy for chat-files
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'objects' AND policyname = 'Allow public read access to chat-files'
+  ) THEN
+    CREATE POLICY "Allow public read access to chat-files"
+    ON storage.objects FOR SELECT
+    USING (bucket_id = 'chat-files');
+  END IF;
+END $$;
+
+-- 3. Ensure public insert access policy for chat-files
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'objects' AND policyname = 'Allow public insert access to chat-files'
+  ) THEN
+    CREATE POLICY "Allow public insert access to chat-files"
+    ON storage.objects FOR INSERT
+    WITH CHECK (bucket_id = 'chat-files');
+  END IF;
+END $$;

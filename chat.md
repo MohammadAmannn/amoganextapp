@@ -50,11 +50,13 @@ This document provides a comprehensive overview of the database tables, constrai
 | `/api/profiles/[id]` | `GET` | ✅ Done | Get profile by ID |
 | `/api/profiles/[id]` | `PATCH` | ✅ Done | Update profile details / presence status |
 
-### Storage / File Upload
+### Storage / File Upload & Image Converter
 | Endpoint | Method | Status | Description |
 |---|---|---|---|
 | `/api/upload` | `POST` | ✅ Done | Upload file to Supabase Storage (multipart/form-data) |
 | `/api/upload` | `DELETE` | ✅ Done | Delete file from Supabase Storage |
+| `/api/convert/photo-to-pdf` | `POST` | ✅ Done | Convert photos to compiled PDF document and upload to Supabase Storage (`chat-files/converted/`) |
+| `/api/convert/doc` | `POST` | ✅ Done | Convert any document format (PDF, DOCX, XLSX, TXT, etc.) and upload to Supabase Storage (`chat-files/converted/`) |
 
 ### Notifications
 | Endpoint | Method | Status | Description |
@@ -116,6 +118,8 @@ Use this table to verify every API operation step-by-step. Replace placeholder U
 | ✅ 41 | Mark all read | `PATCH /api/notifications/read-all` | All unread → read |
 | ✅ 42 | Delete notification | `DELETE /api/notifications/:id` | Notification removed |
 | ✅ 43 | Update profile status | `PATCH /api/profiles/:id` | Profile / presence updated |
+| ✅ 44 | Convert photo to PDF | `POST /api/convert/photo-to-pdf` | Returns PDF publicUrl in `converted/` |
+| ✅ 45 | Convert Document | `POST /api/convert/doc` | Returns converted doc publicUrl in `converted/` |
 
 ---
 
@@ -535,6 +539,83 @@ POST http://localhost:3000/api/upload
   "mimeType": "image/jpeg",
   "storagePath": "images/uuid.jpg",
   "folder": "images"
+}
+```
+
+---
+
+### 25.1. Convert Photo to PDF (Image Converter API)
+
+```
+POST http://localhost:3000/api/convert/photo-to-pdf
+```
+
+**Content-Type:** `multipart/form-data` (Postman auto-sets this when selecting Body → form-data)
+
+**Form-Data Fields:**
+| Key | Type | Value |
+|-----|------|-------|
+| `file` | File | Select your image file (or multiple image files) |
+| `fileName` | Text | (Optional) Custom PDF document name e.g. `converted_doc` |
+
+**Postman Steps:**
+1. Set method to `POST`
+2. Enter URL: `http://localhost:3000/api/convert/photo-to-pdf`
+3. Go to **Body** tab → select **form-data**
+4. Add key `file` → change type dropdown to **File** → choose image file (JPG, PNG, WEBP)
+5. (Optional) Add key `fileName` → type `invoice_doc`
+6. Hit **Send**
+
+**Response:**
+```json
+{
+  "success": true,
+  "publicUrl": "https://abxwugpdvhmuxoesmumq.supabase.co/storage/v1/object/public/chat-files/converted/43a2b7a9-9e12-4c28-98e1-d345f893a123.pdf",
+  "fileName": "invoice_doc.pdf",
+  "fileSize": 142850,
+  "mimeType": "application/pdf",
+  "storagePath": "converted/43a2b7a9-9e12-4c28-98e1-d345f893a123.pdf",
+  "folder": "converted"
+}
+```
+
+---
+
+### 25.2. Convert Document (Document Converter API)
+
+```
+POST http://localhost:3000/api/convert/doc
+```
+
+**Content-Type:** `multipart/form-data`
+
+**Form-Data Fields:**
+| Key | Type | Value |
+|-----|------|-------|
+| `file` | File | Select source document (PDF, DOCX, XLSX, PPTX, TXT, CSV) |
+| `targetFormat` | Text | (Optional) Desired target format e.g. `pdf`, `docx`, `xlsx`, `txt`, `png` (default: `pdf`) |
+| `fileName` | Text | (Optional) Custom document output title |
+
+**Postman Steps:**
+1. Set method to `POST`
+2. Enter URL: `http://localhost:3000/api/convert/doc`
+3. Select **Body** tab → **form-data**
+4. Add key `file` → change dropdown to **File** → select source document (e.g. `report.docx`)
+5. Add key `targetFormat` → type `pdf`
+6. Hit **Send**
+
+**Response:**
+```json
+{
+  "success": true,
+  "publicUrl": "https://abxwugpdvhmuxoesmumq.supabase.co/storage/v1/object/public/chat-files/converted/8f912a7e-12ab-4c99-b123-e456f789a012.pdf",
+  "fileName": "report_converted.pdf",
+  "fileSize": 210450,
+  "mimeType": "application/pdf",
+  "storagePath": "converted/8f912a7e-12ab-4c99-b123-e456f789a012.pdf",
+  "folder": "converted",
+  "sourceFormat": "docx",
+  "targetFormat": "pdf"
 }
 ```
 

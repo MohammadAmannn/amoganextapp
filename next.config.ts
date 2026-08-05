@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
   // maplibre-gl is a browser-only library. Keeping it out of transpilePackages avoids SSR
   // bundling issues and speeds up builds. The map page uses next/dynamic with ssr:false
   // to completely exclude maplibre-gl from the server bundle.
+  serverExternalPackages: ['@cle-does-things/pdfitdown'],
   transpilePackages: [],
   experimental: {},
 }

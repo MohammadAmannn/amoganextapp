@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { FileText, Image, Video, Music, File } from 'lucide-react'
-import { toast } from 'sonner'
+import { downloadFileFromUrl } from '@/utils/download'
 
 export function getFileExtension(fileName?: string, url?: string): string {
   if (fileName) {
@@ -40,20 +40,7 @@ export function useDownloadFile() {
   const downloadFile = async (url: string, fileName: string) => {
     setIsDownloading(true)
     try {
-      const response = await fetch(url)
-      if (!response.ok) throw new Error('Network response was not ok')
-      const blob = await response.blob()
-      const downloadUrl = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = downloadUrl
-      link.setAttribute('download', fileName)
-      document.body.appendChild(link)
-      link.click()
-      link.parentNode?.removeChild(link)
-      window.URL.revokeObjectURL(downloadUrl)
-    } catch (err) {
-      console.error('Download failed:', err)
-      toast.error('Failed to download file.')
+      await downloadFileFromUrl(url, fileName)
     } finally {
       setIsDownloading(false)
     }

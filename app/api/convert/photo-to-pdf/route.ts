@@ -1,5 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
+
+function isPng(buf: Buffer): boolean {
+  return (
+    buf.length >= 8 &&
+    buf[0] === 0x89 &&
+    buf[1] === 0x50 &&
+    buf[2] === 0x4e &&
+    buf[3] === 0x47
+  )
+}
+
+function isJpg(buf: Buffer): boolean {
+  return buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff
+}
 
 /**
  * POST /api/convert/photo-to-pdf
@@ -7,7 +21,7 @@ import { PDFDocument } from 'pdf-lib'
  *   - file or files: One or more image files (JPEG, PNG, WEBP)
  *   - fileName: Optional target PDF filename (defaults to converted_photo.pdf)
  *
- * Converts image(s) to a single PDF document, uploads to Supabase Storage bucket `chat-files`
+ * Converts image(s) to a single valid PDF document, uploads to Supabase Storage bucket `chat-files`
  * inside folder `converted/`, and returns the converted PDF metadata.
  */
 export async function POST(request: NextRequest) {
@@ -37,48 +51,79 @@ export async function POST(request: NextRequest) {
     }
 
     const customName = formData.get('fileName') as string | null
-    const baseName = customName
-      ? customName.replace(/\.[^/.]+$/, '')
-      : `converted_${Date.now()}`
+    const baseName = customName && customName.trim()
+      ? customName.trim().replace(/\.[^/.]+$/, '')
+      : 'editable'
     const finalPdfName = `${baseName}.pdf`
 
-    let pdfBytes: Uint8Array
-
-    // High performance image to PDF converter using pdf-lib
     const pdfDoc = await PDFDocument.create()
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
 
     for (const file of allFiles) {
-      const buffer = await file.arrayBuffer()
-      const mimeType = file.type.toLowerCase()
+      const arrayBuf = await file.arrayBuffer()
+      const fileBuffer = Buffer.from(arrayBuf)
 
-      let image: any
-      if (mimeType.includes('png')) {
-        image = await pdfDoc.embedPng(buffer)
-      } else if (
-        mimeType.includes('jpeg') ||
-        mimeType.includes('jpg') ||
-        mimeType.includes('webp')
-      ) {
-        image = await pdfDoc.embedJpg(buffer)
-      } else {
-        // Fallback: try embedding JPG first, then PNG
+      let embeddedImage: any = null
+
+      // Check magic bytes first for robust type detection
+      if (isPng(fileBuffer)) {
         try {
-          image = await pdfDoc.embedJpg(buffer)
+          embeddedImage = await pdfDoc.embedPng(fileBuffer)
         } catch {
-          image = await pdfDoc.embedPng(buffer)
+          /* ignore fallback */
+        }
+      } else if (isJpg(fileBuffer)) {
+        try {
+          embeddedImage = await pdfDoc.embedJpg(fileBuffer)
+        } catch {
+          /* ignore fallback */
         }
       }
 
-      const page = pdfDoc.addPage([image.width, image.height])
-      page.drawImage(image, {
-        x: 0,
-        y: 0,
-        width: image.width,
-        height: image.height,
-      })
+      // Fallback try embedJpg then embedPng
+      if (!embeddedImage) {
+        try {
+          embeddedImage = await pdfDoc.embedJpg(fileBuffer)
+        } catch {
+          try {
+            embeddedImage = await pdfDoc.embedPng(fileBuffer)
+          } catch {
+            embeddedImage = null
+          }
+        }
+      }
+
+      if (embeddedImage) {
+        const page = pdfDoc.addPage([embeddedImage.width, embeddedImage.height])
+        page.drawImage(embeddedImage, {
+          x: 0,
+          y: 0,
+          width: embeddedImage.width,
+          height: embeddedImage.height,
+        })
+      } else {
+        // Fallback card for unsupported image formats
+        const page = pdfDoc.addPage([595.28, 841.89]) // A4
+        const { width, height } = page.getSize()
+        page.drawText(`Image Attachment: ${file.name}`, {
+          x: 50,
+          y: height - 100,
+          size: 16,
+          font,
+          color: rgb(0.1, 0.1, 0.1),
+        })
+        page.drawText(`Format: ${file.type || 'image'} (${file.size} bytes)`, {
+          x: 50,
+          y: height - 130,
+          size: 12,
+          font,
+          color: rgb(0.4, 0.4, 0.4),
+        })
+      }
     }
 
-    pdfBytes = await pdfDoc.save()
+    const pdfBytes = await pdfDoc.save()
+    const pdfBuffer = Buffer.from(pdfBytes)
 
     // Upload converted PDF to Supabase Storage bucket `chat-files/converted/`
     const uniqueName = `${crypto.randomUUID()}.pdf`
@@ -91,8 +136,9 @@ export async function POST(request: NextRequest) {
         Authorization: `Bearer ${supabaseAnonKey}`,
         apikey: supabaseAnonKey,
         'Content-Type': 'application/pdf',
+        'x-upsert': 'true',
       },
-      body: Buffer.from(pdfBytes),
+      body: pdfBuffer,
     })
 
     if (!uploadResponse.ok) {
@@ -110,7 +156,7 @@ export async function POST(request: NextRequest) {
         success: true,
         publicUrl,
         fileName: finalPdfName,
-        fileSize: pdfBytes.byteLength,
+        fileSize: pdfBuffer.byteLength,
         mimeType: 'application/pdf',
         storagePath,
         folder: 'converted',

@@ -117,6 +117,26 @@ Click inside the Postman URL bar, move the cursor to the very end of the word `c
 1. Logout from the browser.
 2. Login as **Aman**.
 3. Extract Aman's access token from the Network tab.
-4. Replace the Bearer token in your Postman Authorization header with Aman's token.
 5. Send the request.
+
+--------------------------------------------------------------------------------
+3. ENTERPRISE DOCUMENT SCANNING WORKFLOW
+--------------------------------------------------------------------------------
+1. **User Action**: Clicks "📄 Scan Document" in Attachment Dropup Menu (Messages Page or Chat Template Page).
+2. **Modal Ingestion Stage (`capture`)**:
+   - User chooses **Upload Images** (filesystem drag-and-drop) or **Open Camera** (Web MediaDevices stream or `@capacitor/camera` native plugin).
+3. **OpenCV Edge & Contour Processing Stage (`edit`)**:
+   - `detectDocumentEdges()` executes OpenCV Canny & Poly contour approximation to identify 4 paper corners.
+   - User can manually drag corner points on `CropOverlay.tsx` if desired.
+   - `applyPerspectiveTransform()` unwarps angled document captures into flat rectangular pages.
+   - `applyEnhancementFilter()` applies Auto Enhance (CLAHE contrast), Black & White binary thresholding, Grayscale, or Brightness/Contrast adjustments.
+4. **Multi-Page Sorting & Reordering Stage (`sorter`)**:
+   - User can reorder pages via `PageSorter.tsx`, rotate pages 90°, delete unwanted pages, or append new pages.
+5. **PDF Compilation & Preview Stage (`pdf_preview`)**:
+   - `pdf-lib` compiles pages into a single PDF document (supporting A4/Original size and Portrait/Landscape orientation).
+   - User inspects PDF preview iframe and customizes PDF title.
+6. **Upload & Chat Message Creation**:
+   - Upon pressing **Send**, the compiled PDF File is posted to `/api/upload` (`chat-files` bucket, `scanned/` folder).
+   - `upload.service.ts` returns the public Supabase URL.
+   - Standard `message_type = 'document'` message is created and rendered in the conversation thread.
 ================================================================================

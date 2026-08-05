@@ -28,9 +28,8 @@ export function AnalyticsReporter() {
             userAgent: navigator.userAgent || '',
           }),
         })
-      } catch (err) {
-        // Fail silently on client side to avoid user impact
-        console.warn('Analytics logging failed:', err)
+      } catch (_err) {
+        // Fail silently on client side to avoid user impact & console log noise
       }
     }
 

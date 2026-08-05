@@ -23,11 +23,17 @@ import {
   MapPin,
   CheckCheck,
   Clock,
+  Scan,
+  ScanLine,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { toast } from 'sonner'
 import { ImageConverterDialog, ConvertedPdfResult } from '@/components/image-converter-dialog'
 import { DocConverterDialog, ConvertedDocResult } from '@/components/doc-converter-dialog'
+import { DocumentScannerModal } from '@/features/chattemplate/scanner/DocumentScannerModal'
+import { ScannedPdfResult } from '@/features/chattemplate/scanner/types'
+import { useCapacitorDocScanner } from '@/hooks/useCapacitorDocScanner'
+import { downloadFileFromUrl } from '@/utils/download'
 import { cn } from '@/lib/utils'
 import {
   DropdownMenu,
@@ -212,6 +218,8 @@ export function ChatView({
   const [previewImage, setPreviewImage] = useState<ChatAttachment | null>(null)
   const [isImageConverterOpen, setIsImageConverterOpen] = useState(false)
   const [isDocConverterOpen, setIsDocConverterOpen] = useState(false)
+  const [isDocumentScannerOpen, setIsDocumentScannerOpen] = useState(false)
+  const { startDocScan } = useCapacitorDocScanner()
 
   const handlePdfConverted = (result: ConvertedPdfResult) => {
     onSendMessage('', {
@@ -231,6 +239,23 @@ export function ChatView({
       url: result.publicUrl,
       mimeType: result.mimeType,
     })
+  }
+
+  const handleScannedPdfComplete = (result: ScannedPdfResult) => {
+    onSendMessage('', {
+      type: 'document',
+      name: result.fileName,
+      size: result.fileSize,
+      url: result.publicUrl,
+      mimeType: result.mimeType,
+    })
+  }
+
+  const handleNativeDocScanner = () => {
+    startDocScan(
+      (result) => handleScannedPdfComplete(result),
+      () => setIsDocumentScannerOpen(true)
+    )
   }
 
   const [highlightedMessageId, setHighlightedMessageId] = useState<
@@ -557,14 +582,15 @@ export function ChatView({
               {previewDoc.name}
             </span>
           </div>
-          <a
-            href={previewDoc.url}
-            download={previewDoc.name}
-            className='rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground'
+          <button
+            type='button'
+            onClick={() => downloadFileFromUrl(previewDoc.url, previewDoc.name)}
+            className='rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer'
             aria-label='Download document'
+            title='Download document'
           >
             <Download className='h-5 w-5' />
-          </a>
+          </button>
         </div>
         <div className='min-h-0 flex-1 overflow-hidden'>
           <DynamicDocViewer
@@ -748,15 +774,15 @@ export function ChatView({
                         >
                           <Eye className='h-4 w-4' />
                         </button>
-                        <a
-                          href={msg.attachment.url}
-                          download={msg.attachment.name}
-                          className='rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground'
+                        <button
+                          type='button'
+                          onClick={() => msg.attachment && downloadFileFromUrl(msg.attachment.url, msg.attachment.name)}
+                          className='rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer'
                           aria-label={`Download ${msg.attachment.name}`}
                           title='Download'
                         >
                           <Download className='h-4 w-4' />
-                        </a>
+                        </button>
                       </div>
                     </div>
                   )}
@@ -906,7 +932,7 @@ export function ChatView({
         </div>
       )}
       <div className='pb-safe relative flex flex-none shrink-0 items-center gap-2.5 border-t border-border bg-muted/10 p-3'>
-        <div className='relative flex h-10 min-w-0 flex-1 items-center gap-2.5 overflow-hidden rounded-full border border-border bg-background px-3.5 py-1.5 shadow-xs'>
+        <div className='relative flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-full border border-border bg-background px-3.5 py-1.5 shadow-xs'>
           <Popover>
             <PopoverTrigger asChild>
               <button
@@ -993,9 +1019,21 @@ export function ChatView({
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setIsDocConverterOpen(true)}
-                className='cursor-pointer gap-2 font-semibold text-emerald-600 dark:text-emerald-400'
+                className='cursor-pointer gap-2 font-semibold'
               >
                 <RefreshCw className='h-4 w-4' /> Doc Converter
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleNativeDocScanner}
+                className='cursor-pointer gap-2 font-semibold'
+              >
+                <ScanLine className='h-4 w-4 text-primary' /> Doc Scanner
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setIsDocumentScannerOpen(true)}
+                className='cursor-pointer gap-2 font-semibold'
+              >
+                <Scan className='h-4 w-4' /> Scan Document
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -1017,19 +1055,26 @@ export function ChatView({
           }}
           onPointerDown={(event) => {
             if (draft.trim()) return
-            event.preventDefault()
-            event.currentTarget.setPointerCapture(event.pointerId)
+            try {
+              event.currentTarget.setPointerCapture(event.pointerId)
+            } catch (err) {}
             void startRecording()
           }}
           onPointerUp={(event) => {
             if (draft.trim()) return
-            event.preventDefault()
-            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-              event.currentTarget.releasePointerCapture(event.pointerId)
-            }
+            try {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId)
+              }
+            } catch (err) {}
             stopRecording()
           }}
-          onPointerCancel={() => {
+          onPointerCancel={(event) => {
+            try {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId)
+              }
+            } catch (err) {}
             if (!draft.trim()) stopRecording()
           }}
           onContextMenu={(event) => event.preventDefault()}
@@ -1108,6 +1153,11 @@ export function ChatView({
         open={isDocConverterOpen}
         onOpenChange={setIsDocConverterOpen}
         onConverted={handleDocConverted}
+      />
+      <DocumentScannerModal
+        isOpen={isDocumentScannerOpen}
+        onClose={() => setIsDocumentScannerOpen(false)}
+        onComplete={handleScannedPdfComplete}
       />
     </div>
   )

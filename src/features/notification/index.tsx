@@ -17,6 +17,7 @@ import {
   ChevronDown
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { downloadFileFromUrl } from '@/utils/download'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -239,12 +240,11 @@ export function Notifications() {
                           <Button 
                             variant='ghost' 
                             size='icon' 
-                            asChild
+                            onClick={() => selectedMessage.file_url && downloadFileFromUrl(selectedMessage.file_url, selectedMessage.file_name || 'document.pdf')}
                             className='h-8 w-8 shrink-0 hover:bg-background shadow-sm'
+                            title='Download attachment'
                           >
-                            <a href={selectedMessage.file_url} download={selectedMessage.file_name} target='_blank' rel='noopener noreferrer'>
-                              <Download className='h-4 w-4' />
-                            </a>
+                            <Download className='h-4 w-4' />
                           </Button>
                         </div>
                       )}

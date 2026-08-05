@@ -120,6 +120,7 @@ Use this table to verify every API operation step-by-step. Replace placeholder U
 | ✅ 43 | Update profile status | `PATCH /api/profiles/:id` | Profile / presence updated |
 | ✅ 44 | Convert photo to PDF | `POST /api/convert/photo-to-pdf` | Returns PDF publicUrl in `converted/` |
 | ✅ 45 | Convert Document | `POST /api/convert/doc` | Returns converted doc publicUrl in `converted/` |
+| ✅ 46 | Upload Scanned Document | `POST /api/upload` (folder=scanned) | Uploads compiled scan PDF to `chat-files/scanned/` |
 
 ---
 

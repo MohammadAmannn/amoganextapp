@@ -9,7 +9,6 @@ export async function POST(request: NextRequest) {
 
     const webAppUrl = process.env.GOOGLE_SHEET_WEBAPP_URL
     if (!webAppUrl) {
-      console.warn('⚠️ GOOGLE_SHEET_WEBAPP_URL is not configured in environment variables. Logging skipped.')
       return NextResponse.json({ success: true, message: 'Logging skipped (no config)' }, { status: 200 })
     }
 
@@ -30,17 +29,15 @@ export async function POST(request: NextRequest) {
     })
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('❌ Failed to log to Google Sheets Web App:', response.status, errorText)
-      // Return 202 Accepted to the client so that external log script failures do not break client-side site usage.
+      // Fail silently without dumping HTML / 404 response text into server logs
       return NextResponse.json({ success: false, error: 'External logging script returned error status' }, { status: 202 })
     }
 
     return NextResponse.json({ success: true }, { status: 200 })
-  } catch (err) {
-    console.error('❌ Analytics log endpoint exception:', err)
+  } catch (_err) {
+    // Fail silently without clogging server console logs
     return NextResponse.json(
-      { success: false, error: err instanceof Error ? err.message : 'Internal Server Error' },
+      { success: false },
       { status: 202 }
     )
   }

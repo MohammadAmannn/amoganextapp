@@ -671,3 +671,56 @@ BEGIN
     WITH CHECK (bucket_id = 'chat-files');
   END IF;
 END $$;
+
+
+-- ================================================================================
+-- ENTERPRISE DOCUMENT SCANNER MIGRATION SCRIPT
+-- ================================================================================
+-- File: scanner_migration.sql
+-- Description: Ensures Supabase Storage bucket, RLS policies, and database indexes
+--              fully support the Enterprise Document Scanner feature.
+-- 
+-- Compatibility: 100% compatible with existing supbase_schema.sql
+-- Bucket Used: `chat-files` (folder `scanned/`)
+-- Table Used: `chat_messages` (message_type = 'document')
+-- ================================================================================
+
+-- 1. Ensure `chat-files` storage bucket exists and is public
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('chat-files', 'chat-files', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- 2. Ensure public read access policy for `chat-files` bucket
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE tablename = 'objects' AND policyname = 'Allow public read access to chat-files'
+  ) THEN
+    CREATE POLICY "Allow public read access to chat-files"
+    ON storage.objects FOR SELECT
+    USING (bucket_id = 'chat-files');
+  END IF;
+END $$;
+
+-- 3. Ensure public insert access policy for `chat-files` bucket (required for uploading scanned document PDFs)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE tablename = 'objects' AND policyname = 'Allow public insert access to chat-files'
+  ) THEN
+    CREATE POLICY "Allow public insert access to chat-files"
+    ON storage.objects FOR INSERT
+    WITH CHECK (bucket_id = 'chat-files');
+  END IF;
+END $$;
+
+-- 4. Optimization Index for Scanned Document Queries on `chat_messages`
+CREATE INDEX IF NOT EXISTS idx_chat_messages_document_scanned 
+ON public.chat_messages (owner_user_id, message_type, created_at DESC)
+WHERE message_type = 'document';
+
+-- ================================================================================
+-- END OF MIGRATION
+-- ================================================================================

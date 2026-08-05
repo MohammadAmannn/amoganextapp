@@ -29,11 +29,17 @@ import {
   PanelLeft,
   Info,
   MapPin,
+  Scan,
+  ScanLine,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { toast } from 'sonner'
 import { ImageConverterDialog, ConvertedPdfResult } from '@/components/image-converter-dialog'
 import { DocConverterDialog, ConvertedDocResult } from '@/components/doc-converter-dialog'
+import { DocumentScannerModal } from '@/features/chattemplate/scanner/DocumentScannerModal'
+import { ScannedPdfResult } from '@/features/chattemplate/scanner/types'
+import { useCapacitorDocScanner } from '@/hooks/useCapacitorDocScanner'
+import { downloadFileFromUrl } from '@/utils/download'
 import { useAuthStore } from '@/stores/auth-store'
 import { cn, getDisplayNameInitials } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -257,6 +263,8 @@ export function ChatWindow({
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false)
   const [isImageConverterOpen, setIsImageConverterOpen] = useState(false)
   const [isDocConverterOpen, setIsDocConverterOpen] = useState(false)
+  const [isDocumentScannerOpen, setIsDocumentScannerOpen] = useState(false)
+  const { startDocScan } = useCapacitorDocScanner()
 
   const handlePdfConverted = (result: ConvertedPdfResult) => {
     onSendMessage('', {
@@ -276,6 +284,23 @@ export function ChatWindow({
       fileSize: result.fileSize,
       mimeType: result.mimeType,
     })
+  }
+
+  const handleScannedPdfComplete = (result: ScannedPdfResult) => {
+    onSendMessage('', {
+      messageType: 'document',
+      fileUrl: result.publicUrl,
+      fileName: result.fileName,
+      fileSize: result.fileSize,
+      mimeType: result.mimeType,
+    })
+  }
+
+  const handleNativeDocScanner = () => {
+    startDocScan(
+      (result) => handleScannedPdfComplete(result),
+      () => setIsDocumentScannerOpen(true)
+    )
   }
   const [liveLocationInterval, setLiveLocationInterval] =
     useState<NodeJS.Timeout | null>(null)
@@ -702,20 +727,7 @@ export function ChatWindow({
 
   // Helper: File downloader
   const downloadFile = async (url: string, name: string) => {
-    try {
-      const response = await fetch(url)
-      const blob = await response.blob()
-      const blobUrl = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = blobUrl
-      link.setAttribute('download', name)
-      document.body.appendChild(link)
-      link.click()
-      link.parentNode?.removeChild(link)
-      window.URL.revokeObjectURL(blobUrl)
-    } catch (e) {
-      window.open(url, '_blank')
-    }
+    await downloadFileFromUrl(url, name)
   }
 
   // Handle selection of files from native triggers
@@ -1246,21 +1258,15 @@ export function ChatWindow({
           </div>
           {/* Action buttons */}
           <div className='flex shrink-0 items-center gap-1.5'>
-            <a
-              href={previewDoc.url}
-              download={previewDoc.name}
-              target='_blank'
-              rel='noopener noreferrer'
+            <Button
+              size='icon'
+              variant='ghost'
+              onClick={() => downloadFileFromUrl(previewDoc.url, previewDoc.name)}
+              className='h-8.5 w-8.5 cursor-pointer rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground'
+              title='Download Document'
             >
-              <Button
-                size='icon'
-                variant='ghost'
-                className='h-8.5 w-8.5 cursor-pointer rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground'
-                title='Download Document'
-              >
-                <Download className='h-4.5 w-4.5' />
-              </Button>
-            </a>
+              <Download className='h-4.5 w-4.5' />
+            </Button>
           </div>
         </div>
 
@@ -1610,7 +1616,7 @@ export function ChatWindow({
         onTouchMove={handlePointerMove}
         className='pb-safe relative flex flex-none shrink-0 items-center gap-2.5 border-t border-border bg-muted/10 p-3'
       >
-        <div className='relative flex h-10 min-w-0 flex-1 items-center gap-2.5 overflow-hidden rounded-full border border-border bg-background px-3.5 py-1.5 shadow-xs'>
+        <div className='relative flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-full border border-border bg-background px-3.5 py-1.5 shadow-xs'>
           {isRecording ? (
             /* MICROPHONE BUTTON: Recording active UI template (translucent glassmorphic visualizer) */
             <div
@@ -1699,9 +1705,9 @@ export function ChatWindow({
                 ref={inputRef}
                 value={inputText}
                 onChange={(e) => handleInputChange(e.target.value)}
-                placeholder={isTyping ? `Recording in progress...` : 'Message'}
+                placeholder='Message'
                 className='min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground focus:border-0 focus:ring-0 focus:outline-none'
-                disabled={isTyping}
+                disabled={isRecording}
               />
 
               {/* ATTACHMENT BUTTON: Shadcn Dropdown menu */}
@@ -1758,10 +1764,24 @@ export function ChatWindow({
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setIsDocConverterOpen(true)}
-                    className='cursor-pointer gap-2 font-semibold text-emerald-600 dark:text-emerald-400'
+                    className='cursor-pointer gap-2 font-semibold'
                   >
                     <RefreshCw className='h-4 w-4' />
                     <span>Doc Converter</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleNativeDocScanner}
+                    className='cursor-pointer gap-2 font-semibold'
+                  >
+                    <ScanLine className='h-4 w-4 text-primary' />
+                    <span>Doc Scanner</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setIsDocumentScannerOpen(true)}
+                    className='cursor-pointer gap-2 font-semibold'
+                  >
+                    <Scan className='h-4 w-4' />
+                    <span>Scan Document</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -1783,7 +1803,6 @@ export function ChatWindow({
         {inputText.trim() ? (
           <button
             type='submit'
-            disabled={isTyping}
             className='flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-emerald-600 text-white shadow-md transition-all duration-100 hover:bg-emerald-700 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-95 disabled:opacity-55'
             aria-label='Send message'
           >
@@ -1793,7 +1812,6 @@ export function ChatWindow({
           /* MICROPHONE BUTTON: Hold to record, release to send automatically, drag/leave to discard */
           <button
             type='button'
-            disabled={isTyping}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
             onTouchStart={handleTouchStart}
@@ -1973,6 +1991,13 @@ export function ChatWindow({
         open={isDocConverterOpen}
         onOpenChange={setIsDocConverterOpen}
         onConverted={handleDocConverted}
+      />
+
+      {/* ========== ENTERPRISE DOCUMENT SCANNER MODAL ========== */}
+      <DocumentScannerModal
+        isOpen={isDocumentScannerOpen}
+        onClose={() => setIsDocumentScannerOpen(false)}
+        onComplete={handleScannedPdfComplete}
       />
     </div>
   )

@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
         .neq('user_id', senderId)
 
       if (members && members.length > 0) {
-        const recipientUserIds = members.map((m) => m.user_id)
+        const recipientUserIds = members.map((m: any) => m.user_id)
         
         // Fetch FCM tokens for these members
         const { data: recipientProfiles } = await supabase
@@ -168,16 +168,15 @@ export async function POST(request: NextRequest) {
 
         if (isTokenInvalid) {
           console.warn(`[FCM Push] Invalid/Expired token detected for user ${target.userId}. Purging token from database...`)
-          await supabase
-            .from('profiles')
-            .update({ fcm_token: null })
-            .eq('id', target.userId)
-            .then(() => {
-              console.log(`[FCM Push] Successfully purged invalid token for user ${target.userId}`)
-            })
-            .catch((dbErr) => {
-              console.error(`[FCM Push] Failed to purge invalid token for user ${target.userId}:`, dbErr)
-            })
+          try {
+            await supabase
+              .from('profiles')
+              .update({ fcm_token: null })
+              .eq('id', target.userId)
+            console.log(`[FCM Push] Successfully purged invalid token for user ${target.userId}`)
+          } catch (dbErr) {
+            console.error(`[FCM Push] Failed to purge invalid token for user ${target.userId}:`, dbErr)
+          }
         }
       }
     }

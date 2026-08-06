@@ -11,6 +11,7 @@ interface AttachmentRendererProps {
   duration?: number
   onViewDocument?: (url: string, name: string) => void
   messageId?: string
+  processingStatus?: 'pending' | 'processing' | 'completed' | 'failed' | null
 }
 
 export function AttachmentRenderer({
@@ -21,6 +22,7 @@ export function AttachmentRenderer({
   duration,
   onViewDocument,
   messageId,
+  processingStatus,
 }: AttachmentRendererProps) {
   if (!fileUrl) return null
 
@@ -39,6 +41,7 @@ export function AttachmentRenderer({
           fileSize={fileSize}
           onPreview={onViewDocument ? () => onViewDocument(fileUrl, fileName || 'Attachment') : undefined}
           messageId={messageId}
+          processingStatus={processingStatus}
         />
       )
     default:

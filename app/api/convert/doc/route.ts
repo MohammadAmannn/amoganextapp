@@ -497,7 +497,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/pdf',
         'x-upsert': 'true',
       },
-      body: convertedPdfBuffer,
+      body: new Uint8Array(convertedPdfBuffer),
     })
 
     if (!uploadResponse.ok) {

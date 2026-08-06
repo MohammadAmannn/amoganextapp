@@ -69,6 +69,10 @@ async function mapRealtimeMessage(record: any): Promise<Message> {
     duration: record.duration ? Number(record.duration) : undefined,
     thumbnail: record.thumbnail || undefined,
 
+    file_content_text: record.file_content_text || undefined,
+    file_content_json: record.file_content_json || undefined,
+    processing_status: record.processing_status || undefined,
+
     thumb: !!record.thumb,
     favorite: !!record.favorite,
     flag: !!record.flag,

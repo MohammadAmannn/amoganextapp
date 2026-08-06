@@ -216,6 +216,7 @@ export function RealtimeChatView({
       thumb: message.thumb,
       forwarded: message.forward,
       messageStatus: message.message_status,
+      processingStatus: message.processing_status,
       location: message.location_data
         ? {
             latitude: message.location_data.latitude,
@@ -331,6 +332,8 @@ export function RealtimeChatView({
             fileName: attachment.name,
             fileSize: attachment.size,
             mimeType: attachment.mimeType,
+            fileContentText: attachment.fileContentText,
+            fileContentJson: attachment.fileContentJson,
           }
         : undefined
 
@@ -378,6 +381,8 @@ export function RealtimeChatView({
             fileName: details.name,
             fileSize: details.size,
             mimeType: details.type,
+            fileContentText: attachment.fileContentText,
+            fileContentJson: attachment.fileContentJson,
           },
           replyMetadata
         ).then((savedMessage) => {

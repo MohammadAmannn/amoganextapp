@@ -36,6 +36,8 @@ export async function createMessage(msg: {
     parent_message_id: string | null
   }
   clientMessageId?: string
+  fileContentText?: string
+  fileContentJson?: any
   systemMetadata?: {
     type: 'group_created' | 'members_added'
     groupName?: string

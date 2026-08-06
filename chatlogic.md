@@ -139,4 +139,24 @@ Click inside the Postman URL bar, move the cursor to the very end of the word `c
    - Upon pressing **Send**, the compiled PDF File is posted to `/api/upload` (`chat-files` bucket, `scanned/` folder).
    - `upload.service.ts` returns the public Supabase URL.
    - Standard `message_type = 'document'` message is created and rendered in the conversation thread.
+
+--------------------------------------------------------------------------------
+4. ASYNCHRONOUS PDF PROCESSING PIPELINE LIFECYCLE
+--------------------------------------------------------------------------------
+This pipeline automatically triggers for all PDF document messages sent in chat (both direct uploads and scanned documents).
+
+1. **PDF Message Creation**: A message of type `document` is sent where the file name ends with `.pdf` or the MIME type is `application/pdf`.
+2. **Initial State (Pending)**: Message copies are inserted in the database with `processing_status = 'pending'`, `file_content_text = null`, and `file_content_json = null`.
+3. **Immediate UI Delivery**: The chat screen displays the document immediately in the conversation thread with a `Parsing...` status loader. The interface does not block.
+4. **API Invocation**: The client triggers a fire-and-forget background processing request to `POST /api/process-pdf` with the message copy ID.
+5. **Background Server Execution**:
+   - The route handler retrieves the message copy and resolves the canonical sender message ID.
+   - Transitions `processing_status = 'processing'` for all message copies.
+   - Downloads the PDF file bytes from Supabase Storage.
+   - Executes Python `pdftext` on a temporary file path to extract all raw text. On failure, it defaults to an empty string.
+   - Parses the PDF buffer via the Node.js `pdf2json` library to extract structured JSON layout coordinates.
+   - Updates all message copies in the database with `file_content_text`, `file_content_json`, and sets `processing_status = 'completed'`.
+   - If any step fails, sets `processing_status = 'failed'` for error tracking.
+6. **Real-time Synchronization**: The database updates are broadcasted to all participants instantly using Supabase Realtime changes listener.
+7. **User Retry Action**: If parsing failed, the user can click the `Retry` button on the document card to run the background job again.
 ================================================================================

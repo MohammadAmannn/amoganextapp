@@ -16,6 +16,8 @@ export function useSendMessage() {
       fileSize: number
       mimeType: string
       duration?: number
+      fileContentText?: string
+      fileContentJson?: any
     },
     replyMetadata?: {
       replyemoji?: string
@@ -38,6 +40,8 @@ export function useSendMessage() {
         fileSize: attachment?.fileSize,
         mimeType: attachment?.mimeType,
         duration: attachment?.duration,
+        fileContentText: attachment?.fileContentText,
+        fileContentJson: attachment?.fileContentJson,
         replyMetadata: replyMetadata?.replyto_message_id ? {
           replyemoji: replyMetadata.replyemoji || null,
           replyto_message_id: replyMetadata.replyto_message_id,

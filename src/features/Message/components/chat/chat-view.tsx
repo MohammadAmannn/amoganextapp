@@ -25,12 +25,15 @@ import {
   Clock,
   Scan,
   ScanLine,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { toast } from 'sonner'
 import { ImageConverterDialog, ConvertedPdfResult } from '@/components/image-converter-dialog'
 import { DocConverterDialog, ConvertedDocResult } from '@/components/doc-converter-dialog'
 import { DocumentScannerModal } from '@/features/chattemplate/scanner/DocumentScannerModal'
+import { TextExtractorModal } from '@/features/chattemplate/extractor/TextExtractorModal'
 import { ScannedPdfResult } from '@/features/chattemplate/scanner/types'
 import { useCapacitorDocScanner } from '@/hooks/useCapacitorDocScanner'
 import { downloadFileFromUrl } from '@/utils/download'
@@ -98,6 +101,8 @@ export interface ChatAttachment {
   mimeType: string
   file?: File
   duration?: number
+  fileContentText?: string
+  fileContentJson?: any
 }
 export interface ChatLocation {
   latitude: number
@@ -125,6 +130,7 @@ export interface ChatMessage {
   thumb?: boolean
   forwarded?: boolean
   messageStatus?: 'pending' | 'sent' | 'delivered' | 'read' | 'failed'
+  processingStatus?: 'pending' | 'processing' | 'completed' | 'failed' | null
   replyTo?: {
     id?: string
     sender: string
@@ -217,8 +223,27 @@ export function ChatView({
   const [mapPreview, setMapPreview] = useState<ChatLocation | null>(null)
   const [previewImage, setPreviewImage] = useState<ChatAttachment | null>(null)
   const [isImageConverterOpen, setIsImageConverterOpen] = useState(false)
+  
+  const handleRetryPdf = async (messageId: string) => {
+    try {
+      const res = await fetch('/api/process-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId, isRetry: true }),
+      })
+      if (res.ok) {
+        toast.success('PDF parsing retry triggered successfully!')
+      } else {
+        toast.error('Failed to trigger retry.')
+      }
+    } catch (err) {
+      console.error('Retry failed:', err)
+      toast.error('Network error triggering retry.')
+    }
+  }
   const [isDocConverterOpen, setIsDocConverterOpen] = useState(false)
   const [isDocumentScannerOpen, setIsDocumentScannerOpen] = useState(false)
+  const [isTextExtractorOpen, setIsTextExtractorOpen] = useState(false)
   const { startDocScan } = useCapacitorDocScanner()
 
   const handlePdfConverted = (result: ConvertedPdfResult) => {
@@ -248,6 +273,25 @@ export function ChatView({
       size: result.fileSize,
       url: result.publicUrl,
       mimeType: result.mimeType,
+    })
+  }
+
+  const handleOcrPdfComplete = (result: {
+    fileName: string
+    fileSize: number
+    publicUrl: string
+    mimeType: string
+    extractedText: string
+    extractedJson: Record<string, any>
+  }) => {
+    onSendMessage('', {
+      type: 'document',
+      name: result.fileName,
+      size: result.fileSize,
+      url: result.publicUrl,
+      mimeType: result.mimeType,
+      fileContentText: result.extractedText,
+      fileContentJson: result.extractedJson,
     })
   }
 
@@ -763,8 +807,34 @@ export function ChatView({
                           {getFileType(msg.attachment.name)?.toUpperCase() ||
                             'FILE'}
                         </span>
+                        {msg.processingStatus === 'pending' || msg.processingStatus === 'processing' ? (
+                          <span className="text-[10px] text-sky-600 dark:text-sky-400 font-semibold leading-normal mt-0.5 flex items-center gap-1 select-none">
+                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                            Parsing...
+                          </span>
+                        ) : msg.processingStatus === 'failed' ? (
+                          <span className="text-[10px] text-destructive font-semibold leading-normal mt-0.5 flex items-center gap-1 select-none">
+                            <AlertCircle className="h-2.5 w-2.5" />
+                            Parsing failed
+                          </span>
+                        ) : msg.processingStatus === 'completed' ? (
+                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold leading-normal mt-0.5 select-none">
+                            Parsed
+                          </span>
+                        ) : null}
                       </span>
                       <div className='flex shrink-0 items-center gap-0.5'>
+                        {msg.processingStatus === 'failed' && (
+                          <button
+                            type='button'
+                            onClick={() => handleRetryPdf(msg.id)}
+                            className='rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer'
+                            aria-label='Retry parsing'
+                            title='Retry parsing'
+                          >
+                            <RefreshCw className='h-4 w-4' />
+                          </button>
+                        )}
                         <button
                           type='button'
                           onClick={() => setPreviewDoc(msg.attachment!)}
@@ -1035,6 +1105,12 @@ export function ChatView({
               >
                 <Scan className='h-4 w-4' /> Scan Document
               </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setIsTextExtractorOpen(true)}
+                className='cursor-pointer gap-2 font-semibold'
+              >
+                <FileText className='h-4 w-4 text-primary' /> Extract Text
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -1158,6 +1234,11 @@ export function ChatView({
         isOpen={isDocumentScannerOpen}
         onClose={() => setIsDocumentScannerOpen(false)}
         onComplete={handleScannedPdfComplete}
+      />
+      <TextExtractorModal
+        isOpen={isTextExtractorOpen}
+        onClose={() => setIsTextExtractorOpen(false)}
+        onComplete={handleOcrPdfComplete}
       />
     </div>
   )

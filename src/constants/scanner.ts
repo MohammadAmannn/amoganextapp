@@ -27,7 +27,7 @@
 import { ScanFilterMode, PaperSize, PaperOrientation } from '../types/scanner'
 
 /** OpenCV.js CDN script URL (fast jsDelivr build) */
-export const OPENCV_CDN_URL = 'https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.9.0-release.3/opencv.js'
+export const OPENCV_CDN_URL = 'https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.9.0-release.3/dist/opencv.js'
 
 /** Max number of pages allowed per document scan session */
 export const MAX_SCAN_PAGES = 30

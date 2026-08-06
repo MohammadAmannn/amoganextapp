@@ -26,54 +26,8 @@ class OpenCVService {
   }
 
   public loadOpenCV(): Promise<any> {
-    if (typeof window === 'undefined') return Promise.reject(new Error('Browser environment required'))
-    if (this.isReady()) return Promise.resolve((window as any).cv)
-    if (this.loadPromise) return this.loadPromise
-
-    this.loadPromise = new Promise((resolve, reject) => {
-      const existingScript = document.querySelector(`script[src="${OPENCV_CDN_URL}"]`)
-      const onReady = () => {
-        this.isLoaded = true
-        resolve((window as any).cv)
-      }
-
-      if (existingScript && (window as any).cv && (window as any).cv.Mat) {
-        onReady()
-        return
-      }
-
-      ;(window as any).Module = {
-        onRuntimeInitialized: onReady,
-      }
-
-      const script = document.createElement('script')
-      script.src = OPENCV_CDN_URL
-      script.async = true
-      script.onload = () => {
-        let retries = 0
-        const check = () => {
-          if ((window as any).cv && (window as any).cv.Mat) {
-            onReady()
-          } else if (retries < 30) {
-            retries++
-            setTimeout(check, 100)
-          } else {
-            this.loadPromise = null
-            console.warn('[OpenCV] CDN load timed out after 3 seconds, falling back to Canvas engine.')
-            resolve(null)
-          }
-        }
-        check()
-      }
-      script.onerror = () => {
-        this.loadPromise = null
-        console.warn('[OpenCV] CDN script load failed, falling back to Canvas engine.')
-        resolve(null)
-      }
-      document.body.appendChild(script)
-    })
-
-    return this.loadPromise
+    console.log('[OpenCV] OpenCV script load disabled to ensure main-thread responsiveness. Falling back to native Canvas engine.')
+    return Promise.resolve(null)
   }
 }
 

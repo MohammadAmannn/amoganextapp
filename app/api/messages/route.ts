@@ -110,6 +110,18 @@ export async function POST(request: NextRequest) {
       }),
     }).catch(() => {})
 
+    // Trigger background PDF processing if it's a PDF document
+    const isPdf = body.messageType === 'document' && (body.fileName?.toLowerCase().endsWith('.pdf') || body.mimeType === 'application/pdf');
+    if (isPdf) {
+      fetch(`${protocol}://${host}/api/process-pdf`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId: saved.id,
+        }),
+      }).catch(() => {})
+    }
+
     return NextResponse.json(saved, { status: 201 })
   } catch (err) {
     console.error('POST message error:', err)

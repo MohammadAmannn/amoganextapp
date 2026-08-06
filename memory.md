@@ -414,3 +414,18 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
   - Automatically dispatches a standard `message_type = 'document'` chat message with PDF file metadata to the conversation thread.
 * **Beginner-Friendly Documentation**:
   - Every file includes standard JSDoc header comments detailing *Why it exists*, *What it does*, *When it runs*, *How it connects*, *Who calls it*, and *Who depends on it*.
+
+---
+
+## 37. Asynchronous PDF Processing Pipeline
+* **Background Parsing Flow**:
+  - Automatically processes any PDF files sent in chat (both normal uploads and scanned documents).
+  - Client interface inserts messages immediately with `processing_status = 'pending'` and continues without blocking the user.
+  - Fires an asynchronous non-blocking request to the `/api/process-pdf` background API.
+* **Service Responsibilities**:
+  - **messages.api.ts** / **messages REST API**: Sets initial `processing_status` state and triggers the background route.
+  - **/api/process-pdf API Route**: Runs background parsing: downloads PDF buffer from storage bucket `chat-files`, writes it to a workspace temp folder `.temp-pdf-processing`, runs Python `pdftext` to extract all text, parses structured layout using JavaScript `pdf2json`, and updates all message copies in the database.
+* **Realtime Sync & Retry Mechanism**:
+  - Maps `file_content_text`, `file_content_json`, and `processing_status` in realtime listeners (`use-realtime.ts`) so frontend reflects state changes immediately.
+  - Renders `Parsing...` and `Parsing failed` indicators inside `FileCard` and `chat-view.tsx` document bubbles.
+  - Renders a `Retry` action trigger button when parsing fails to run the background pipeline again.

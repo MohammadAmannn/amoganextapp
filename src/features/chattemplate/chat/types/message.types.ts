@@ -25,6 +25,11 @@ export interface Message {
   duration?: number
   thumbnail?: string
 
+  // PDF processing fields
+  file_content_text?: string | null
+  file_content_json?: any | null
+  processing_status?: 'pending' | 'processing' | 'completed' | 'failed' | null
+
   // Actions
   thumb: boolean
   favorite: boolean

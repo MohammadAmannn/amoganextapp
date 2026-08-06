@@ -1,5 +1,6 @@
 import React from 'react'
-import { Eye, Download } from 'lucide-react'
+import { Eye, Download, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { 
   getFileIconInfo, 
@@ -25,6 +26,7 @@ export interface FileCardProps {
   }
   className?: string
   messageId?: string
+  processingStatus?: 'pending' | 'processing' | 'completed' | 'failed' | null
 }
 
 export function FileCard({ 
@@ -38,7 +40,8 @@ export function FileCard({
   allowDownload = true,
   file,
   className,
-  messageId
+  messageId,
+  processingStatus
 }: FileCardProps) {
   const { downloadFile, isDownloading } = useDownloadFile()
 
@@ -82,6 +85,58 @@ export function FileCard({
     }
   }
 
+  const handleRetryClick = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!messageId) return
+    try {
+      const res = await fetch('/api/process-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId, isRetry: true }),
+      })
+      if (res.ok) {
+        toast.success('PDF parsing retry triggered successfully!')
+      } else {
+        toast.error('Failed to trigger retry.')
+      }
+    } catch (err) {
+      console.error('Retry failed:', err)
+      toast.error('Network error triggering retry.')
+    }
+  }
+
+  const renderProcessingStatus = () => {
+    if (!processingStatus) return null
+    
+    if (processingStatus === 'pending' || processingStatus === 'processing') {
+      return (
+        <span className="text-[10px] text-sky-600 dark:text-sky-400 font-semibold leading-normal mt-0.5 flex items-center gap-1 select-none">
+          <Loader2 className="h-2.5 w-2.5 animate-spin" />
+          Parsing...
+        </span>
+      )
+    }
+    
+    if (processingStatus === 'failed') {
+      return (
+        <span className="text-[10px] text-destructive font-semibold leading-normal mt-0.5 flex items-center gap-1 select-none">
+          <AlertCircle className="h-2.5 w-2.5" />
+          Parsing failed
+        </span>
+      )
+    }
+    
+    if (processingStatus === 'completed') {
+      return (
+        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold leading-normal mt-0.5 select-none">
+          Parsed
+        </span>
+      )
+    }
+    
+    return null
+  }
+
   return (
     <div className={cn(
       "flex items-center gap-2 p-2 rounded-xl border border-border/80 bg-card hover:bg-muted/10 transition-all duration-200 w-full min-w-0 select-none",
@@ -107,6 +162,7 @@ export function FileCard({
           {resolvedSize ? formatBytes(resolvedSize) : 'Unknown size'} 
           {resolvedCreatedAt ? ` • ${formatDate(resolvedCreatedAt)}` : ` • ${fileExt.toUpperCase()}`}
         </span>
+        {renderProcessingStatus()}
       </div>
 
       {/* Action icons — always visible, never clipped */}
@@ -136,6 +192,19 @@ export function FileCard({
             className="h-7 w-7 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-150 cursor-pointer shrink-0"
           >
             <Download className="h-3.5 w-3.5" />
+          </Button>
+        )}
+        {processingStatus === 'failed' && messageId && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleRetryClick}
+            aria-label="Retry parsing"
+            title="Retry parsing"
+            className="h-7 w-7 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-150 cursor-pointer shrink-0"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
           </Button>
         )}
       </div>

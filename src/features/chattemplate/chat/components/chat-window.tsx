@@ -37,6 +37,7 @@ import { toast } from 'sonner'
 import { ImageConverterDialog, ConvertedPdfResult } from '@/components/image-converter-dialog'
 import { DocConverterDialog, ConvertedDocResult } from '@/components/doc-converter-dialog'
 import { DocumentScannerModal } from '@/features/chattemplate/scanner/DocumentScannerModal'
+import { TextExtractorModal } from '@/features/chattemplate/extractor/TextExtractorModal'
 import { ScannedPdfResult } from '@/features/chattemplate/scanner/types'
 import { useCapacitorDocScanner } from '@/hooks/useCapacitorDocScanner'
 import { downloadFileFromUrl } from '@/utils/download'
@@ -167,6 +168,8 @@ interface ChatWindowProps {
       fileSize: number
       mimeType: string
       duration?: number
+      fileContentText?: string
+      fileContentJson?: any
     },
     replyMetadata?: {
       replyemoji?: string
@@ -264,6 +267,7 @@ export function ChatWindow({
   const [isImageConverterOpen, setIsImageConverterOpen] = useState(false)
   const [isDocConverterOpen, setIsDocConverterOpen] = useState(false)
   const [isDocumentScannerOpen, setIsDocumentScannerOpen] = useState(false)
+  const [isTextExtractorOpen, setIsTextExtractorOpen] = useState(false)
   const { startDocScan } = useCapacitorDocScanner()
 
   const handlePdfConverted = (result: ConvertedPdfResult) => {
@@ -293,6 +297,25 @@ export function ChatWindow({
       fileName: result.fileName,
       fileSize: result.fileSize,
       mimeType: result.mimeType,
+    })
+  }
+
+  const handleOcrPdfComplete = (result: {
+    fileName: string
+    fileSize: number
+    publicUrl: string
+    mimeType: string
+    extractedText: string
+    extractedJson: Record<string, any>
+  }) => {
+    onSendMessage('', {
+      messageType: 'document',
+      fileUrl: result.publicUrl,
+      fileName: result.fileName,
+      fileSize: result.fileSize,
+      mimeType: result.mimeType,
+      fileContentText: result.extractedText,
+      fileContentJson: result.extractedJson,
     })
   }
 
@@ -1783,6 +1806,13 @@ export function ChatWindow({
                     <Scan className='h-4 w-4' />
                     <span>Scan Document</span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setIsTextExtractorOpen(true)}
+                    className='cursor-pointer gap-2 font-semibold'
+                  >
+                    <FileText className='h-4 w-4 text-primary' />
+                    <span>Extract Text</span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -1998,6 +2028,13 @@ export function ChatWindow({
         isOpen={isDocumentScannerOpen}
         onClose={() => setIsDocumentScannerOpen(false)}
         onComplete={handleScannedPdfComplete}
+      />
+
+      {/* ========== OCR TEXT EXTRACTOR MODAL ========== */}
+      <TextExtractorModal
+        isOpen={isTextExtractorOpen}
+        onClose={() => setIsTextExtractorOpen(false)}
+        onComplete={handleOcrPdfComplete}
       />
     </div>
   )

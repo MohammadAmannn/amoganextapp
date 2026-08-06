@@ -52,75 +52,8 @@ class OpenCVService {
    * Lazy load OpenCV.js script asynchronously with single-flight promise deduplication.
    */
   public loadOpenCV(): Promise<any> {
-    if (typeof window === 'undefined') {
-      return Promise.reject(new Error('OpenCV can only be loaded in a browser environment'))
-    }
-
-    if (this.isReady()) {
-      return Promise.resolve((window as any).cv)
-    }
-
-    if (this.loadPromise) {
-      return this.loadPromise
-    }
-
-    this.isLoading = true
-    this.loadPromise = new Promise((resolve, reject) => {
-      // Check if script element already exists
-      const existingScript = document.querySelector(`script[src="${OPENCV_CDN_URL}"]`)
-
-      const onCvReady = () => {
-        this.isLoaded = true
-        this.isLoading = false
-        resolve((window as any).cv)
-      }
-
-      if (existingScript && (window as any).cv && (window as any).cv.Mat) {
-        onCvReady()
-        return
-      }
-
-      // Configure global callback
-      ;(window as any).Module = {
-        onRuntimeInitialized: () => {
-          onCvReady()
-        },
-      }
-
-      const script = document.createElement('script')
-      script.src = OPENCV_CDN_URL
-      script.async = true
-      script.type = 'text/javascript'
-
-      script.onload = () => {
-        let retries = 0
-        const checkCv = () => {
-          if ((window as any).cv && (window as any).cv.Mat) {
-            onCvReady()
-          } else if (retries < 30) {
-            retries++
-            setTimeout(checkCv, 100)
-          } else {
-            this.isLoading = false
-            this.loadPromise = null
-            console.warn('[OpenCVService] CDN load timed out after 3 seconds, falling back to Canvas engine.')
-            resolve(null)
-          }
-        }
-        checkCv()
-      }
-
-      script.onerror = (err) => {
-        this.isLoading = false
-        this.loadPromise = null
-        console.warn(`[OpenCVService] Failed to load OpenCV script from ${OPENCV_CDN_URL}, falling back to Canvas engine.`)
-        resolve(null)
-      }
-
-      document.body.appendChild(script)
-    })
-
-    return this.loadPromise
+    console.log('[OpenCV] OpenCV script load disabled to ensure main-thread responsiveness. Falling back to native Canvas engine.')
+    return Promise.resolve(null)
   }
 
   /**

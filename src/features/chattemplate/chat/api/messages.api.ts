@@ -63,6 +63,10 @@ export async function getConversationMessages(
       duration: d.duration ? Number(d.duration) : undefined,
       thumbnail: d.thumbnail || undefined,
 
+      file_content_text: d.file_content_text || undefined,
+      file_content_json: d.file_content_json || undefined,
+      processing_status: d.processing_status || undefined,
+
       thumb: !!d.thumb,
       favorite: !!d.favorite,
       flag: !!d.flag,
@@ -252,6 +256,8 @@ export async function createMessage(msg: {
     parent_message_id: string | null
   }
   clientMessageId?: string
+  fileContentText?: string
+  fileContentJson?: any
   systemMetadata?: {
     type: 'group_created' | 'members_added'
     groupName?: string
@@ -316,6 +322,8 @@ export async function createMessage(msg: {
         }
       }
 
+      const hasPreparsedData = !!(msg.fileContentText || msg.fileContentJson)
+
       records.push({
         id: msgId,
         conversation_id: msg.conversationId,
@@ -356,12 +364,31 @@ export async function createMessage(msg: {
         message_status: 'sent',
         location_data: msg.locationData || null,
         location_type: msg.locationType || null,
+        file_content_text: msg.fileContentText || null,
+        file_content_json: msg.fileContentJson || null,
+        processing_status: hasPreparsedData
+          ? 'completed'
+          : (msg.messageType === 'document' && (msg.fileName?.toLowerCase().endsWith('.pdf') || msg.mimeType === 'application/pdf'))
+          ? 'pending'
+          : null,
       })
     }
 
     // 3. Bulk insert copies into the DB
     if (records.length > 0) {
       await apiClient.post('/rest/v1/chat_messages', records)
+      
+      // Trigger background PDF processing if it's a PDF document
+      const isPdf = msg.messageType === 'document' && (msg.fileName?.toLowerCase().endsWith('.pdf') || msg.mimeType === 'application/pdf');
+      if (isPdf && typeof window !== 'undefined') {
+        fetch('/api/process-pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messageId: senderMsgId,
+          }),
+        }).catch((err) => console.warn('[Messages API] Asynchronous PDF processing dispatch error:', err))
+      }
       
       // Trigger FCM Push notification to offline/backgrounded recipient devices
       if (typeof window !== 'undefined') {
@@ -434,6 +461,9 @@ export async function createMessage(msg: {
       client_message_id: senderRecord.client_message_id || undefined,
       location_data: senderRecord.location_data || undefined,
       location_type: senderRecord.location_type || undefined,
+      file_content_text: senderRecord.file_content_text || undefined,
+      file_content_json: senderRecord.file_content_json || undefined,
+      processing_status: senderRecord.processing_status || undefined,
       sender: profile
         ? {
             id: profile.id,

@@ -56,7 +56,8 @@ This document provides a comprehensive overview of the database tables, constrai
 | `/api/upload` | `POST` | ✅ Done | Upload file to Supabase Storage (multipart/form-data) |
 | `/api/upload` | `DELETE` | ✅ Done | Delete file from Supabase Storage |
 | `/api/convert/photo-to-pdf` | `POST` | ✅ Done | Convert photos to compiled PDF document and upload to Supabase Storage (`chat-files/converted/`) |
-| `/api/convert/doc` | `POST` | ✅ Done | Convert any document format (PDF, DOCX, XLSX, TXT, etc.) and upload to Supabase Storage (`chat-files/converted/`) |
+| `/api/convert/doc` | `POST` | ✅ Done | Convert any document format (PDF, DOCX, XLSX, PPTX, etc.) and upload to Supabase Storage (`chat-files/converted/`) |
+| `/api/process-pdf` | `POST` | ✅ Done | Asynchronously processes PDF files (extracts plain text and structured JSON) |
 
 ### Notifications
 | Endpoint | Method | Status | Description |
@@ -121,6 +122,7 @@ Use this table to verify every API operation step-by-step. Replace placeholder U
 | ✅ 44 | Convert photo to PDF | `POST /api/convert/photo-to-pdf` | Returns PDF publicUrl in `converted/` |
 | ✅ 45 | Convert Document | `POST /api/convert/doc` | Returns converted doc publicUrl in `converted/` |
 | ✅ 46 | Upload Scanned Document | `POST /api/upload` (folder=scanned) | Uploads compiled scan PDF to `chat-files/scanned/` |
+| ✅ 47 | Process PDF (Background) | `POST /api/process-pdf` | Extracts text and JSON, returns 202 Accepted |
 
 ---
 
@@ -617,6 +619,32 @@ POST http://localhost:3000/api/convert/doc
   "folder": "converted",
   "sourceFormat": "docx",
   "targetFormat": "pdf"
+}
+```
+
+---
+
+### 25.3. Process PDF (Background Pipeline)
+
+```
+POST http://localhost:3000/api/process-pdf
+```
+
+**Body (JSON):**
+```json
+{
+  "messageId": "YOUR_MESSAGE_UUID_HERE",
+  "isRetry": true
+}
+```
+
+**Response (202 Accepted):**
+```json
+{
+  "success": true,
+  "message": "PDF processing triggered in background",
+  "messageId": "YOUR_MESSAGE_UUID_HERE",
+  "isRetry": true
 }
 ```
 

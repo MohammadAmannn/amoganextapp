@@ -66,7 +66,7 @@ export interface DocumentScannerModalProps {
 }
 
 /** Official OpenCV CDN script URL */
-export const OPENCV_CDN_URL = 'https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.9.0-release.3/opencv.js'
+export const OPENCV_CDN_URL = 'https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.9.0-release.3/dist/opencv.js'
 export const MAX_SCAN_PAGES = 30
 export const DEFAULT_JPEG_QUALITY = 0.85
 export const FALLBACK_CROP_MARGIN_RATIO = 0.05

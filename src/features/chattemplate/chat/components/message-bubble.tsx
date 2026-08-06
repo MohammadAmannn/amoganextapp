@@ -206,6 +206,7 @@ export function MessageBubble({
             duration={message.duration}
             onViewDocument={onViewDocument}
             messageId={message.id}
+            processingStatus={message.processing_status}
           />
         )}
 

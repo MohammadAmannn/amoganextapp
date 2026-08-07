@@ -113,7 +113,6 @@ class OcrService {
           extractedAt: new Date().toISOString(),
         },
         lines: allLines,
-        words: allWords,
         rawText: fullText.trim(),
       }
 
@@ -187,7 +186,6 @@ class OcrService {
           extractedAt: new Date().toISOString(),
         },
         lines,
-        words,
         rawText,
       }
 

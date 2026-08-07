@@ -26,7 +26,8 @@ import {
   LayoutTemplate,
   Link,
   CalendarDays,
-  Bell
+  Bell,
+  Ticket
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -81,6 +82,11 @@ export const sidebarData: SidebarData = {
           url: '/inbox',
           badge: '4',
           icon: Mail,
+        },
+        {
+          title: 'Vouchers',
+          url: '/vouchers',
+          icon: Ticket,
         },
         {
           title: 'Apps',

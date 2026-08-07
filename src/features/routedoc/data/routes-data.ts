@@ -49,6 +49,18 @@ export const ROUTES_DATA: RouteInfo[] = [
     priority: 0.7
   },
   {
+    path: '/vouchers',
+    name: 'Vouchers',
+    description: 'Vouchers listing and PDF document preview panel.',
+    category: 'General',
+    folder: 'vouchers',
+    file: 'app/(dashboard)/vouchers/page.tsx',
+    auth: 'Authenticated',
+    status: 'Active',
+    methods: ['PAGE'],
+    priority: 0.7
+  },
+  {
     path: '/apps',
     name: 'Apps',
     description: 'Browse, manage, and install application modules and tools in the integration workspace.',

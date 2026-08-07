@@ -45,11 +45,12 @@ import { NewEmail } from './components/emails/new-email'
 import { ContactManagerTab } from './components/tabs/contact-manager-tab'
 import { GroupManagerTab } from './components/tabs/group-manager-tab'
 import { AiChatPanel } from './components/panels/ai-chat-panel'
-import { DocViewerPanel } from './components/panels/doc-viewer-panel'
 import { MessageEmailSettings } from './components/panels/message-email-settings'
+import { HeaderActions } from './components/chat/header-actions'
 import CalendarTemplate from '@/features/calendartemplate'
 import KanbanTemplate from '@/features/kanbantemplate'
 import { emails as initialEmails, Email } from './data/emails'
+import { InvoiceMaker } from '../vouchers/components/invoice-maker'
 
 interface DirectoryChat {
   id: string
@@ -481,7 +482,41 @@ export default function MessageFeature() {
         ) : isKanbanOpen ? (
           <KanbanTemplate embedded onBack={() => setIsKanbanOpen(false)} />
         ) : isFileOpen ? (
-          <DocViewerPanel onBack={() => setIsFileOpen(false)} />
+          <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-background overflow-hidden animate-in fade-in duration-200 md:relative md:z-auto'>
+            {/* Header styled like other panels */}
+            <div className='flex flex-none shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3 select-none gap-3'>
+              <div className='flex min-w-0 items-center gap-3 flex-1'>
+                <button
+                  onClick={() => setIsFileOpen(false)}
+                  className='-ml-1 flex md:hidden h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+                  title='Close'
+                >
+                  <ArrowLeft className='h-5 w-5' />
+                </button>
+
+                <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-200/40 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-600 dark:border-indigo-800/40 dark:text-indigo-400'>
+                  <Plus className='h-4.5 w-4.5' />
+                </div>
+
+                <div className='min-w-0 flex-1'>
+                  <p className='truncate text-sm font-semibold text-foreground'>
+                    New Voucher Form
+                  </p>
+                  <p className='truncate text-xs text-muted-foreground'>
+                    Create, review and print digital vouchers.
+                  </p>
+                </div>
+              </div>
+
+              <HeaderActions
+                onDelete={() => setIsFileOpen(false)}
+              />
+            </div>
+
+            <div className='relative h-full min-h-0 w-full flex-1 overflow-hidden bg-background flex flex-col'>
+              <InvoiceMaker />
+            </div>
+          </div>
         ) : selectedDirectoryChat ? (
           selectedDirectoryChat.conversationId ? (
             <RealtimeChatView

@@ -24,6 +24,7 @@ import {
   ClipboardList,
   FileText,
   FolderOpen,
+  Plus,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useNotificationStore } from '@/stores/notification-store'
@@ -351,16 +352,16 @@ export function EmailList({
             <ClipboardList className='h-4 w-4' />
           </button>
 
-          {/* File Icon */}
+          {/* File Icon replaced with Plus for New Voucher Form */}
           <button
             onClick={onSelectFile}
             className={cn(
               'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-              isFileSelected && 'bg-background text-red-600 dark:text-red-400 shadow-sm border border-border/60 font-semibold'
+              isFileSelected && 'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
             )}
-            title='Document Specifications'
+            title='New Voucher Form'
           >
-            <FileText className='h-4 w-4' />
+            <Plus className='h-4 w-4' />
           </button>
         </div>
 
@@ -915,51 +916,6 @@ export function EmailList({
                         
                         <span className='pl-10 text-[10px] text-muted-foreground/80 font-medium block'>
                           July 30, 2026 - Aug 10, 2026
-                        </span>
-                      </div>
-                    </>
-                  )}
-
-                  {/* File card */}
-                  {!isCollapsed && onSelectFile && (
-                    <>
-                      {!isCollapsed && (
-                        <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
-                          <FileText className='h-3 w-3 shrink-0 text-red-500' />
-                          <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
-                            Files
-                          </span>
-                          <div className='h-px flex-1 bg-border' />
-                        </div>
-                      )}
-                      <div
-                        id='file-card'
-                        onClick={onSelectFile}
-                        className={[
-                          'group relative mx-3 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
-                          isFileSelected
-                            ? 'border-red-200/50 bg-red-500/10 dark:border-red-900/30 dark:bg-red-950/20'
-                            : 'border-transparent bg-background hover:bg-red-500/5 hover:border-red-200/30',
-                        ].join(' ')}
-                      >
-                        {isFileSelected && (
-                          <div className='absolute top-1 bottom-1 left-0 w-0.5 rounded-l-full bg-red-600' />
-                        )}
-                        <div className='flex items-center justify-between'>
-                          <div className='flex min-w-0 items-center gap-2'>
-                            <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-red-200/40 bg-gradient-to-br from-red-500/20 to-rose-500/20 text-red-600 dark:border-red-800/40 dark:text-red-400'>
-                              <FileText className='h-3.5 w-3.5' />
-                            </div>
-                            <span className='flex items-center gap-1.5 truncate text-sm font-semibold text-foreground'>
-                              demo.pdf                            </span>
-                          </div>
-                          <span className='ml-2 shrink-0 rounded-full bg-red-500/10 px-1.5 py-0.5 text-[9px] font-bold text-red-600 dark:text-red-400'>
-                            File
-                          </span>
-                        </div>
-                       
-                        <span className='pl-10 text-[10px] text-muted-foreground/80 font-medium block'>
-                          July 30, 2026 at 4:00 PM
                         </span>
                       </div>
                     </>

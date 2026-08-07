@@ -81,16 +81,6 @@ export const TextExtractorModal: React.FC<TextExtractorModalProps> = ({
             <span>→</span>
             <span className={stage === 'pdf_preview' ? 'font-semibold text-primary' : ''}>3. Send PDF</span>
           </div>
-
-          <Button
-            type='button'
-            variant='ghost'
-            size='icon'
-            onClick={onClose}
-            className='h-8 w-8 rounded-full'
-          >
-            <X className='h-4 w-4' />
-          </Button>
         </DialogHeader>
 
         {/* Modal Body Container */}

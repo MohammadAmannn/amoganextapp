@@ -44,7 +44,7 @@ export function useOcrExtractor() {
         setProgressText(statusText)
       })
       setOcrResult(result)
-      setEditedText(result.text)
+      setEditedText(JSON.stringify(result.jsonPayload, null, 2))
       toast.success('Text extracted successfully!')
     } catch (err: any) {
       toast.error('Failed to extract text from document')
@@ -70,7 +70,7 @@ export function useOcrExtractor() {
           setProgressText(statusText)
         })
         setOcrResult(result)
-        setEditedText(result.text)
+        setEditedText(JSON.stringify(result.jsonPayload, null, 2))
         toast.success(`Text re-extracted in ${newLang.toUpperCase()}`)
       } catch (err: any) {
         toast.error('Failed to re-extract text')

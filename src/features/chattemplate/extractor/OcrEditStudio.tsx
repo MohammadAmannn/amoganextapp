@@ -59,7 +59,7 @@ export const OcrEditStudio: React.FC<OcrEditStudioProps> = ({
     if (!editedText) return
     navigator.clipboard.writeText(editedText)
     setCopied(true)
-    toast.success('Extracted text copied to clipboard!')
+    toast.success('Extracted JSON copied to clipboard!')
     setTimeout(() => setCopied(false), 2000)
   }
 
@@ -114,7 +114,7 @@ export const OcrEditStudio: React.FC<OcrEditStudioProps> = ({
             className='gap-1.5'
           >
             {copied ? <Check className='h-3.5 w-3.5 text-emerald-500' /> : <Copy className='h-3.5 w-3.5' />}
-            <span>{copied ? 'Copied' : 'Copy Text'}</span>
+            <span>{copied ? 'Copied' : 'Copy JSON'}</span>
           </Button>
 
           <Button
@@ -154,17 +154,17 @@ export const OcrEditStudio: React.FC<OcrEditStudioProps> = ({
         <div className='flex flex-col flex-1 min-h-0 p-4 bg-background relative'>
           <div className='flex items-center justify-between mb-2 shrink-0'>
             <label className='text-xs font-semibold text-foreground flex items-center gap-1.5'>
-              <Sparkles className='h-3.5 w-3.5 text-primary' /> Extracted Readable Text
+              <Sparkles className='h-3.5 w-3.5 text-primary' /> Extracted JSON Preview
             </label>
             <span className='text-[10px] text-muted-foreground'>
-              {editedText.length} characters • {editedText.split(/\s+/).filter(Boolean).length} words
+              {editedText.length} characters
             </span>
           </div>
 
           {isProcessing ? (
             <div className='flex-1 flex flex-col items-center justify-center p-6 text-center bg-muted/20 rounded-xl border border-dashed'>
               <Loader2 className='h-8 w-8 text-primary animate-spin mb-3' />
-              <p className='text-sm font-medium text-foreground'>{progressText || 'Extracting text...'}</p>
+              <p className='text-sm font-medium text-foreground'>{progressText || 'Extracting JSON...'}</p>
               <div className='w-48 bg-muted rounded-full h-1.5 mt-3 overflow-hidden'>
                 <div
                   className='bg-primary h-full transition-all duration-300'
@@ -176,7 +176,7 @@ export const OcrEditStudio: React.FC<OcrEditStudioProps> = ({
             <textarea
               value={editedText}
               onChange={(e) => onEditedTextChange(e.target.value)}
-              placeholder='Extracted text will appear here. You can edit or format it before creating the PDF...'
+              placeholder='Extracted JSON payload will appear here...'
               className='flex-1 w-full resize-none rounded-xl border border-input bg-muted/20 p-3.5 text-sm font-mono leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 overflow-y-auto'
             />
           )}

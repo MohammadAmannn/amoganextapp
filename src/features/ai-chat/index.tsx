@@ -136,11 +136,23 @@ Instructions:
 
         if (activeTool === 'ui-render') {
           try {
-            // Strip markdown block format if present
             let cleanedText = data.text.trim();
-            if (cleanedText.startsWith('```')) {
-              cleanedText = cleanedText.replace(/^```[a-zA-Z]*\n/, '').replace(/\n```$/, '');
+            
+            // Extract from code blocks if present
+            if (cleanedText.includes('```')) {
+              const match = cleanedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+              if (match && match[1]) {
+                cleanedText = match[1].trim();
+              }
             }
+            
+            // Extract first '{' to last '}' to skip any conversational text
+            const firstBrace = cleanedText.indexOf('{');
+            const lastBrace = cleanedText.lastIndexOf('}');
+            if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+              cleanedText = cleanedText.substring(firstBrace, lastBrace + 1);
+            }
+
             const schema = JSON.parse(cleanedText)
             setUiSchema(schema)
             setShowSchemaEditor(true)
@@ -156,7 +168,7 @@ Instructions:
 
             return
           } catch (err) {
-            console.error('Invalid JSON:', data.text)
+            console.error('Invalid JSON parsing failed:', err, data.text)
 
             setMessages((prev) => [
               ...prev,

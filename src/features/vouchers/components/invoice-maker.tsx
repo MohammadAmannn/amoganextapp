@@ -75,6 +75,7 @@ export function InvoiceMaker() {
   const [error, setError] = useState<string | null>(null)
   const [savedReviewData, setSavedReviewData] = useState<any>(null)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [fileUrl, setFileUrl] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     const saved = window.localStorage.getItem('voucher-review-json')
@@ -101,6 +102,12 @@ export function InvoiceMaker() {
     if (!file) return
     setUploadedFile(file)
     setFileName(file.name)
+
+    try {
+      const url = URL.createObjectURL(file)
+      setFileUrl(url)
+    } catch { /* Ignore */ }
+
     setError(null)
     setLoading(true)
     setProgressPct(10)
@@ -442,8 +449,8 @@ export function InvoiceMaker() {
       {tab === 'pdf' && (
         <ReviewPanel
           fileName={fileName || 'invoice.pdf'}
+          fileUrl={fileUrl}
           editedJson={savedReviewData || editedJson || initialInvoice}
-          onBackToEdit={() => setTab('review')}
         />
       )}
     </div>

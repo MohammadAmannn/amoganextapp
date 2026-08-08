@@ -310,7 +310,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = memo(({
         {/* Left / Center: View Mode Toggle */}
         <div className="flex items-center rounded-xl border border-border bg-muted/40 p-1">
           {([
-            ['invoice', FileText, 'Invoice Preview'],
+            ['invoice', FileText, 'Voucher Preview'],
             ['matches', LayoutList, 'Field Matches'],
             ['json', Code, 'JSON'],
           ] as const).map(([key, Icon, label]) => (
@@ -346,13 +346,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = memo(({
       <div className="flex-1 overflow-y-auto p-4 sm:p-8">
         {view === 'invoice' && (
           <div className="w-full flex-1 flex flex-col min-h-0">
-            {fileUrl ? (
-              <div className="w-full h-[650px] min-h-[500px] rounded-2xl border border-border shadow-md overflow-hidden bg-card flex flex-col relative">
-                <ReactDocViewerWrapper documents={[{ uri: fileUrl, fileName: fileName || 'document.pdf' }]} />
-              </div>
-            ) : (
-              <InvoiceDocumentPreview data={editedJson} fileName={fileName} />
-            )}
+            <InvoiceDocumentPreview data={editedJson} fileName={fileName} />
           </div>
         )}
 

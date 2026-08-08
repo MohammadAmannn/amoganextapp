@@ -251,7 +251,7 @@ export const DynamicJsonForm: React.FC<DynamicJsonFormProps> = memo(({
           className="gap-2 font-bold px-6 shadow-sm"
         >
           <Save className="size-4" />
-          <span>{isSaving ? 'Saving...' : 'Save & Open Review'}</span>
+          <span>{isSaving ? 'Saving...' : 'Save to JSON'}</span>
         </Button>
       </div>
     </div>

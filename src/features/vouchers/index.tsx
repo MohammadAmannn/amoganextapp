@@ -43,6 +43,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Search as HeaderSearch } from '@/components/search'
 import { formatDistanceToNow } from 'date-fns'
 
 import { AppHeader } from '@/components/layout/app-header'
@@ -168,6 +169,7 @@ export default function VouchersFeature() {
   const [searchQuery, setSearchQuery] = useState('')
   const [mode, setMode] = useState<'inbox' | 'done'>('inbox')
   const [activeTab, setActiveTab] = useState('inbox')
+  const [pageTab, setPageTab] = useState<'purchase' | 'analytics'>('purchase')
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isComposing, setIsComposing] = useState(false)
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -679,41 +681,63 @@ export default function VouchersFeature() {
     >
       {/* Top Header & Search */}
       <div className='shrink-0 border-b border-border bg-background px-3 pt-2.5 pb-2 flex flex-col gap-2 select-none'>
+        {/* 1. Header: Voucher Title + Top-Right Search & Bell Icons */}
         <div className='flex items-center justify-between'>
           {!isSidebarCollapsed && (
-            <div className='flex items-center gap-2'>
-              <Ticket className='h-5 w-5 text-emerald-600 dark:text-emerald-400' />
-              <h1 className='text-base font-bold tracking-tight text-foreground sm:text-lg'>
-                Vouchers & Hub
-              </h1>
-            </div>
+            <h1 className='text-xl font-black tracking-tight text-foreground'>
+              Voucher
+            </h1>
           )}
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-1 ml-auto'>
+            <HeaderSearch iconOnly />
             <Button
               variant='ghost'
               size='icon'
-              onClick={() =>
-                setIsSidebarCollapsed((collapsed) => {
-                  const next = !collapsed
-                  localStorage.setItem(
-                    'vouchers_sidebar_collapsed',
-                    String(next)
-                  )
-                  return next
-                })
-              }
-              className={cn(
-                'h-8 w-8 text-muted-foreground hover:text-foreground',
-                isSidebarCollapsed && 'mx-auto'
-              )}
-              title='Toggle Sidebar'
+              className='relative size-8 shrink-0 cursor-pointer'
+              aria-label='Notifications'
+              onClick={() => router.push('/notification')}
             >
-              <PanelLeft className='h-4 w-4' />
+              <Bell className='size-4' />
+              {unreadCount > 0 && (
+                <span className='absolute -top-0.5 -right-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-medium text-white shadow-xs'>
+                  {unreadCount > 5 ? '5+' : unreadCount}
+                </span>
+              )}
             </Button>
           </div>
         </div>
 
-        {/* Toolbar Icons (Email Settings, Chat, AI Chat, Calendar, Tasks, File) */}
+        {/* 2. Line Tabs: Purchase & Analytics (placed at left below Voucher title) */}
+        {!isSidebarCollapsed && (
+          <div className='flex items-center gap-6 border-b border-border/60 px-1 pt-1 pb-1 text-xs font-bold'>
+            <button
+              type='button'
+              onClick={() => setPageTab('purchase')}
+              className={cn(
+                'pb-1 border-b-2 transition-all cursor-pointer select-none',
+                pageTab === 'purchase'
+                  ? 'border-primary text-primary font-bold'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              )}
+            >
+              Purchase
+            </button>
+            <button
+              type='button'
+              onClick={() => setPageTab('analytics')}
+              className={cn(
+                'pb-1 border-b-2 transition-all cursor-pointer select-none',
+                pageTab === 'analytics'
+                  ? 'border-primary text-primary font-bold'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              )}
+            >
+              Analytics
+            </button>
+          </div>
+        )}
+
+        {/* 3. Toolbar Icons (Email Settings, Chat, AI Chat, Calendar, Tasks, File) WITHOUT + icon */}
         {!isSidebarCollapsed && (
           <div className='rounded-xl border border-border/80 bg-muted/10 p-1 flex items-center justify-between gap-1'>
             {/* Email Settings */}
@@ -799,7 +823,7 @@ export default function VouchersFeature() {
               <ClipboardList className='h-4 w-4' />
             </button>
 
-            {/* New Voucher Icon (+ icon) */}
+            {/* Voucher Document Icon (FileText icon, replaces + icon) */}
             <button
               onClick={() => {
                 resetAllSelections()
@@ -810,9 +834,9 @@ export default function VouchersFeature() {
                 isInvoiceMakerOpen &&
                   'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
               )}
-              title='New Voucher Form'
+              title='Voucher Document Form'
             >
-              <Plus className='h-4 w-4' />
+              <FileText className='h-4 w-4' />
             </button>
           </div>
         )}
@@ -1164,7 +1188,7 @@ export default function VouchersFeature() {
 
               <div className='min-w-0 flex-1'>
                 <p className='truncate text-sm font-semibold text-foreground'>
-                  New Voucher Form
+                  New Voucher
                 </p>
                 <p className='truncate text-xs text-muted-foreground'>
                   Create, review and print digital vouchers.
@@ -1284,6 +1308,7 @@ export default function VouchersFeature() {
 
   return (
     <>
+      {/* Mobile-only global top header */}
       <div
         className={cn(
           'md:hidden',
@@ -1298,106 +1323,121 @@ export default function VouchersFeature() {
             'hidden'
         )}
       >
-        <AppHeader title='Vouchers & Messages' />
+        <AppHeader title="Voucher" />
       </div>
 
       <Main
         fixed
-        className='flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background p-0 sm:px-4 sm:py-0'
+        className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background p-0 sm:px-4 sm:py-0"
       >
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className='flex h-full min-h-0 flex-1 flex-col overflow-hidden'
-        >
-          {isComposing ? (
-            <div className='mt-0 flex h-full flex-grow flex-col overflow-hidden bg-background'>
-              <NewEmail
-                onCancel={() => setIsComposing(false)}
-                onSend={(emailData) => {
-                  toast.success('Message sent successfully!')
-                  const newEmail: Email = {
-                    id: String(Date.now()),
-                    from: undefined,
-                    name: 'Me',
-                    email: 'user@example.com',
-                    replyTo: 'user@example.com',
-                    subject: emailData.subject || '(No Subject)',
-                    preview: emailData.body
-                      ? emailData.body.replace(/<[^>]*>/g, '').substring(0, 100)
-                      : '(No Content)',
-                    body: emailData.body || '',
-                    date: new Date(),
-                    read: true,
-                    labels: ['sent'],
-                    avatarInitials: 'ME',
-                    done: true,
-                  }
-                  setEmails((prev) => [newEmail, ...prev])
-                  setIsComposing(false)
-                }}
-                onSaveDraft={() => {
-                  toast.success('Draft saved!')
-                  setIsComposing(false)
-                }}
-              />
+        {pageTab === 'purchase' ? (
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
+          >
+            {isComposing ? (
+              <div className="mt-0 flex h-full flex-grow flex-col overflow-hidden bg-background">
+                <NewEmail
+                  onCancel={() => setIsComposing(false)}
+                  onSend={(emailData) => {
+                    toast.success('Message sent successfully!')
+                    const newEmail: Email = {
+                      id: String(Date.now()),
+                      from: undefined,
+                      name: 'Me',
+                      email: 'user@example.com',
+                      replyTo: 'user@example.com',
+                      subject: emailData.subject || '(No Subject)',
+                      preview: emailData.body
+                        ? emailData.body.replace(/<[^>]*>/g, '').substring(0, 100)
+                        : '(No Content)',
+                      body: emailData.body || '',
+                      date: new Date(),
+                      read: true,
+                      labels: ['sent'],
+                      avatarInitials: 'ME',
+                      done: true,
+                    }
+                    setEmails((prev) => [newEmail, ...prev])
+                    setIsComposing(false)
+                  }}
+                  onSaveDraft={() => {
+                    toast.success('Draft saved!')
+                    setIsComposing(false)
+                  }}
+                />
+              </div>
+            ) : (
+              <>
+                <TabsContent
+                  value="inbox"
+                  className="mt-0 flex h-full min-h-0 flex-1 flex-row overflow-hidden bg-background focus-visible:outline-none"
+                >
+                  <div className="flex h-full min-h-0 w-full flex-1 flex-row overflow-hidden">
+                    {renderSidebarContent()}
+                    {renderRightPanelContent()}
+                  </div>
+                </TabsContent>
+
+                <TabsContent
+                  value="send"
+                  className="mt-0 flex h-full min-h-0 flex-1 flex-row overflow-hidden bg-background focus-visible:outline-none"
+                >
+                  <div className="flex h-full min-h-0 w-full flex-1 flex-row overflow-hidden">
+                    {renderSidebarContent()}
+                    {renderRightPanelContent()}
+                  </div>
+                </TabsContent>
+
+                <TabsContent
+                  value="folder"
+                  className="mt-0 flex flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8"
+                >
+                  <div className="w-full max-w-3xl mx-auto">
+                    <LinksTab />
+                  </div>
+                </TabsContent>
+
+                <TabsContent
+                  value="contact"
+                  className="mt-0 flex min-h-0 flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8"
+                >
+                  <ContactManagerTab
+                    contacts={contacts}
+                    onRefresh={fetchContactsAndGroups}
+                    onSelectContact={handleSelectContact}
+                  />
+                </TabsContent>
+
+                <TabsContent
+                  value="groups"
+                  className="mt-0 flex min-h-0 flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8"
+                >
+                  <GroupManagerTab
+                    groups={groups}
+                    contacts={contacts}
+                    onRefresh={fetchContactsAndGroups}
+                    onSelectGroup={handleSelectGroup}
+                  />
+                </TabsContent>
+              </>
+            )}
+          </Tabs>
+        ) : (
+          <div className="flex h-full min-h-0 flex-1 flex-row overflow-hidden">
+            {renderSidebarContent()}
+            <div className="flex h-full min-h-0 flex-1 flex-col items-center justify-center p-8 text-center bg-background">
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4">
+                <Sparkles className="size-7" />
+              </div>
+              <h3 className="text-lg font-extrabold text-foreground">Analytics Coming Soon</h3>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground max-w-sm">
+                Detailed voucher performance metrics, spending insights, and analytics dashboard will be available here soon.
+              </p>
             </div>
-          ) : (
-            <>
-              <TabsContent
-                value='inbox'
-                className='mt-0 flex h-full min-h-0 flex-1 flex-row overflow-hidden bg-background focus-visible:outline-none'
-              >
-                <div className='flex h-full min-h-0 w-full flex-1 flex-row overflow-hidden'>
-                  {renderSidebarContent()}
-                  {renderRightPanelContent()}
-                </div>
-              </TabsContent>
-
-              <TabsContent
-                value='send'
-                className='mt-0 flex h-full min-h-0 flex-1 flex-row overflow-hidden bg-background focus-visible:outline-none'
-              >
-                <div className='flex h-full min-h-0 w-full flex-1 flex-row overflow-hidden'>
-                  {renderSidebarContent()}
-                  {renderRightPanelContent()}
-                </div>
-              </TabsContent>
-
-              <TabsContent
-                value='folder'
-                className='mt-0 flex flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8'
-              >
-                <div className='w-full max-w-3xl mx-auto'>
-                  <LinksTab />
-                </div>
-              </TabsContent>
-
-              <TabsContent
-                value='contact'
-                className='mt-0 flex min-h-0 flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8'
-              >
-                <ContactManagerTab
-                  contacts={contacts}
-                  onRefresh={fetchContactsAndGroups}
-                  onSelectContact={handleSelectContact}
-                />
-              </TabsContent>
-
-              <TabsContent
-                value='groups'
-                className='mt-0 flex min-h-0 flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8'
-              >
-                <GroupManagerTab
-                  groups={groups}
-                  contacts={contacts}
-                  onRefresh={fetchContactsAndGroups}
-                  onSelectGroup={handleSelectGroup}
-                />
-              </TabsContent>
-            </>
-          )}
-        </Tabs>
+          </div>
+        )}
       </Main>
     </>
   )

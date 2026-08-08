@@ -500,7 +500,7 @@ export default function MessageFeature() {
 
                 <div className='min-w-0 flex-1'>
                   <p className='truncate text-sm font-semibold text-foreground'>
-                    New Voucher Form
+                    New Voucher 
                   </p>
                   <p className='truncate text-xs text-muted-foreground'>
                     Create, review and print digital vouchers.

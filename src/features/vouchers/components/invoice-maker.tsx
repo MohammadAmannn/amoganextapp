@@ -220,7 +220,7 @@ export function InvoiceMaker() {
         {([
           ['select', '1', 'Upload Document'],
           ['review', '2', 'Edit Fields'],
-          ['pdf', '3', 'Invoice Preview'],
+          ['pdf', '3', 'Voucher Preview'],
         ] as const).map(([key, number, label]) => (
           <button
             key={key}
@@ -244,7 +244,7 @@ export function InvoiceMaker() {
         <section className="w-full p-4 sm:p-8">
           <div className="mb-8">
             <p className="text-xs font-bold uppercase tracking-widest text-primary">Document Processing</p>
-            <h2 className="mt-2 text-2xl font-extrabold tracking-tight">Upload an Invoice or Document</h2>
+            <h2 className="mt-2 text-2xl font-extrabold tracking-tight">Upload Document</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Upload any PDF or image. OCR extracts the text, then AI parses it into structured invoice fields you can edit.
             </p>
@@ -280,14 +280,14 @@ export function InvoiceMaker() {
               <div className="mb-6 flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <FileText className="size-5" />
               </div>
-              <h3 className="text-base font-bold">Sample Invoice</h3>
-              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Start with a pre-filled Northstar Technology invoice as a demo.</p>
+              <h3 className="text-base font-bold">Use Template</h3>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Start with a pre-filled voucher template as a demo.</p>
               <span className="mt-auto pt-4 text-xs font-bold text-primary">
-                Use sample <ArrowRight className="ml-1 inline size-3" />
+                Use template <ArrowRight className="ml-1 inline size-3" />
               </span>
             </button>
 
-            {/* Continue Saved Button */}
+            {/* Make Template Button */}
             <button
               onClick={() => {
                 const saved = savedReviewData || initialInvoice
@@ -302,10 +302,10 @@ export function InvoiceMaker() {
               <div className="mb-6 flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <ScanLine className="size-5" />
               </div>
-              <h3 className="text-base font-bold">Continue Saved</h3>
-              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Resume your last saved invoice from browser storage.</p>
+              <h3 className="text-base font-bold">Make Template</h3>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Create or resume your custom voucher template.</p>
               <span className="mt-auto pt-4 text-xs font-bold text-primary">
-                Continue <ArrowRight className="ml-1 inline size-3" />
+                Make template <ArrowRight className="ml-1 inline size-3" />
               </span>
             </button>
           </div>

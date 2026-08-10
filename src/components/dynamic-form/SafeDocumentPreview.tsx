@@ -107,7 +107,7 @@ export function SafeDocumentPreview({
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs sm:text-sm font-bold text-foreground">
+            <p className="truncate text-xs sm:text-sm font-bold text-foreground max-w-[120px] xs:max-w-[180px] sm:max-w-xs">
               {cleanName}
             </p>
           </div>
@@ -115,28 +115,28 @@ export function SafeDocumentPreview({
 
         {/* View Mode Toggle if JSON exists */}
         {editedJson && fileUrl && (
-          <div className="hidden sm:flex items-center rounded-lg border border-border bg-muted/40 p-0.5 shrink-0">
+          <div className="flex items-center rounded-lg border border-border bg-muted/40 p-0.5 shrink-0">
             <button
               type="button"
               onClick={() => setViewMode('document')}
-              className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer ${
+              className={`px-2 py-1 text-[10px] sm:text-[11px] font-bold rounded-md transition-all cursor-pointer ${
                 viewMode === 'document'
                   ? 'bg-background text-primary shadow-2xs'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Original Doc
+              Doc
             </button>
             <button
               type="button"
               onClick={() => setViewMode('structured')}
-              className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer ${
+              className={`px-2 py-1 text-[10px] sm:text-[11px] font-bold rounded-md transition-all cursor-pointer ${
                 viewMode === 'structured'
                   ? 'bg-background text-primary shadow-2xs'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Voucher View
+              Voucher
             </button>
           </div>
         )}

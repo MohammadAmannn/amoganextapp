@@ -1208,12 +1208,14 @@ export default function VouchersFeature() {
 
         </div>
       ) : selectedVoucher ? (
-        <SafeDocumentPreview
-          fileName={selectedVoucher.fileName}
-          fileUrl={selectedVoucher.pdfUrl || selectedVoucher.originalFileUrl}
-          editedJson={selectedVoucher.editedJson}
-          onClose={() => setSelectedVoucher(null)}
-        />
+        <div className="fixed inset-0 z-50 flex flex-col w-full h-full h-[100dvh] bg-background md:relative md:z-auto md:h-full">
+          <SafeDocumentPreview
+            fileName={selectedVoucher.fileName}
+            fileUrl={selectedVoucher.pdfUrl || selectedVoucher.originalFileUrl}
+            editedJson={selectedVoucher.editedJson}
+            onClose={() => setSelectedVoucher(null)}
+          />
+        </div>
       ) : selectedDirectoryChat ? (
 
         selectedDirectoryChat.conversationId ? (

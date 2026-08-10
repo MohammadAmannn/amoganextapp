@@ -455,3 +455,32 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
   - Step 3 (Voucher Preview) displays the original uploaded document in exact format matching user screenshot, with seamless toggle to view updated structured fields.
   - Added Eye (preview) and Download action buttons directly to the file card in Step 2 (Edit Fields tab).
   - Clicking the `+` icon re-keys `InvoiceMaker` to start a fresh upload workflow.
+
+---
+
+## 39. Unified Right-Window Document Viewer, Supabase Storage Integration & Bulletproof PDF Engine
+* **Unified Right-Window Document Viewer (`SafeDocumentPreview.tsx` & `DocumentViewer.tsx`)**:
+  - Built a Chat-Template style Right-Window Document Viewer powered by `@cyntler/react-doc-viewer` and custom document renderers.
+  - Standardized top header bar layout:
+    - **Top Left**: `[X]` Close cross button (returns user to active view), document icon, and responsive filename (`Invoice_2026-08-10.pdf`).
+    - **Top Middle**: Mode switcher tabs (*Doc* / *Voucher* toggle when JSON/edited data exists).
+    - **Top Right**: Download button, Zoom Out (`-`), percentage indicator (`100%`), Zoom In (`+`), Rotate (`90°`), and Fullscreen (`Maximize/Minimize`) controls.
+  - Configured `DocumentViewer` with `hideHeader={true}` and CSS rules (`#header-bar`, `#pdf-controls`) to eliminate duplicate internal headers and white icon boxes, resulting in a single clean toolbar.
+* **Everywhere Integration in Voucher Feature (`invoice-maker.tsx` & `vouchers/index.tsx`)**:
+  - **Step 1 (Upload Tab)**: Clicking the **Eye icon** on an uploaded file card opens the uploaded file in the Right-Window Doc Viewer with `[X]` close button.
+  - **Step 2 (Edit Fields Tab)**: Header file info card features an **Eye icon** button that opens the document preview in the Right-Window Doc Viewer, allowing users to inspect the document while editing fields.
+  - **Step 3 (Voucher Preview Tab)**: Renders the full Document Viewer experience with *Original Doc* / *Voucher View* toggle and `[X]` close button returning to Step 2.
+  - **Main Vouchers List**: Selecting any voucher card from the list displays it in the Right-Window Doc Viewer.
+* **Supabase Storage Upload, Caching, & Fetching Architecture**:
+  - **Original File Upload**: In `invoice-maker.tsx`, uploading a document calls `uploadVoucherFile(file, 'originals')` in `voucher-repository.ts`. Uploads the file to Supabase Storage bucket `vouchers` under path `vouchers/${userId}/originals/${cleanFileName}`.
+  - **Local Blob URL Preview**: Immediately creates a local blob URL (`URL.createObjectURL(file)`) so document preview renders instantly with zero latency before storage upload finishes.
+  - **Edited PDF Upload & Storage**: When user saves or downloads a voucher, `uploadVoucherBlob(pdfBlob, pdfFileName)` uploads the generated PDF blob to Supabase Storage under `vouchers/${userId}/edited/${pdfFileName}` and saves the public URL to PostgreSQL database columns `original_file_url` / `edited_file_url`.
+  - **Supabase Storage Fetching**: On page load, `GET /api/vouchers` fetches all saved voucher records from PostgreSQL, including `original_file_url` and `edited_file_url` public Supabase Storage URIs. Passing these URLs to `SafeDocumentPreview` renders the stored document directly via `@cyntler/react-doc-viewer`.
+* **Bulletproof 1-Click Vector PDF Engine (`ReviewPanel.tsx`)**:
+  - Replaced HTML-to-Canvas rendering with a native vector PDF generator using `jsPDF`.
+  - Bypasses all browser CSS color parser crashes (`oklch(...)`/`lab(...)` in Tailwind CSS v4) and Tainted Canvas security errors (`canvas.toDataURL()`).
+  - Renders exact voucher view (headers, company logo badge, bill to info, line item table with alternating rows, right-aligned totals, notes, and payment terms) directly as a binary A4 vector PDF in ~5ms.
+  - Triggers browser download in 1 click via `downloadFileFromUrl(blobUrl, pdfFileName)`.
+* **Full-Screen Mobile UI**:
+  - Configured document preview containers to use `fixed inset-0 z-[100] h-[100dvh] w-full bg-background` on mobile screens (`<md`), providing a full-screen mobile experience with top bar `[X]` close icon and zero background bleed.
+  - Preserves standard desktop side-by-side right window view on desktop (`md:` breakpoint).

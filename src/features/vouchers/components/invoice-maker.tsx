@@ -536,7 +536,7 @@ export function InvoiceMaker() {
 
       {/* STEP 3: VOUCHER PREVIEW */}
       {tab === 'pdf' && (
-        <div className="flex-1 min-h-0 flex flex-col overflow-hidden w-full h-full">
+        <div className="fixed inset-0 z-50 flex flex-col w-full h-full h-[100dvh] bg-background overflow-hidden animate-in fade-in duration-200 md:relative md:z-auto md:h-full">
           <SafeDocumentPreview
             fileName={displayFileName || fileName || 'Invoice_VCH_2026.pdf'}
             fileUrl={originalFileUrl}
@@ -548,7 +548,7 @@ export function InvoiceMaker() {
 
       {/* Right Window Doc Viewer View (Triggered by Eye icon in Step 1 Upload Tab or Step 2 Edit Tab) */}
       {showOriginalPreview && (
-        <div className="absolute inset-0 z-50 flex flex-col w-full h-full bg-background overflow-hidden animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex flex-col w-full h-full h-[100dvh] bg-background overflow-hidden animate-in fade-in duration-200 md:absolute md:z-50 md:h-full">
           <SafeDocumentPreview
             fileName={displayFileName || fileName || 'document.pdf'}
             fileUrl={originalFileUrl}

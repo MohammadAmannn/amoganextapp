@@ -154,6 +154,17 @@
   box-sizing: border-box !important;
 }
 
+/* Hide default internal react-doc-viewer header bar and floating control boxes to prevent duplicate UI */
+.doc-viewer-wrapper #header-bar,
+.doc-viewer-wrapper #react-doc-viewer-header,
+.doc-viewer-wrapper #pdf-controls,
+.doc-viewer-wrapper #pdf-controls-bar,
+.doc-viewer-wrapper [id*="pdf-controls"],
+.doc-viewer-wrapper [class*="pdf-controls"],
+.doc-viewer-wrapper [class*="pdfControls"] {
+  display: none !important;
+}
+
 /* Force PDF viewer container to expand, center pages, and scroll internally */
 .doc-viewer-wrapper #pdf-renderer {
   width: 100% !important;

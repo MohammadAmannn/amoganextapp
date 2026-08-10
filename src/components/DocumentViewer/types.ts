@@ -9,4 +9,5 @@ export interface DocumentViewerProps {
   onBack?: () => void
   fullscreen?: boolean
   messageId?: string
+  hideHeader?: boolean
 }

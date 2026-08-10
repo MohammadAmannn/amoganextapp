@@ -33,6 +33,7 @@ export function DocumentViewer({
   onBack,
   fullscreen = false,
   messageId,
+  hideHeader = false,
 }: DocumentViewerProps) {
   const extension = (propExtension || getFileExtension(fileName, fileUrl)).toLowerCase()
   const { downloadFile, isDownloading } = useDownloadFile()
@@ -207,24 +208,28 @@ export function DocumentViewer({
         fullscreen ? 'h-[100dvh]' : 'h-full'
       }`}
     >
-      <DocumentViewerHeader
-        fileName={fileName}
-        fileUrl={fileUrl}
-        allowDownload={allowDownload}
-        onClose={onClose}
-        onBack={onBack}
-        messageId={messageId}
-      />
+      {!hideHeader && (
+        <DocumentViewerHeader
+          fileName={fileName}
+          fileUrl={fileUrl}
+          allowDownload={allowDownload}
+          onClose={onClose}
+          onBack={onBack}
+          messageId={messageId}
+        />
+      )}
       <div className="flex-grow flex flex-col overflow-hidden bg-zinc-950/5 dark:bg-zinc-900/5 relative w-full min-h-0">
         {renderContent()}
       </div>
-      <div className="flex justify-end p-2 bg-muted/10 border-t border-border select-none shrink-0">
-        <DocumentViewerActions
-          fileUrl={fileUrl}
-          allowPrint={allowPrint && extension === 'pdf'}
-          messageId={messageId}
-        />
-      </div>
+      {!hideHeader && (
+        <div className="flex justify-end p-2 bg-muted/10 border-t border-border select-none shrink-0">
+          <DocumentViewerActions
+            fileUrl={fileUrl}
+            allowPrint={allowPrint && extension === 'pdf'}
+            messageId={messageId}
+          />
+        </div>
+      )}
     </div>
   )
 }

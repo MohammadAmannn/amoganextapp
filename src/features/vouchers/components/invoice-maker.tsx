@@ -223,7 +223,7 @@ export function InvoiceMaker() {
     setSaving(true)
     setEditedJson(finalJson)
     setSavedReviewData(finalJson)
-    setIsSaved(true)
+    setIsSaved(true)                  
 
     try {
       const vendorName = finalJson.vendor || finalJson.businessName || finalJson.company || displayFileName || 'Voucher Document'
@@ -275,7 +275,7 @@ export function InvoiceMaker() {
   }
 
   return (
-    <div className={`w-full flex-1 flex flex-col max-w-5xl mx-auto ${tab === 'pdf' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+    <div className={`relative h-full w-full flex-1 flex flex-col max-w-5xl mx-auto ${tab === 'pdf' || showOriginalPreview ? 'overflow-hidden' : 'overflow-y-auto'}`}>
 
       {/* Step Navigation Bar */}
       <nav className="sticky top-0 z-10 flex border-b border-border bg-background/95 backdrop-blur px-4 sm:px-8" aria-label="Invoice steps">
@@ -416,17 +416,11 @@ export function InvoiceMaker() {
 
                 {/* Card Actions: Eye (preview original) | Download (download original) | Edit Fields */}
                 <div className="flex items-center gap-2 shrink-0">
-                  {/* Eye — preview original uploaded file */}
+                  {/* Eye — preview document with doc viewer */}
                   <button
                     type="button"
-                    onClick={() => {
-                      if (originalFileUrl) {
-                        setShowOriginalPreview(true)
-                      } else {
-                        toast.info('Upload a file first to preview it.')
-                      }
-                    }}
-                    title="Preview original file"
+                    onClick={() => setShowOriginalPreview(true)}
+                    title="Preview document in doc viewer"
                     className="flex size-9 items-center justify-center rounded-xl border border-border bg-muted/40 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all cursor-pointer"
                   >
                     <Eye className="size-4" />
@@ -500,12 +494,8 @@ export function InvoiceMaker() {
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
-                    onClick={() => {
-                      if (originalFileUrl) {
-                        setShowOriginalPreview(true)
-                      }
-                    }}
-                    title="Preview original file"
+                    onClick={() => setShowOriginalPreview(true)}
+                    title="Preview document in doc viewer"
                     className="flex size-9 items-center justify-center rounded-xl border border-border bg-muted/40 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all cursor-pointer"
                   >
                     <Eye className="size-4" />
@@ -526,7 +516,10 @@ export function InvoiceMaker() {
               <DynamicJsonForm
                 jsonData={ocrJson || editedJson}
                 editedJson={editedJson}
-                onChange={(newJson) => setEditedJson(newJson)}
+                onChange={(newJson) => {
+                  setEditedJson(newJson)
+                  setSavedReviewData(newJson)
+                }}
                 onSave={handleSaveForm}
                 isSaving={saving}
               />
@@ -543,31 +536,27 @@ export function InvoiceMaker() {
 
       {/* STEP 3: VOUCHER PREVIEW */}
       {tab === 'pdf' && (
-        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-          <ReviewPanel
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden w-full h-full">
+          <SafeDocumentPreview
             fileName={displayFileName || fileName || 'Invoice_VCH_2026.pdf'}
             fileUrl={originalFileUrl}
-            editedJson={savedReviewData || editedJson || initialInvoice}
+            editedJson={editedJson || savedReviewData || initialInvoice}
+            onClose={() => setTab('review')}
           />
         </div>
       )}
 
-
-
-
-      {/* Original File Preview Dialog (Eye icon in Step 1) */}
-      {showOriginalPreview && originalFileUrl && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 animate-in fade-in duration-200">
-          <div className="relative flex flex-col w-full max-w-5xl h-[85vh] rounded-2xl border border-border bg-background shadow-2xl overflow-hidden">
-            <SafeDocumentPreview
-              fileName={displayFileName || fileName || 'document.pdf'}
-              fileUrl={originalFileUrl}
-              onClose={() => setShowOriginalPreview(false)}
-            />
-          </div>
+      {/* Right Window Doc Viewer View (Triggered by Eye icon in Step 1 Upload Tab or Step 2 Edit Tab) */}
+      {showOriginalPreview && (
+        <div className="absolute inset-0 z-50 flex flex-col w-full h-full bg-background overflow-hidden animate-in fade-in duration-200">
+          <SafeDocumentPreview
+            fileName={displayFileName || fileName || 'document.pdf'}
+            fileUrl={originalFileUrl}
+            editedJson={editedJson}
+            onClose={() => setShowOriginalPreview(false)}
+          />
         </div>
       )}
-
     </div>
   )
 }

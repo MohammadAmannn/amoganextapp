@@ -9,12 +9,23 @@ import {
   Maximize2,
   Minimize2,
   FileText,
-  FileCode,
   RotateCw,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import dynamic from 'next/dynamic'
 import { ReviewPanel } from './ReviewPanel'
 
+const DocumentViewer = dynamic(
+  () => import('@/components/DocumentViewer/DocumentViewer').then((m) => m.DocumentViewer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex flex-col items-center justify-center h-full w-full py-16">
+        <div className="size-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <span className="mt-3 text-xs font-semibold text-muted-foreground">Loading document viewer...</span>
+      </div>
+    ),
+  }
+)
 
 interface SafeDocumentPreviewProps {
   fileName?: string
@@ -33,7 +44,7 @@ export function SafeDocumentPreview({
   const [rotation, setRotation] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [viewMode, setViewMode] = useState<'document' | 'structured'>(
-    editedJson ? 'structured' : 'document'
+    editedJson && !fileUrl ? 'structured' : 'document'
   )
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -69,15 +80,6 @@ export function SafeDocumentPreview({
     }
   }
 
-
-  const isImage =
-    fileUrl?.match(/\.(png|jpg|jpeg|webp|gif|svg)(\?.*)?$/i) ||
-    fileUrl?.startsWith('data:image/')
-
-  const isPdf =
-    fileUrl?.match(/\.pdf(\?.*)?$/i) ||
-    fileUrl?.startsWith('data:application/pdf')
-
   return (
     <div
       ref={containerRef}
@@ -85,16 +87,16 @@ export function SafeDocumentPreview({
         isFullscreen ? 'fixed inset-0 z-[9999] bg-background' : 'h-full min-h-0'
       }`}
     >
-      {/* Top Header Bar matched 1-to-1 to user's screenshot */}
-      <div className="flex flex-none shrink-0 items-center justify-between border-b border-border bg-background px-4 py-2.5 select-none gap-3 z-10 shadow-2xs">
-        {/* Left: Close Cross & Document Title */}
+      {/* Top Header Bar matched 1-to-1 to chat template & screenshot */}
+      <div className="flex flex-none shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3 select-none gap-3 z-10 shadow-2xs">
+        {/* Left: Close Cross [X] & Document Title */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {onClose && (
             <button
               type="button"
               onClick={onClose}
               className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer"
-              title="Close preview"
+              title="Close document viewer"
             >
               <X className="size-4" />
             </button>
@@ -112,7 +114,7 @@ export function SafeDocumentPreview({
         </div>
 
         {/* View Mode Toggle if JSON exists */}
-        {editedJson && (
+        {editedJson && fileUrl && (
           <div className="hidden sm:flex items-center rounded-lg border border-border bg-muted/40 p-0.5 shrink-0">
             <button
               type="button"
@@ -139,7 +141,7 @@ export function SafeDocumentPreview({
           </div>
         )}
 
-        {/* Right Toolbar Controls: Download | ZoomOut | ZoomIn | Rotate | Fullscreen */}
+        {/* Right Toolbar Controls: Download | Zoom controls | Fullscreen */}
         <div className="flex items-center gap-1 shrink-0">
           {fileUrl && (
             <button
@@ -199,9 +201,9 @@ export function SafeDocumentPreview({
       </div>
 
       {/* Main Preview Content Body */}
-      <div className="flex-1 min-h-0 w-full overflow-auto bg-muted/20 flex flex-col items-center justify-center p-2 sm:p-4">
+      <div className="relative flex-1 min-h-0 w-full overflow-hidden bg-muted/20 flex flex-col">
         {viewMode === 'structured' && editedJson ? (
-          <div className="w-full h-full min-h-0">
+          <div className="w-full h-full min-h-0 overflow-auto">
             <ReviewPanel
               fileName={cleanName}
               fileUrl={fileUrl}
@@ -210,39 +212,22 @@ export function SafeDocumentPreview({
           </div>
         ) : fileUrl ? (
           <div
-            className="flex flex-col items-center justify-center transition-all duration-200 max-w-full max-h-full overflow-auto"
+            className="w-full h-full min-h-0 flex-1 flex flex-col transition-all duration-200"
             style={{
               transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
-              transformOrigin: 'center center',
+              transformOrigin: 'top center',
             }}
           >
-            {isImage ? (
-              /* Image document rendering */
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={fileUrl}
-                alt={cleanName}
-                className="max-w-full max-h-[80vh] object-contain rounded-xl shadow-md border border-border/60 bg-background"
-              />
-            ) : isPdf ? (
-              /* Binary PDF iframe rendering */
-              <iframe
-                src={fileUrl}
-                title={cleanName}
-                className="w-[85vw] max-w-4xl h-[78vh] rounded-xl border border-border/60 shadow-md bg-background"
-              />
-            ) : (
-              /* Fallback document iframe / object rendering */
-              <iframe
-                src={fileUrl}
-                title={cleanName}
-                className="w-[85vw] max-w-4xl h-[78vh] rounded-xl border border-border/60 shadow-md bg-background"
-              />
-            )}
+            <DocumentViewer
+              fileUrl={fileUrl}
+              fileName={cleanName}
+              allowDownload={true}
+              allowPrint={true}
+              hideHeader={true}
+            />
           </div>
-
         ) : editedJson ? (
-          <div className="w-full h-full min-h-0">
+          <div className="w-full h-full min-h-0 overflow-auto">
             <ReviewPanel
               fileName={cleanName}
               fileUrl={fileUrl}
@@ -251,7 +236,7 @@ export function SafeDocumentPreview({
           </div>
         ) : (
           /* Empty / No Document state */
-          <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
+          <div className="flex flex-col items-center justify-center h-full w-full p-12 text-center text-muted-foreground">
             <FileText className="size-12 mb-3 opacity-30 text-indigo-500" />
             <p className="text-sm font-semibold text-foreground/80">Document preview ready</p>
             <p className="text-xs mt-1 max-w-xs text-muted-foreground">
@@ -263,3 +248,4 @@ export function SafeDocumentPreview({
     </div>
   )
 }
+

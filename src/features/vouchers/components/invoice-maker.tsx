@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
+  CheckCircle2,
   Download,
   Eye,
   FileEdit,
@@ -11,14 +12,20 @@ import {
   UploadCloud,
   X,
 } from 'lucide-react'
+
 import { ocrService } from '@/features/chattemplate/extractor/ocr.service'
 import { DynamicJsonForm } from '@/components/dynamic-form/DynamicJsonForm'
 import { ReviewPanel } from '@/components/dynamic-form/ReviewPanel'
 import { LoadingState } from '@/components/dynamic-form/LoadingState'
 import { ErrorState } from '@/components/dynamic-form/ErrorState'
-import { toast } from 'sonner'
+import dynamic from 'next/dynamic'
 import { useVoucherStore } from '@/stores/voucher-store'
+
 import { uploadVoucherFile } from '@/features/vouchers/repositories/voucher-repository'
+import { SafeDocumentPreview } from '@/components/dynamic-form/SafeDocumentPreview'
+import { toast } from 'sonner'
+
+
 
 type LineItem = { id: number; description: string; quantity: number; rate: number; tax: number }
 type InvoiceState = {
@@ -83,15 +90,12 @@ export function InvoiceMaker() {
   // Preview dialog state for original uploaded file
   const [showOriginalPreview, setShowOriginalPreview] = useState(false)
 
+  // Control whether Step 3 Preview is unlocked (unlocked ONLY after user clicks Save)
+  const [isSaved, setIsSaved] = useState(false)
+  const [extractionSuccess, setExtractionSuccess] = useState(false)
+
+  // Clear session storage on initial load unless explicit save occurred
   useEffect(() => {
-    const saved = window.localStorage.getItem('voucher-review-json')
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        setEditedJson(parsed)
-        setSavedReviewData(parsed)
-      } catch { /* Ignore */ }
-    }
     setHydrated(true)
   }, [])
 
@@ -108,6 +112,9 @@ export function InvoiceMaker() {
     if (!file) return
     setUploadedFile(file)
     setFileName(file.name)
+    setIsSaved(false)
+    setExtractionSuccess(false)
+
 
     // Sanitize display name (never show sample names)
     const safeName = file.name.toLowerCase().includes('aman')
@@ -138,13 +145,11 @@ export function InvoiceMaker() {
         const text = await file.text()
         const parsed = JSON.parse(text)
         setOcrJson(parsed)
-        setEditedJson(parsed)
         setProgressPct(100)
         setScanStatus('JSON imported! Click Eye to preview or Edit to modify fields.')
-        toast.success('JSON imported successfully!')
+
       } catch {
         setError('Invalid JSON file. Please upload a valid JSON document.')
-        toast.error('Invalid JSON file')
       } finally {
         setLoading(false)
       }
@@ -166,7 +171,6 @@ export function InvoiceMaker() {
       }
     } catch (err: any) {
       setError(err?.message || 'OCR failed. Please try a clearer image or PDF.')
-      toast.error('OCR Failed')
       setLoading(false)
       return
     }
@@ -191,14 +195,13 @@ export function InvoiceMaker() {
       setEditedJson(structuredJson)
       setProgressPct(100)
       setScanStatus('Fields extracted! Edit any value below and click Save.')
-      toast.success('Invoice extracted! Ready for review.')
+      setExtractionSuccess(true)
     } catch (err: any) {
       const fallback = { extractedText: rawText }
       setOcrJson(fallback)
       setEditedJson(fallback)
       setProgressPct(100)
       setScanStatus('Could not fully parse — raw text stored. Click Edit or Eye.')
-      toast.warning('AI parsing failed. Raw text ready.')
     } finally {
       setLoading(false)
     }
@@ -213,7 +216,6 @@ export function InvoiceMaker() {
     a.download = displayFileName || uploadedFile.name
     a.click()
     URL.revokeObjectURL(url)
-    toast.success('Original file downloaded!')
   }
 
   /** Save edited form → upload generated PDF → save to DB */
@@ -221,6 +223,7 @@ export function InvoiceMaker() {
     setSaving(true)
     setEditedJson(finalJson)
     setSavedReviewData(finalJson)
+    setIsSaved(true)
 
     try {
       const vendorName = finalJson.vendor || finalJson.businessName || finalJson.company || displayFileName || 'Voucher Document'
@@ -263,8 +266,6 @@ export function InvoiceMaker() {
         editedJson: finalJson,
         dbId: savedDbId,
       })
-
-      toast.success('Voucher saved successfully!')
     } catch { /* Ignore */ }
 
     setTimeout(() => {
@@ -274,29 +275,40 @@ export function InvoiceMaker() {
   }
 
   return (
-    <div className="w-full flex-1 flex flex-col max-w-5xl mx-auto overflow-y-auto">
+    <div className={`w-full flex-1 flex flex-col max-w-5xl mx-auto ${tab === 'pdf' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+
       {/* Step Navigation Bar */}
       <nav className="sticky top-0 z-10 flex border-b border-border bg-background/95 backdrop-blur px-4 sm:px-8" aria-label="Invoice steps">
         {([
           ['select', '1', 'Upload Document'],
           ['review', '2', 'Edit Fields'],
           ['pdf', '3', 'Voucher Preview'],
-        ] as const).map(([key, number, label]) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={`relative flex flex-1 items-center justify-center gap-2 border-b-2 px-3 py-3.5 text-xs font-bold transition ${
-              tab === key
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
-            }`}
-          >
-            <span className={`flex size-5 items-center justify-center rounded-full text-[10px] font-black ${
-              tab === key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-            }`}>{number}</span>
-            <span>{label}</span>
-          </button>
-        ))}
+        ] as const).map(([key, number, label]) => {
+          const isDisabled = key === 'pdf' && !isSaved
+          return (
+            <button
+              key={key}
+              onClick={() => {
+                if (!isDisabled) {
+                  setTab(key)
+                }
+              }}
+
+              className={`relative flex flex-1 items-center justify-center gap-2 border-b-2 px-3 py-3.5 text-xs font-bold transition ${
+                tab === key
+                  ? 'border-primary text-primary'
+                  : isDisabled
+                  ? 'border-transparent text-muted-foreground/40 cursor-not-allowed opacity-60'
+                  : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground cursor-pointer'
+              }`}
+            >
+              <span className={`flex size-5 items-center justify-center rounded-full text-[10px] font-black ${
+                tab === key ? 'bg-primary text-primary-foreground' : isDisabled ? 'bg-muted/50 text-muted-foreground/40' : 'bg-muted text-muted-foreground'
+              }`}>{number}</span>
+              <span>{label}</span>
+            </button>
+          )
+        })}
       </nav>
 
       {/* STEP 1: UPLOAD */}
@@ -382,7 +394,15 @@ export function InvoiceMaker() {
 
           {/* Uploaded File Card */}
           {(displayFileName || fileName) && (
-            <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm relative">
+              {/* Compact Inline Success Banner - Centered & Less Height */}
+              {extractionSuccess && (
+                <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 shadow-2xs animate-in fade-in slide-in-from-top-1 duration-200">
+                  <CheckCircle2 className="size-3.5 text-emerald-500 shrink-0" />
+                  <span>Invoice extracted! Ready for review.</span>
+                </div>
+              )}
+
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -472,20 +492,36 @@ export function InvoiceMaker() {
                   </div>
                   <div className="min-w-0">
                     <p className="font-bold text-xs text-foreground truncate">{displayFileName || fileName || 'Invoice Document'}</p>
-                    <p className="text-[11px] text-muted-foreground">Edit any field below and click Save to preview</p>
+                    <p className="text-[11px] text-muted-foreground">Edit any field below and click Save to generate your voucher preview</p>
                   </div>
                 </div>
+
+                {/* Card Actions: Eye (preview original) & Download (download original) */}
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
-                    onClick={() => setTab('pdf')}
-                    title="Preview Voucher"
-                    className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xs cursor-pointer"
+                    onClick={() => {
+                      if (originalFileUrl) {
+                        setShowOriginalPreview(true)
+                      }
+                    }}
+                    title="Preview original file"
+                    className="flex size-9 items-center justify-center rounded-xl border border-border bg-muted/40 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all cursor-pointer"
                   >
                     <Eye className="size-4" />
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={handleDownloadOriginal}
+                    title="Download original file"
+                    className="flex size-9 items-center justify-center rounded-xl border border-border bg-muted/40 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all cursor-pointer"
+                  >
+                    <Download className="size-4" />
+                  </button>
                 </div>
               </div>
+
 
               <DynamicJsonForm
                 jsonData={ocrJson || editedJson}
@@ -507,81 +543,31 @@ export function InvoiceMaker() {
 
       {/* STEP 3: VOUCHER PREVIEW */}
       {tab === 'pdf' && (
-        <ReviewPanel
-          fileName={displayFileName || fileName || 'Invoice_VCH_2026.pdf'}
-          fileUrl={originalFileUrl}
-          editedJson={savedReviewData || editedJson || initialInvoice}
-        />
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <ReviewPanel
+            fileName={displayFileName || fileName || 'Invoice_VCH_2026.pdf'}
+            fileUrl={originalFileUrl}
+            editedJson={savedReviewData || editedJson || initialInvoice}
+          />
+        </div>
       )}
+
+
+
 
       {/* Original File Preview Dialog (Eye icon in Step 1) */}
       {showOriginalPreview && originalFileUrl && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="relative flex flex-col w-full max-w-4xl max-h-[90vh] rounded-2xl border border-border bg-background shadow-2xl overflow-hidden">
-            {/* Dialog Header */}
-            <div className="flex items-center justify-between border-b border-border px-5 py-3.5 bg-background/95">
-              <div className="flex items-center gap-2.5">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <FileText className="size-4" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-foreground">{displayFileName || fileName}</p>
-                  <p className="text-[11px] text-muted-foreground">Original uploaded file preview</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowOriginalPreview(false)}
-                className="flex size-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            {/* File Content */}
-            <div className="flex-1 overflow-auto bg-muted/20">
-              {uploadedFile?.type === 'application/pdf' || fileName.endsWith('.pdf') ? (
-                <iframe
-                  src={originalFileUrl}
-                  className="w-full h-[75vh] border-none"
-                  title="Original document preview"
-                />
-              ) : uploadedFile?.type?.startsWith('image/') ? (
-                <div className="flex items-center justify-center p-6 min-h-[50vh]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={originalFileUrl}
-                    alt="Uploaded document"
-                    className="max-w-full max-h-[65vh] object-contain rounded-xl shadow-md"
-                  />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground min-h-[50vh]">
-                  <FileText className="size-12 mb-4 opacity-30" />
-                  <p className="text-sm font-semibold">Preview not available for this file type.</p>
-                  <p className="text-xs mt-1">Download the file to view it.</p>
-                </div>
-              )}
-            </div>
-
-            {/* Dialog Footer */}
-            <div className="flex items-center justify-end gap-2 border-t border-border px-5 py-3 bg-background/95">
-              <button
-                onClick={handleDownloadOriginal}
-                className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-4 py-2 text-xs font-bold text-foreground hover:bg-primary/10 hover:border-primary/30 transition-all cursor-pointer"
-              >
-                <Download className="size-3.5" />
-                Download Original
-              </button>
-              <button
-                onClick={() => setShowOriginalPreview(false)}
-                className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 animate-in fade-in duration-200">
+          <div className="relative flex flex-col w-full max-w-5xl h-[85vh] rounded-2xl border border-border bg-background shadow-2xl overflow-hidden">
+            <SafeDocumentPreview
+              fileName={displayFileName || fileName || 'document.pdf'}
+              fileUrl={originalFileUrl}
+              onClose={() => setShowOriginalPreview(false)}
+            />
           </div>
         </div>
       )}
+
     </div>
   )
 }

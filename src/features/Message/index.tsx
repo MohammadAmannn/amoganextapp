@@ -50,9 +50,12 @@ import { HeaderActions } from './components/chat/header-actions'
 import CalendarTemplate from '@/features/calendartemplate'
 import KanbanTemplate from '@/features/kanbantemplate'
 import { emails as initialEmails, Email } from './data/emails'
+import dynamic from 'next/dynamic'
 import { InvoiceMaker } from '../vouchers/components/invoice-maker'
 import { ReviewPanel } from '@/components/dynamic-form/ReviewPanel'
+import { SafeDocumentPreview } from '@/components/dynamic-form/SafeDocumentPreview'
 import { useVoucherStore } from '@/stores/voucher-store'
+
 
 interface DirectoryChat {
   id: string
@@ -485,50 +488,14 @@ export default function MessageFeature() {
         ) : isKanbanOpen ? (
           <KanbanTemplate embedded onBack={() => setIsKanbanOpen(false)} />
         ) : isFileOpen ? (
-          <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-background overflow-hidden animate-in fade-in duration-200 md:relative md:z-auto'>
-            {/* Header styled like other panels */}
-            <div className='flex flex-none shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3 select-none gap-3'>
-              <div className='flex min-w-0 items-center gap-3 flex-1'>
-                <button
-                  onClick={() => setIsFileOpen(false)}
-                  className='-ml-1 flex md:hidden h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-                  title='Close'
-                >
-                  <ArrowLeft className='h-5 w-5' />
-                </button>
-
-                <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-200/40 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-600 dark:border-indigo-800/40 dark:text-indigo-400'>
-                  <Plus className='h-4.5 w-4.5' />
-                </div>
-
-                <div className='min-w-0 flex-1'>
-                  <p className='truncate text-sm font-semibold text-foreground'>
-                    {selectedVoucher ? selectedVoucher.fileName : 'New Voucher'}
-                  </p>
-                  <p className='truncate text-xs text-muted-foreground'>
-                    {selectedVoucher ? `Saved Voucher · ${selectedVoucher.date}` : 'Create, review and print digital vouchers.'}
-                  </p>
-                </div>
-              </div>
-
-              <HeaderActions
-                onDelete={() => setIsFileOpen(false)}
-              />
-            </div>
-
-            <div className='relative h-full min-h-0 w-full flex-1 overflow-hidden bg-background flex flex-col'>
-              {selectedVoucher && selectedVoucher.editedJson ? (
-                <ReviewPanel
-                  fileName={selectedVoucher.fileName}
-                  fileUrl={selectedVoucher.pdfUrl}
-                  editedJson={selectedVoucher.editedJson}
-                />
-              ) : (
-                <InvoiceMaker />
-              )}
-            </div>
-          </div>
+          <SafeDocumentPreview
+            fileName={selectedVoucher?.fileName || 'invoice.pdf'}
+            fileUrl={selectedVoucher?.pdfUrl || selectedVoucher?.originalFileUrl}
+            editedJson={selectedVoucher?.editedJson}
+            onClose={() => setIsFileOpen(false)}
+          />
         ) : selectedDirectoryChat ? (
+
           selectedDirectoryChat.conversationId ? (
             <RealtimeChatView
               conversationId={selectedDirectoryChat.conversationId}

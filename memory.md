@@ -429,3 +429,29 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
   - Maps `file_content_text`, `file_content_json`, and `processing_status` in realtime listeners (`use-realtime.ts`) so frontend reflects state changes immediately.
   - Renders `Parsing...` and `Parsing failed` indicators inside `FileCard` and `chat-view.tsx` document bubbles.
   - Renders a `Retry` action trigger button when parsing fails to run the background pipeline again.
+
+---
+
+## 38. Enterprise Voucher Workflow, Database Persistence, & Strict User Isolation
+* **Supabase Database & Storage Isolation**:
+  - Created `public.vouchers` table with mandatory `user_id` foreign key referencing `auth.users(id)`.
+  - Configured Row Level Security (RLS) policies (`FOR SELECT/INSERT/UPDATE/DELETE USING (auth.uid() = user_id)`), guaranteeing 100% data isolation so no user can view or access another account's vouchers.
+  - Uploaded files are strictly isolated into user-scoped paths (`vouchers/${userId}/originals/` and `vouchers/${userId}/edited/`).
+* **REST API Endpoints (`/api/vouchers`)**:
+  - `GET /api/vouchers` — Retrieves authenticated user's saved vouchers from Postgres DB.
+  - `POST /api/vouchers` — Saves extracted & edited invoice JSON data directly to the database.
+* **Popup-Free PDF Printing Engine**:
+  - `ReviewPanel.tsx` uses an inline hidden `<iframe>` to trigger browser print / "Save as PDF" dialogs without opening external popup tabs, completely eliminating browser popup blocker errors.
+* **Sequential Save & Preview Enforcer**:
+  - `InvoiceMaker.tsx` locks Step 3 (Voucher Preview) until the user uploads a document, edits fields, and clicks the **Save** button.
+* **Message Page Integration & React Doc Viewer**:
+  - Clicking the Voucher file icon on the Messages page renders only real DB vouchers belonging to the logged-in user.
+  - Removed upload options from the Messages page panel.
+  - Built `SafeDocumentPreview.tsx` wrapper around document preview with Zoom (`-`/`+`), Rotation (`90°`), Fullscreen (`Expand`), Download, and Toggle mode controls. Matches screenshot layout 1-to-1 (`✕  filename.pdf ... controls`). Guarantees zero runtime crashes or Vercel rendering exceptions on empty/invalid document URLs.
+* **Direct File Download & Toast Removal**:
+  - Removed all floating toast notifications from the Voucher page. Statuses are rendered as clean inline state text/badges.
+  - Updated `ReviewPanel.tsx` download handler: clicking **Download PDF** on the voucher preview tab directly fetches and downloads the document file from Supabase Storage without opening default browser print/PDF view tabs or print dialogs.
+* **Original Document Preview & Fresh Upload Flow**:
+  - Step 3 (Voucher Preview) displays the original uploaded document in exact format matching user screenshot, with seamless toggle to view updated structured fields.
+  - Added Eye (preview) and Download action buttons directly to the file card in Step 2 (Edit Fields tab).
+  - Clicking the `+` icon re-keys `InvoiceMaker` to start a fresh upload workflow.

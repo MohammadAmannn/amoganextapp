@@ -150,12 +150,14 @@ export function EmailList({
           createdAt: v.created_at,
         }))
         setDbVouchers(mapped)
+        useVoucherStore.getState().setVouchers(mapped)
       })
-      .catch(() => { /* fall back to store vouchers */ })
+      .catch(() => { /* Keep store vouchers */ })
     return () => { cancelled = true }
   }, [])
 
-  const savedVouchers = dbVouchers.length > 0 ? dbVouchers : storeVouchers
+  const savedVouchers = storeVouchers
+
 
   const emailAccounts = React.useMemo(() => {
     const accounts = new Map()
@@ -968,52 +970,92 @@ export function EmailList({
                         </span>
                       </div>
 
-                      {savedVouchers.map((voucher) => {
-                        const isVoucherActive = isFileSelected && selectedVoucher?.id === voucher.id
-                        return (
-                          <div
-                            key={voucher.id}
-                            id={`voucher-card-${voucher.id}`}
-                            onClick={() => {
-                              useVoucherStore.getState().setSelectedVoucher(voucher)
-                              onSelectFile?.()
-                            }}
-                            className={[
-                              'group relative mx-3 my-0.5 flex cursor-pointer flex-col gap-1 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
-                              isVoucherActive
-                                ? 'border-indigo-200/50 bg-indigo-500/10 dark:border-indigo-900/30 dark:bg-indigo-950/20'
-                                : 'border-transparent bg-background hover:bg-indigo-500/5 hover:border-indigo-200/30',
-                            ].join(' ')}
-                          >
-                            {isVoucherActive && (
-                              <div className='absolute top-1 bottom-1 left-0 w-0.5 rounded-l-full bg-indigo-600' />
-                            )}
-                            <div className='flex items-center justify-between gap-2'>
-                              <div className='flex min-w-0 items-center gap-2'>
-                                <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-200/40 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-600 dark:border-indigo-800/40 dark:text-indigo-400'>
-                                  <FileText className='h-3.5 w-3.5' />
+                      {savedVouchers.length === 0 ? (
+                        <div className='mx-3 my-2 rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-xs text-muted-foreground'>
+                          <FileText className='mx-auto h-7 w-7 opacity-30 mb-2 text-indigo-500' />
+                          <p className='font-semibold text-foreground/80'>No vouchers yet</p>
+                          <p className='text-[11px] opacity-70 mt-0.5'>Upload and save a voucher on the Voucher page to see it here.</p>
+                        </div>
+                      ) : (
+                        savedVouchers.map((voucher) => {
+                          const isVoucherActive = isFileSelected && selectedVoucher?.id === voucher.id
+
+                          // Helper to extract JSON values safely
+                          const getVal = (...keys: string[]) => {
+                            const json = voucher.editedJson
+                            if (!json || typeof json !== 'object') return null
+                            for (const k of keys) {
+                              const kl = k.toLowerCase().replace(/[_\-\s]/g, '')
+                              for (const dk of Object.keys(json)) {
+                                if (dk.toLowerCase().replace(/[_\-\s]/g, '') === kl && json[dk] != null && json[dk] !== '') {
+                                  return String(json[dk])
+                                }
+                              }
+                            }
+                            return null
+                          }
+
+                          const vendor = getVal('vendor', 'businessName', 'company', 'from') || voucher.from || 'Vendor'
+                          const invoiceNo = getVal('invoiceNumber', 'invoiceNo', 'voucherNo') || voucher.voucherNo
+                          const total = getVal('total', 'totalAmount', 'grandTotal', 'amount')
+                          const currency = getVal('currency') || 'USD'
+
+                          return (
+                            <div
+                              key={voucher.id}
+                              id={`voucher-card-${voucher.id}`}
+                              onClick={() => {
+                                useVoucherStore.getState().setSelectedVoucher(voucher)
+                                onSelectFile?.()
+                              }}
+                              className={[
+                                'group relative mx-3 my-1 flex cursor-pointer flex-col gap-2 rounded-xl p-3 transition-all duration-200 select-none border shadow-2xs',
+                                isVoucherActive
+                                  ? 'border-indigo-300 bg-indigo-500/10 dark:border-indigo-800 dark:bg-indigo-950/30'
+                                  : 'border-border/60 bg-card hover:bg-indigo-500/5 hover:border-indigo-200/50',
+                              ].join(' ')}
+                            >
+                              {isVoucherActive && (
+                                <div className='absolute top-1.5 bottom-1.5 left-0 w-1 rounded-l-full bg-indigo-600' />
+                              )}
+                              <div className='flex items-start justify-between gap-2 min-w-0'>
+                                <div className='flex items-center gap-2 min-w-0 flex-1'>
+                                  <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-200/40 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-600 dark:border-indigo-800/40 dark:text-indigo-400'>
+                                    <FileText className='h-4 w-4' />
+                                  </div>
+                                  <div className='flex flex-col min-w-0 flex-1'>
+                                    <span className='truncate text-xs font-bold text-foreground'>
+                                      📄 {voucher.fileName}
+                                    </span>
+                                    <span className='truncate text-[11px] text-muted-foreground font-medium mt-0.5'>
+                                      Vendor: <span className='text-foreground/80 font-semibold'>{vendor}</span>
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className='flex flex-col min-w-0'>
-                                  <span className='truncate text-sm font-semibold text-foreground'>
-                                    {voucher.fileName}
-                                  </span>
-                                
-                                </div>
-                              </div>
-                              <div className='flex flex-col items-end gap-1 shrink-0 ml-2'>
-                                <span className='rounded-full bg-indigo-500/10 px-1.5 py-0.5 text-[9px] font-bold text-indigo-600 dark:text-indigo-400'>
+                                <span className='rounded-full bg-indigo-500/10 px-2 py-0.5 text-[9px] font-bold text-indigo-600 dark:text-indigo-400 shrink-0'>
                                   Voucher
                                 </span>
-                                <span className='text-[9px] text-muted-foreground/80 font-medium whitespace-nowrap'>
-                                  {voucher.date}
-                                </span>
+                              </div>
+
+                              <div className='flex items-center justify-between border-t border-border/40 pt-2 text-[11px] text-muted-foreground'>
+                                <div className='flex items-center gap-2 truncate'>
+                                  <span>Invoice: <strong className='text-foreground/80 font-semibold'>#{invoiceNo}</strong></span>
+                                  <span>·</span>
+                                  <span>{voucher.date}</span>
+                                </div>
+                                {total && (
+                                  <span className='font-black text-xs text-indigo-600 dark:text-indigo-400 shrink-0 ml-2'>
+                                    {currency} {total}
+                                  </span>
+                                )}
                               </div>
                             </div>
-                          </div>
-                        )
-                      })}
+                          )
+                        })
+                      )}
                     </>
                   )}
+
                 </>
               )
             })()

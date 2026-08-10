@@ -753,5 +753,58 @@ ON public.chat_messages (processing_status)
 WHERE processing_status IS NOT NULL;
 
 -- ================================================================================
+-- VOUCHERS DATABASE & USER ISOLATION SCHEMA
+-- ================================================================================
+
+-- 1. Create public.vouchers table
+CREATE TABLE IF NOT EXISTS public.vouchers (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  voucher_no text NOT NULL,
+  file_name text NOT NULL,
+  original_file_url text,
+  edited_file_url text,
+  edited_json jsonb,
+  vendor_name text,
+  customer_name text,
+  invoice_date text,
+  total numeric,
+  currency text DEFAULT 'USD',
+  status text DEFAULT 'Active',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- 2. Enable Row Level Security (RLS)
+ALTER TABLE public.vouchers ENABLE ROW LEVEL SECURITY;
+
+-- 3. Strict User Isolation RLS Policies
+DROP POLICY IF EXISTS "Users can view their own vouchers" ON public.vouchers;
+CREATE POLICY "Users can view their own vouchers"
+  ON public.vouchers FOR SELECT
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert their own vouchers" ON public.vouchers;
+CREATE POLICY "Users can insert their own vouchers"
+  ON public.vouchers FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update their own vouchers" ON public.vouchers;
+CREATE POLICY "Users can update their own vouchers"
+  ON public.vouchers FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete their own vouchers" ON public.vouchers;
+CREATE POLICY "Users can delete their own vouchers"
+  ON public.vouchers FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- 4. Performance Index
+CREATE INDEX IF NOT EXISTS idx_vouchers_user_id ON public.vouchers(user_id);
+CREATE INDEX IF NOT EXISTS idx_vouchers_created_at ON public.vouchers(created_at DESC);
+
+-- ================================================================================
 -- END OF MIGRATION
 -- ================================================================================
+

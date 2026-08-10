@@ -35,8 +35,8 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { LinksTab } from '@/features/email-settings/components/accounts-tab'
-import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
+
 import { useNotificationStore } from '@/stores/notification-store'
 import { cn } from '@/lib/utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -45,8 +45,9 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Search as HeaderSearch } from '@/components/search'
 import { formatDistanceToNow } from 'date-fns'
-import { useVoucherStore } from '@/stores/voucher-store'
 import { ReviewPanel } from '@/components/dynamic-form/ReviewPanel'
+import { SafeDocumentPreview } from '@/components/dynamic-form/SafeDocumentPreview'
+
 
 import { AppHeader } from '@/components/layout/app-header'
 import { Main } from '@/components/layout/main'
@@ -79,46 +80,8 @@ import CalendarTemplate from '@/features/calendartemplate'
 import KanbanTemplate from '@/features/kanbantemplate'
 import { emails as initialEmails, Email } from '../Message/data/emails'
 import { InvoiceMaker } from './components/invoice-maker'
+import { useVoucherStore } from '@/stores/voucher-store'
 
-const DynamicDocViewer = dynamic(
-  () =>
-    import('@cyntler/react-doc-viewer').then((mod) => {
-      return function WrappedDocViewer({ documents }: { documents: any[] }) {
-        return (
-          <mod.default
-            documents={documents}
-            pluginRenderers={mod.DocViewerRenderers}
-            theme={{
-              primary: '#10b981',
-              secondary: '#ffffff',
-              tertiary: '#f3f4f6',
-              textPrimary: '#1f2937',
-              textSecondary: '#6b7280',
-            }}
-            config={{
-              header: {
-                disableHeader: true,
-                disableFileName: true,
-                retainURLParams: false,
-              },
-            }}
-            style={{ height: '100%' }}
-          />
-        )
-      }
-    }),
-  {
-    ssr: false,
-    loading: () => (
-      <div className='animate-in fade-in flex h-full w-full flex-col items-center justify-center space-y-3 bg-background duration-200'>
-        <Loader2 className='h-6 w-6 animate-spin text-primary' />
-        <p className='animate-pulse text-xs font-semibold text-muted-foreground'>
-          Loading document preview...
-        </p>
-      </div>
-    ),
-  }
-)
 
 export interface VoucherItem {
   id: string
@@ -184,7 +147,9 @@ export default function VouchersFeature() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [isKanbanOpen, setIsKanbanOpen] = useState(false)
   const [isInvoiceMakerOpen, setIsInvoiceMakerOpen] = useState(false)
+  const [invoiceMakerKey, setInvoiceMakerKey] = useState(0)
   const [isEmailSettingsOpen, setIsEmailSettingsOpen] = useState(false)
+
 
   const currentUser = useAuthStore((state) => state.auth.user)
   const router = useRouter()
@@ -197,6 +162,40 @@ export default function VouchersFeature() {
       localStorage.getItem('vouchers_sidebar_collapsed') === 'true'
     )
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/vouchers')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        if (cancelled || !json?.data) return
+        const mapped = json.data.map((v: any) => ({
+          id: v.id,
+          voucherNo: v.voucher_no,
+          date: new Date(v.created_at).toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          from: v.vendor_name || 'Vendor',
+          userName: 'Aman',
+          status: v.status || 'Active',
+          fileName: v.file_name,
+          originalFileUrl: v.original_file_url || undefined,
+          editedFileUrl: v.edited_file_url || undefined,
+          editedJson: v.edited_json || null,
+          pdfUrl: v.edited_file_url || v.original_file_url || undefined,
+          createdAt: v.created_at,
+        }))
+        useVoucherStore.getState().setVouchers(mapped)
+      })
+      .catch(() => { /* Keep store vouchers fallback */ })
+    return () => {
+      cancelled = true
+    }
+  }, [currentUser])
 
   useEffect(() => {
     if (!currentUser) return
@@ -304,7 +303,6 @@ export default function VouchersFeature() {
       contact.contactUserId
     )
     if (!conversationId) {
-      toast.error('Unable to open this conversation.')
       return
     }
     setSelectedDirectoryChat({
@@ -358,9 +356,9 @@ export default function VouchersFeature() {
     }
 
     if (!conversation) {
-      toast.error('Unable to open this group conversation.')
       return
     }
+
     resetAllSelections()
     setSelectedDirectoryChat({
       id: `group-${group.id}`,
@@ -828,8 +826,10 @@ export default function VouchersFeature() {
             <button
               onClick={() => {
                 resetAllSelections()
+                setInvoiceMakerKey((k) => k + 1)
                 setIsInvoiceMakerOpen(true)
               }}
+
               className={cn(
                 'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
                 isInvoiceMakerOpen &&
@@ -1203,72 +1203,19 @@ export default function VouchersFeature() {
           </div>
 
           <div className='relative h-full min-h-0 w-full flex-1 overflow-hidden bg-background flex flex-col'>
-            <InvoiceMaker />
+            <InvoiceMaker key={invoiceMakerKey} />
           </div>
+
         </div>
       ) : selectedVoucher ? (
-        <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-background overflow-hidden animate-in fade-in duration-200 md:relative md:z-auto'>
-          <div className='flex flex-none shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3 select-none gap-3'>
-            <div className='flex min-w-0 items-center gap-3 flex-1'>
-              <button
-                onClick={() => setSelectedVoucher(null)}
-                className='-ml-1 flex md:hidden h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-                title='Close'
-              >
-                <X className='h-5 w-5' />
-              </button>
-
-              <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-200/40 bg-gradient-to-br from-red-500/20 to-rose-500/20 text-red-600 dark:border-red-800/40 dark:text-red-400'>
-                <FileText className='h-4.5 w-4.5' />
-              </div>
-
-              <div className='min-w-0 flex-1'>
-                <p className='truncate text-sm font-semibold text-foreground'>
-                  {selectedVoucher.fileName}
-                </p>
-                <p className='truncate text-xs text-muted-foreground'>
-                  Voucher Specification · Voucher #{selectedVoucher.voucherNo} · {selectedVoucher.date}
-                </p>
-              </div>
-            </div>
-
-            <HeaderActions
-              onDelete={() => setSelectedVoucher(null)}
-              onDownload={() => {
-                const url = selectedVoucher.pdfUrl || selectedVoucher.originalFileUrl || ''
-                if (url) {
-                  const link = document.createElement('a')
-                  link.href = url
-                  link.download = selectedVoucher.fileName
-                  link.click()
-                }
-              }}
-            />
-          </div>
-
-          <div className='relative h-full min-h-0 w-full flex-1 overflow-hidden bg-background flex flex-col'>
-            {selectedVoucher.editedJson ? (
-              <ReviewPanel
-                fileName={selectedVoucher.fileName}
-                fileUrl={selectedVoucher.pdfUrl || selectedVoucher.originalFileUrl || ''}
-                editedJson={selectedVoucher.editedJson}
-              />
-            ) : (
-              <div className='doc-viewer-wrapper h-full w-full'>
-                <DynamicDocViewer
-                  documents={[
-                    {
-                      uri: selectedVoucher.pdfUrl || selectedVoucher.originalFileUrl || '',
-                      fileName: selectedVoucher.fileName,
-                      fileType: 'pdf',
-                    },
-                  ]}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+        <SafeDocumentPreview
+          fileName={selectedVoucher.fileName}
+          fileUrl={selectedVoucher.pdfUrl || selectedVoucher.originalFileUrl}
+          editedJson={selectedVoucher.editedJson}
+          onClose={() => setSelectedVoucher(null)}
+        />
       ) : selectedDirectoryChat ? (
+
         selectedDirectoryChat.conversationId ? (
           <RealtimeChatView
             conversationId={selectedDirectoryChat.conversationId}
@@ -1353,7 +1300,6 @@ export default function VouchersFeature() {
                 <NewEmail
                   onCancel={() => setIsComposing(false)}
                   onSend={(emailData) => {
-                    toast.success('Message sent successfully!')
                     const newEmail: Email = {
                       id: String(Date.now()),
                       from: undefined,
@@ -1375,9 +1321,9 @@ export default function VouchersFeature() {
                     setIsComposing(false)
                   }}
                   onSaveDraft={() => {
-                    toast.success('Draft saved!')
                     setIsComposing(false)
                   }}
+
                 />
               </div>
             ) : (

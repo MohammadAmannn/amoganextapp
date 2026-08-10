@@ -18,15 +18,18 @@ export interface VoucherRecord {
   updated_at: string
 }
 
-/** Upload a file to Supabase Storage under `vouchers/` folder in `chat-files` bucket */
+/** Upload a file to Supabase Storage under `vouchers/${userId}/` folder in `chat-files` bucket */
 export async function uploadVoucherFile(
   file: File,
   subfolder: 'originals' | 'edited' = 'originals'
 ): Promise<string> {
   const supabase = createClient()
+  const { data: user } = await supabase.auth.getUser()
+  const userId = user?.user?.id || 'anonymous'
+
   const fileExt = file.name.split('.').pop() || 'bin'
   const uniqueName = `${crypto.randomUUID()}.${fileExt}`
-  const path = `vouchers/${subfolder}/${uniqueName}`
+  const path = `vouchers/${userId}/${subfolder}/${uniqueName}`
 
   const { error } = await supabase.storage
     .from('chat-files')
@@ -46,8 +49,11 @@ export async function uploadVoucherBlob(
   fileName: string
 ): Promise<string> {
   const supabase = createClient()
+  const { data: user } = await supabase.auth.getUser()
+  const userId = user?.user?.id || 'anonymous'
+
   const uniqueName = `${crypto.randomUUID()}_${fileName}`
-  const path = `vouchers/edited/${uniqueName}`
+  const path = `vouchers/${userId}/edited/${uniqueName}`
 
   const { error } = await supabase.storage
     .from('chat-files')

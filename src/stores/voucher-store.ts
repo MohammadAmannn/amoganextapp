@@ -77,11 +77,12 @@ export const useVoucherStore = create<VoucherStoreState>()(
       },
     }),
     {
-      name: 'vouchers-storage-v3',
+      name: 'vouchers-storage-v4',
       partialize: (state) => ({
-        vouchers: state.vouchers,
-        selectedVoucher: state.selectedVoucher,
+        // Do NOT persist vouchers array globally in localStorage to prevent user data leakage across accounts
+        selectedVoucher: null,
       }),
     }
+
   )
 )

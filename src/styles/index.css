@@ -200,14 +200,14 @@
   display: block !important;
 }
 
-/* Ensure the react-pdf page text layer scales appropriately or sits correctly if rendered */
-.doc-viewer-wrapper .react-pdf__Page__textContent {
-  display: none !important; /* Disabling text layer prevents mismatch offset issues when scaling canvas */
-}
-
-.doc-viewer-wrapper .react-pdf__Page__annotations {
+/* Ensure the react-pdf page text layer is hidden to prevent duplicate raw text below PDF canvas */
+.doc-viewer-wrapper .react-pdf__Page__textContent,
+.react-pdf__Page__textContent,
+.doc-viewer-wrapper .react-pdf__Page__annotations,
+.react-pdf__Page__annotations {
   display: none !important;
 }
+
 
 /* Style default react-doc-viewer fallback renderers */
 .doc-viewer-wrapper #txt-renderer {

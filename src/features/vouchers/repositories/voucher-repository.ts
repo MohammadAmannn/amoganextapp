@@ -43,7 +43,7 @@ export async function uploadVoucherFile(
   return urlData.publicUrl
 }
 
-/** Upload a Blob (generated PDF) to Supabase Storage */
+/** Upload a Blob (generated invoice file) to Supabase Storage */
 export async function uploadVoucherBlob(
   blob: Blob,
   fileName: string
@@ -57,10 +57,10 @@ export async function uploadVoucherBlob(
 
   const { error } = await supabase.storage
     .from('chat-files')
-    .upload(path, blob, { upsert: false, contentType: 'application/pdf' })
+    .upload(path, blob, { upsert: false, contentType: blob.type || 'application/octet-stream' })
 
   if (error) {
-    throw new Error(`PDF storage upload failed: ${error.message}`)
+    throw new Error(`Invoice storage upload failed: ${error.message}`)
   }
 
   const { data: urlData } = supabase.storage.from('chat-files').getPublicUrl(path)

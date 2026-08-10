@@ -18,6 +18,7 @@ import { createClient } from '@/lib/client'
 import { ensureProfileExists } from '@/features/chattemplate/chat/repositories/profile-repository'
 import { handleAuthRedirect } from '@/services/auth-redirect.service'
 import { initializeCapacitorHandlers } from '@/lib/capacitor-init'
+import { OfflineScreen, useIsOffline } from '@/components/offline-screen'
 
 function QueryProviderWrapper({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -81,6 +82,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const { auth } = useAuthStore()
   const oauthRedirectHandled = useRef(false)
+  const isOffline = useIsOffline()
 
   useEffect(() => {
     initializeCapacitorHandlers(router)
@@ -235,7 +237,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  // Register Service Worker → custom offline page instead of browser error screen
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/sw.js', { scope: '/' })
+        .catch((err) => console.error('[SW] registration failed:', err))
+    }
+  }, [])
+
   return (
+    <>
+      {isOffline && <OfflineScreen />}
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ''}>
       <QueryProviderWrapper>
         <ThemeProvider>
@@ -251,5 +264,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
         </ThemeProvider>
       </QueryProviderWrapper>
     </GoogleOAuthProvider>
+    </>
   )
 }

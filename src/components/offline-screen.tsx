@@ -1,0 +1,249 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+
+/* ─────────────────────────── SVG helpers ─────────────────────────── */
+
+/** Crossed-out Wi-Fi icon (blue, matching screenshot) */
+function WifiOffIcon() {
+  return (
+    <svg
+      width="72"
+      height="72"
+      viewBox="0 0 72 72"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="No wifi"
+    >
+      {/* Wave 1 – outermost */}
+      <path
+        d="M10 27C18.5 18.5 30.5 13 44 13"
+        stroke="#5BB8F5"
+        strokeWidth="4.5"
+        strokeLinecap="round"
+        opacity="0.35"
+      />
+      {/* Wave 2 */}
+      <path
+        d="M17 34C23.5 27.5 32.5 23 43 23"
+        stroke="#5BB8F5"
+        strokeWidth="4.5"
+        strokeLinecap="round"
+        opacity="0.55"
+      />
+      {/* Wave 3 */}
+      <path
+        d="M24.5 41.5C28.5 37.5 33.5 35 39.5 35"
+        stroke="#5BB8F5"
+        strokeWidth="4.5"
+        strokeLinecap="round"
+      />
+      {/* Dot */}
+      <circle cx="36" cy="52" r="4" fill="#5BB8F5" />
+      {/* Diagonal slash */}
+      <line
+        x1="8"
+        y1="64"
+        x2="62"
+        y2="10"
+        stroke="#5BB8F5"
+        strokeWidth="5"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+/** Two cloud characters with helmets, question marks, and a disconnected plug */
+function CloudCharacters() {
+  return (
+    <svg
+      width="280"
+      height="160"
+      viewBox="0 0 280 160"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      {/* ground line */}
+      <path d="M20 148 Q140 155 260 148" stroke="#d0d0d0" strokeWidth="2" strokeLinecap="round" />
+
+      {/* LEFT CLOUD CHARACTER */}
+      <ellipse cx="88" cy="72" rx="42" ry="30" fill="#e8e8e8" />
+      <circle cx="65" cy="78" r="20" fill="#e8e8e8" />
+      <circle cx="111" cy="78" r="20" fill="#e8e8e8" />
+      {/* helmet */}
+      <path d="M54 68 Q88 44 122 68" fill="#b0b0b0" />
+      <rect x="52" y="66" width="72" height="10" rx="5" fill="#9a9a9a" />
+      {/* sad eyes */}
+      <circle cx="78" cy="79" r="3.5" fill="#555" />
+      <circle cx="98" cy="79" r="3.5" fill="#555" />
+      {/* sad mouth */}
+      <path d="M78 91 Q88 86 98 91" stroke="#888" strokeWidth="2" strokeLinecap="round" fill="none" />
+      {/* left arm */}
+      <line x1="68" y1="100" x2="52" y2="120" stroke="#b0b0b0" strokeWidth="4" strokeLinecap="round" />
+      {/* right arm */}
+      <line x1="108" y1="100" x2="118" y2="118" stroke="#b0b0b0" strokeWidth="4" strokeLinecap="round" />
+      {/* legs / roller-skates */}
+      <ellipse cx="74" cy="136" rx="10" ry="5" fill="#c8c8c8" />
+      <ellipse cx="100" cy="136" rx="10" ry="5" fill="#c8c8c8" />
+      <circle cx="69" cy="141" r="3" fill="#aaa" />
+      <circle cx="79" cy="141" r="3" fill="#aaa" />
+      <circle cx="95" cy="141" r="3" fill="#aaa" />
+      <circle cx="105" cy="141" r="3" fill="#aaa" />
+      {/* plug socket (left) */}
+      <rect x="38" y="118" width="18" height="12" rx="3" fill="#c8c8c8" stroke="#aaa" strokeWidth="1.5" />
+      <line x1="43" y1="118" x2="43" y2="112" stroke="#aaa" strokeWidth="2" strokeLinecap="round" />
+      <line x1="50" y1="118" x2="50" y2="112" stroke="#aaa" strokeWidth="2" strokeLinecap="round" />
+      {/* question marks */}
+      <text x="44" y="58" fontSize="18" fill="#ccc" fontFamily="Georgia, serif" fontWeight="700">?</text>
+      <text x="60" y="42" fontSize="14" fill="#d0d0d0" fontFamily="Georgia, serif" fontWeight="700">?</text>
+
+      {/* LIGHT BULB (middle) */}
+      <ellipse cx="142" cy="114" rx="10" ry="13" fill="#f5f5a0" stroke="#d4d400" strokeWidth="1.5" />
+      <rect x="137" y="126" width="10" height="5" rx="2" fill="#ccc" />
+      <line x1="142" y1="101" x2="142" y2="96" stroke="#f0c040" strokeWidth="2" strokeLinecap="round" />
+      <line x1="134" y1="104" x2="131" y2="100" stroke="#f0c040" strokeWidth="2" strokeLinecap="round" />
+      <line x1="150" y1="104" x2="153" y2="100" stroke="#f0c040" strokeWidth="2" strokeLinecap="round" />
+
+      {/* RIGHT CLOUD CHARACTER */}
+      <ellipse cx="200" cy="72" rx="42" ry="30" fill="#e8e8e8" />
+      <circle cx="177" cy="78" r="20" fill="#e8e8e8" />
+      <circle cx="223" cy="78" r="20" fill="#e8e8e8" />
+      {/* helmet */}
+      <path d="M166 68 Q200 44 234 68" fill="#b0b0b0" />
+      <rect x="164" y="66" width="72" height="10" rx="5" fill="#9a9a9a" />
+      {/* sad eyes */}
+      <circle cx="190" cy="79" r="3.5" fill="#555" />
+      <circle cx="210" cy="79" r="3.5" fill="#555" />
+      {/* sad mouth */}
+      <path d="M190 91 Q200 86 210 91" stroke="#888" strokeWidth="2" strokeLinecap="round" fill="none" />
+      {/* left arm */}
+      <line x1="180" y1="100" x2="162" y2="118" stroke="#b0b0b0" strokeWidth="4" strokeLinecap="round" />
+      {/* right arm */}
+      <line x1="220" y1="100" x2="230" y2="118" stroke="#b0b0b0" strokeWidth="4" strokeLinecap="round" />
+      {/* legs / roller-skates */}
+      <ellipse cx="186" cy="136" rx="10" ry="5" fill="#c8c8c8" />
+      <ellipse cx="212" cy="136" rx="10" ry="5" fill="#c8c8c8" />
+      <circle cx="181" cy="141" r="3" fill="#aaa" />
+      <circle cx="191" cy="141" r="3" fill="#aaa" />
+      <circle cx="207" cy="141" r="3" fill="#aaa" />
+      <circle cx="217" cy="141" r="3" fill="#aaa" />
+      {/* plug prong (right) */}
+      <rect x="152" y="118" width="18" height="12" rx="3" fill="#c8c8c8" stroke="#aaa" strokeWidth="1.5" />
+      <line x1="157" y1="130" x2="157" y2="136" stroke="#aaa" strokeWidth="2" strokeLinecap="round" />
+      <line x1="164" y1="130" x2="164" y2="136" stroke="#aaa" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+/* ─────────────────────────── Main Component ─────────────────────────── */
+
+export function OfflineScreen() {
+  return (
+    <div
+      id="offline-screen"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#ffffff',
+        fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
+        padding: '24px',
+        animation: 'offlineFadeIn 0.35s ease',
+      }}
+    >
+      <style>{`
+        @keyframes offlineFadeIn {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes offlineBob {
+          0%, 100% { transform: translateY(0px); }
+          50%       { transform: translateY(-6px); }
+        }
+        #offline-wifi-icon {
+          animation: offlineBob 2.4s ease-in-out infinite;
+        }
+        #offline-clouds {
+          animation: offlineBob 3s ease-in-out infinite;
+          animation-delay: 0.4s;
+        }
+
+      `}</style>
+
+      {/* Wi-Fi off icon */}
+      <div id="offline-wifi-icon" style={{ marginBottom: '20px' }}>
+        <WifiOffIcon />
+      </div>
+
+      {/* Ooops! */}
+      <h1
+        style={{
+          fontSize: '36px',
+          fontWeight: '700',
+          color: '#2d2d2d',
+          margin: '0 0 10px',
+          letterSpacing: '-0.5px',
+        }}
+      >
+        Ooops!
+      </h1>
+
+      {/* Subtitle */}
+      <p
+        style={{
+          fontSize: '15px',
+          color: '#888',
+          textAlign: 'center',
+          lineHeight: '1.7',
+          margin: '0',
+          maxWidth: '240px',
+        }}
+      >
+        Internet connection not found
+        <br />
+        Check the connection
+      </p>
+
+      {/* Doodle illustration */}
+      <div id="offline-clouds" style={{ marginTop: '32px' }}>
+        <CloudCharacters />
+      </div>
+
+
+    </div>
+  )
+}
+
+/* ─────────────────────────── Hook ─────────────────────────── */
+
+/**
+ * Returns `true` when the browser reports no network connection.
+ * Listens for `online` / `offline` window events in real time.
+ */
+export function useIsOffline() {
+  const [isOffline, setIsOffline] = useState(false)
+
+  useEffect(() => {
+    // Initialise from the current navigator state
+    setIsOffline(!navigator.onLine)
+
+    const goOffline = () => setIsOffline(true)
+    const goOnline  = () => setIsOffline(false)
+
+    window.addEventListener('offline', goOffline)
+    window.addEventListener('online',  goOnline)
+
+    return () => {
+      window.removeEventListener('offline', goOffline)
+      window.removeEventListener('online',  goOnline)
+    }
+  }, [])
+
+  return isOffline
+}

@@ -1,15 +1,15 @@
 'use client'
 
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
-  Check,
   Download,
   Eye,
   FileEdit,
   FileText,
   ScanLine,
   UploadCloud,
+  X,
 } from 'lucide-react'
 import { ocrService } from '@/features/chattemplate/extractor/ocr.service'
 import { DynamicJsonForm } from '@/components/dynamic-form/DynamicJsonForm'
@@ -17,6 +17,8 @@ import { ReviewPanel } from '@/components/dynamic-form/ReviewPanel'
 import { LoadingState } from '@/components/dynamic-form/LoadingState'
 import { ErrorState } from '@/components/dynamic-form/ErrorState'
 import { toast } from 'sonner'
+import { useVoucherStore } from '@/stores/voucher-store'
+import { uploadVoucherFile } from '@/features/vouchers/repositories/voucher-repository'
 
 type LineItem = { id: number; description: string; quantity: number; rate: number; tax: number }
 type InvoiceState = {
@@ -59,9 +61,9 @@ const initialInvoice: InvoiceState = {
 }
 
 export function InvoiceMaker() {
-  const [invoice, setInvoice] = useState<InvoiceState>(initialInvoice)
   const [tab, setTab] = useState<Tab>('select')
   const [fileName, setFileName] = useState('')
+  const [displayFileName, setDisplayFileName] = useState('')
   const [scanStatus, setScanStatus] = useState('No file uploaded yet')
   const [progressPct, setProgressPct] = useState(0)
   const [hydrated, setHydrated] = useState(false)
@@ -75,7 +77,11 @@ export function InvoiceMaker() {
   const [error, setError] = useState<string | null>(null)
   const [savedReviewData, setSavedReviewData] = useState<any>(null)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
-  const [fileUrl, setFileUrl] = useState<string | undefined>(undefined)
+  const [originalFileUrl, setOriginalFileUrl] = useState<string | undefined>(undefined) // blob URL for preview
+  const [storedOriginalUrl, setStoredOriginalUrl] = useState<string | undefined>(undefined) // supabase storage URL
+
+  // Preview dialog state for original uploaded file
+  const [showOriginalPreview, setShowOriginalPreview] = useState(false)
 
   useEffect(() => {
     const saved = window.localStorage.getItem('voucher-review-json')
@@ -96,22 +102,34 @@ export function InvoiceMaker() {
 
   /**
    * Step 1: Upload file → Run OCR → AI parse raw text into structured invoice JSON
-   * Note: User stays on upload page and can navigate by clicking Edit icon, Eye preview icon, or Tab headers.
+   * Also uploads the original file to Supabase Storage.
    */
   async function handleFile(file?: File) {
     if (!file) return
     setUploadedFile(file)
     setFileName(file.name)
 
+    // Sanitize display name (never show sample names)
+    const safeName = file.name.toLowerCase().includes('aman')
+      ? `Invoice_${new Date().toISOString().slice(0, 10)}.${file.name.split('.').pop()}`
+      : file.name
+    setDisplayFileName(safeName)
+
+    // Create local blob URL for Eye preview of original file
     try {
-      const url = URL.createObjectURL(file)
-      setFileUrl(url)
+      const blobUrl = URL.createObjectURL(file)
+      setOriginalFileUrl(blobUrl)
     } catch { /* Ignore */ }
 
     setError(null)
     setLoading(true)
     setProgressPct(10)
-    setScanStatus('Reading document...')
+    setScanStatus('Uploading document...')
+
+    // Upload original file to Supabase Storage in background
+    uploadVoucherFile(file, 'originals')
+      .then((url) => setStoredOriginalUrl(url))
+      .catch(() => { /* Non-fatal — storage URL not required for preview */ })
 
     // Handle raw JSON upload
     if (file.type === 'application/json' || file.name.toLowerCase().endsWith('.json')) {
@@ -122,7 +140,7 @@ export function InvoiceMaker() {
         setOcrJson(parsed)
         setEditedJson(parsed)
         setProgressPct(100)
-        setScanStatus('JSON file imported! Click Eye icon to preview or Edit icon to modify.')
+        setScanStatus('JSON imported! Click Eye to preview or Edit to modify fields.')
         toast.success('JSON imported successfully!')
       } catch {
         setError('Invalid JSON file. Please upload a valid JSON document.')
@@ -136,9 +154,9 @@ export function InvoiceMaker() {
     // Step 1: Run OCR to extract raw text
     let rawText = ''
     try {
-      setScanStatus('Running OCR scan on document...')
+      setScanStatus('Running OCR scan...')
       const ocrResult = await ocrService.recognizeFile(file, 'eng', (pct, msg) => {
-        const mappedPct = Math.round(10 + (pct * 0.6)) // 10% -> 70%
+        const mappedPct = Math.round(10 + (pct * 0.6))
         setProgressPct(mappedPct)
         setScanStatus(`OCR (${mappedPct}%): ${msg}`)
       })
@@ -156,16 +174,14 @@ export function InvoiceMaker() {
     // Step 2: AI parses raw OCR text → structured invoice JSON
     try {
       setProgressPct(75)
-      setScanStatus('AI is extracting structured invoice fields...')
+      setScanStatus('AI extracting invoice fields...')
       const res = await fetch('/api/parse-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rawText }),
       })
 
-      if (!res.ok) {
-        throw new Error('Invoice parsing service unavailable. Please try again.')
-      }
+      if (!res.ok) throw new Error('Invoice parsing service unavailable.')
 
       const { data, error: apiErr } = await res.json()
       if (apiErr) throw new Error(apiErr)
@@ -174,39 +190,83 @@ export function InvoiceMaker() {
       setOcrJson(structuredJson)
       setEditedJson(structuredJson)
       setProgressPct(100)
-      setScanStatus('Invoice fields extracted! Edit any value and click Save.')
+      setScanStatus('Fields extracted! Edit any value below and click Save.')
       toast.success('Invoice extracted! Ready for review.')
     } catch (err: any) {
-      // Fallback: use raw text as single field if AI fails
       const fallback = { extractedText: rawText }
       setOcrJson(fallback)
       setEditedJson(fallback)
       setProgressPct(100)
-      setScanStatus('Could not fully parse fields — raw text stored. Click Edit or Eye icon.')
+      setScanStatus('Could not fully parse — raw text stored. Click Edit or Eye.')
       toast.warning('AI parsing failed. Raw text ready.')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDownloadJson = () => {
-    const dataToSave = editedJson || ocrJson || initialInvoice
-    const jsonString = JSON.stringify(dataToSave, null, 2)
-    const blob = new Blob([jsonString], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
+  /** Download the original uploaded file (blob) */
+  const handleDownloadOriginal = () => {
+    if (!uploadedFile) return
+    const url = URL.createObjectURL(uploadedFile)
     const a = document.createElement('a')
     a.href = url
-    a.download = (fileName ? fileName.replace(/\.[^/.]+$/, '') : 'invoice') + '.json'
+    a.download = displayFileName || uploadedFile.name
     a.click()
     URL.revokeObjectURL(url)
-    toast.success('JSON file downloaded!')
+    toast.success('Original file downloaded!')
   }
 
-  const handleSaveForm = (finalJson: any) => {
+  /** Save edited form → upload generated PDF → save to DB */
+  const handleSaveForm = async (finalJson: any) => {
     setSaving(true)
     setEditedJson(finalJson)
     setSavedReviewData(finalJson)
-    toast.success('Saved! Review your invoice below.')
+
+    try {
+      const vendorName = finalJson.vendor || finalJson.businessName || finalJson.company || displayFileName || 'Voucher Document'
+      const invoiceNo = finalJson.invoiceNumber || finalJson.invoiceNo || finalJson.voucherNo || `VCH-${Date.now().toString().slice(-6)}`
+      const cleanName = `${invoiceNo}_${vendorName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+
+      // Save to DB via API route
+      let savedDbId: string | undefined
+      try {
+        const res = await fetch('/api/vouchers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            voucher_no: invoiceNo,
+            file_name: cleanName,
+            original_file_url: storedOriginalUrl || null,
+            edited_json: finalJson,
+            vendor_name: vendorName,
+            customer_name: finalJson.customerName || finalJson.customer || null,
+            invoice_date: finalJson.invoiceDate || finalJson.date || null,
+            total: finalJson.total || finalJson.totalAmount || null,
+            currency: finalJson.currency || 'USD',
+          }),
+        })
+        if (res.ok) {
+          const { data } = await res.json()
+          savedDbId = data?.id
+        }
+      } catch { /* Non-fatal — continue with local save */ }
+
+      // Update local Zustand store
+      useVoucherStore.getState().addVoucher({
+        voucherNo: invoiceNo,
+        date: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        from: vendorName,
+        userName: 'Aman',
+        status: 'Active',
+        fileName: cleanName,
+        originalFileUrl: storedOriginalUrl,
+        editedJson: finalJson,
+        dbId: savedDbId,
+      })
+
+      toast.success('Voucher saved successfully!')
+    } catch { /* Ignore */ }
+
     setTimeout(() => {
       setSaving(false)
       setTab('pdf')
@@ -246,7 +306,7 @@ export function InvoiceMaker() {
             <p className="text-xs font-bold uppercase tracking-widest text-primary">Document Processing</p>
             <h2 className="mt-2 text-2xl font-extrabold tracking-tight">Upload Document</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Upload any PDF or image. OCR extracts the text, then AI parses it into structured invoice fields you can edit.
+              Upload any PDF or image. OCR extracts the text, then AI parses it into structured fields you can edit.
             </p>
           </div>
 
@@ -272,6 +332,7 @@ export function InvoiceMaker() {
                 setOcrJson(initialInvoice)
                 setEditedJson(initialInvoice)
                 setFileName('northstar-invoice.pdf')
+                setDisplayFileName('northstar-invoice.pdf')
                 setScanStatus('Template loaded. Edit fields and save.')
                 setTab('review')
               }}
@@ -294,6 +355,7 @@ export function InvoiceMaker() {
                 setOcrJson(saved)
                 setEditedJson(saved)
                 setFileName(fileName || 'saved-invoice.json')
+                setDisplayFileName(displayFileName || 'saved-invoice.pdf')
                 setScanStatus('Loaded from saved browser data.')
                 setTab('review')
               }}
@@ -318,47 +380,57 @@ export function InvoiceMaker() {
             onChange={(e) => handleFile(e.target.files?.[0])}
           />
 
-          {/* Uploaded File Card with Progress Bar & Action Icons */}
-          {fileName && (
-            <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-border bg-card p-4.5 shadow-sm transition-all">
+          {/* Uploaded File Card */}
+          {(displayFileName || fileName) && (
+            <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3.5 min-w-0">
+                <div className="flex items-center gap-3 min-w-0">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <FileText className="size-5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-xs text-foreground truncate">{fileName}</p>
+                    <p className="font-bold text-xs text-foreground truncate">{displayFileName || fileName}</p>
                     <p className="text-[11px] text-muted-foreground truncate">{scanStatus}</p>
                   </div>
                 </div>
 
-                {/* Step 1 Card Actions: Download JSON, Edit Fields, Eye Preview */}
+                {/* Card Actions: Eye (preview original) | Download (download original) | Edit Fields */}
                 <div className="flex items-center gap-2 shrink-0">
+                  {/* Eye — preview original uploaded file */}
                   <button
                     type="button"
-                    onClick={handleDownloadJson}
-                    title="Download JSON"
+                    onClick={() => {
+                      if (originalFileUrl) {
+                        setShowOriginalPreview(true)
+                      } else {
+                        toast.info('Upload a file first to preview it.')
+                      }
+                    }}
+                    title="Preview original file"
                     className="flex size-9 items-center justify-center rounded-xl border border-border bg-muted/40 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all cursor-pointer"
+                  >
+                    <Eye className="size-4" />
+                  </button>
+
+                  {/* Download — download original uploaded file */}
+                  <button
+                    type="button"
+                    onClick={handleDownloadOriginal}
+                    title="Download original file"
+                    disabled={!uploadedFile}
+                    className="flex size-9 items-center justify-center rounded-xl border border-border bg-muted/40 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all cursor-pointer disabled:opacity-40"
                   >
                     <Download className="size-4" />
                   </button>
 
+                  {/* Edit Fields — go to step 2 */}
                   <button
                     type="button"
                     onClick={() => setTab('review')}
                     title="Edit Fields"
-                    className="flex size-9 items-center justify-center rounded-xl border border-border bg-muted/40 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all cursor-pointer"
-                  >
-                    <FileEdit className="size-4" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setTab('pdf')}
-                    title="Preview Invoice"
                     className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xs cursor-pointer"
                   >
-                    <Eye className="size-4" />
+                    <FileEdit className="size-4" />
                   </button>
                 </div>
               </div>
@@ -383,7 +455,7 @@ export function InvoiceMaker() {
         </section>
       )}
 
-      {/* STEP 2: EDIT FIELDS (DynamicJsonForm) */}
+      {/* STEP 2: EDIT FIELDS */}
       {tab === 'review' && (
         <section className="w-full flex-1 flex flex-col min-h-0 p-4 sm:px-8 pt-6">
           {loading ? (
@@ -392,33 +464,22 @@ export function InvoiceMaker() {
             <ErrorState error={error} onRetry={() => { setError(null); setTab('select') }} />
           ) : editedJson ? (
             <div className="flex-1 flex flex-col min-h-0">
-              {/* Document File Card at Top of Edit Fields Step (Replaces plain info banner) */}
-              <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4.5 shadow-sm transition-all">
-                <div className="flex items-center gap-3.5 min-w-0">
+              {/* File info header */}
+              <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
+                <div className="flex items-center gap-3 min-w-0">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <FileText className="size-5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-xs text-foreground truncate">{fileName || 'Uploaded Invoice'}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">Invoice fields extracted! Edit any value below and click Save.</p>
+                    <p className="font-bold text-xs text-foreground truncate">{displayFileName || fileName || 'Invoice Document'}</p>
+                    <p className="text-[11px] text-muted-foreground">Edit any field below and click Save to preview</p>
                   </div>
                 </div>
-
-                {/* Step 2 Card Actions: Download JSON & Eye Preview Icon */}
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
-                    onClick={handleDownloadJson}
-                    title="Download JSON"
-                    className="flex size-9 items-center justify-center rounded-xl border border-border bg-muted/40 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all cursor-pointer"
-                  >
-                    <Download className="size-4" />
-                  </button>
-
-                  <button
-                    type="button"
                     onClick={() => setTab('pdf')}
-                    title="Preview Invoice"
+                    title="Preview Voucher"
                     className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xs cursor-pointer"
                   >
                     <Eye className="size-4" />
@@ -426,7 +487,6 @@ export function InvoiceMaker() {
                 </div>
               </div>
 
-              {/* Schema-independent Dynamic Form */}
               <DynamicJsonForm
                 jsonData={ocrJson || editedJson}
                 editedJson={editedJson}
@@ -445,13 +505,82 @@ export function InvoiceMaker() {
         </section>
       )}
 
-      {/* STEP 3: INVOICE PREVIEW + MATCHES + JSON */}
+      {/* STEP 3: VOUCHER PREVIEW */}
       {tab === 'pdf' && (
         <ReviewPanel
-          fileName={fileName || 'invoice.pdf'}
-          fileUrl={fileUrl}
+          fileName={displayFileName || fileName || 'Invoice_VCH_2026.pdf'}
+          fileUrl={originalFileUrl}
           editedJson={savedReviewData || editedJson || initialInvoice}
         />
+      )}
+
+      {/* Original File Preview Dialog (Eye icon in Step 1) */}
+      {showOriginalPreview && originalFileUrl && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="relative flex flex-col w-full max-w-4xl max-h-[90vh] rounded-2xl border border-border bg-background shadow-2xl overflow-hidden">
+            {/* Dialog Header */}
+            <div className="flex items-center justify-between border-b border-border px-5 py-3.5 bg-background/95">
+              <div className="flex items-center gap-2.5">
+                <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <FileText className="size-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-foreground">{displayFileName || fileName}</p>
+                  <p className="text-[11px] text-muted-foreground">Original uploaded file preview</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowOriginalPreview(false)}
+                className="flex size-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {/* File Content */}
+            <div className="flex-1 overflow-auto bg-muted/20">
+              {uploadedFile?.type === 'application/pdf' || fileName.endsWith('.pdf') ? (
+                <iframe
+                  src={originalFileUrl}
+                  className="w-full h-[75vh] border-none"
+                  title="Original document preview"
+                />
+              ) : uploadedFile?.type?.startsWith('image/') ? (
+                <div className="flex items-center justify-center p-6 min-h-[50vh]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={originalFileUrl}
+                    alt="Uploaded document"
+                    className="max-w-full max-h-[65vh] object-contain rounded-xl shadow-md"
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground min-h-[50vh]">
+                  <FileText className="size-12 mb-4 opacity-30" />
+                  <p className="text-sm font-semibold">Preview not available for this file type.</p>
+                  <p className="text-xs mt-1">Download the file to view it.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Dialog Footer */}
+            <div className="flex items-center justify-end gap-2 border-t border-border px-5 py-3 bg-background/95">
+              <button
+                onClick={handleDownloadOriginal}
+                className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-4 py-2 text-xs font-bold text-foreground hover:bg-primary/10 hover:border-primary/30 transition-all cursor-pointer"
+              >
+                <Download className="size-3.5" />
+                Download Original
+              </button>
+              <button
+                onClick={() => setShowOriginalPreview(false)}
+                className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

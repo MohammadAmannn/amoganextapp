@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import {
   Search,
@@ -43,6 +43,7 @@ import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Conversation } from '@/features/chattemplate/chat/types/chat.types'
 import { Contact } from '@/features/chattemplate/contacts/types/contact.types'
 import { Email } from '../../data/emails'
+import { useVoucherStore, SavedVoucher } from '@/stores/voucher-store'
 
 interface EmailListProps {
   emails: Email[]
@@ -122,7 +123,39 @@ export function EmailList({
 }: EmailListProps) {
   const router = useRouter()
   const { unreadCount } = useNotificationStore()
+  const selectedVoucher = useVoucherStore((state) => state.selectedVoucher)
+  const storeVouchers = useVoucherStore((state) => state.vouchers)
+  const [dbVouchers, setDbVouchers] = useState<SavedVoucher[]>([])
   const [selectedAccount, setSelectedAccount] = useState<string>('all')
+
+  // Fetch real vouchers from DB API, fall back to local store if unavailable
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/vouchers')
+      .then((r) => r.ok ? r.json() : null)
+      .then((json) => {
+        if (cancelled || !json?.data) return
+        const mapped: SavedVoucher[] = json.data.map((v: any) => ({
+          id: v.id,
+          voucherNo: v.voucher_no,
+          date: new Date(v.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          from: v.vendor_name || 'Vendor',
+          userName: 'Aman',
+          status: v.status || 'Active',
+          fileName: v.file_name,
+          originalFileUrl: v.original_file_url || undefined,
+          editedFileUrl: v.edited_file_url || undefined,
+          editedJson: v.edited_json || null,
+          pdfUrl: v.edited_file_url || v.original_file_url || undefined,
+          createdAt: v.created_at,
+        }))
+        setDbVouchers(mapped)
+      })
+      .catch(() => { /* fall back to store vouchers */ })
+    return () => { cancelled = true }
+  }, [])
+
+  const savedVouchers = dbVouchers.length > 0 ? dbVouchers : storeVouchers
 
   const emailAccounts = React.useMemo(() => {
     const accounts = new Map()
@@ -352,16 +385,16 @@ export function EmailList({
             <ClipboardList className='h-4 w-4' />
           </button>
 
-          {/* File Icon replaced with Plus for New Voucher Form */}
+          {/* Voucher Icon (FileText icon for Vouchers list) */}
           <button
             onClick={onSelectFile}
             className={cn(
               'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
               isFileSelected && 'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
             )}
-            title='New Voucher Form'
+            title='Vouchers'
           >
-            <Plus className='h-4 w-4' />
+            <FileText className='h-4 w-4' />
           </button>
         </div>
 
@@ -918,6 +951,67 @@ export function EmailList({
                           July 30, 2026 - Aug 10, 2026
                         </span>
                       </div>
+                    </>
+                  )}
+
+                  {/* Real Saved Vouchers cards */}
+                  {!isCollapsed && onSelectFile && (
+                    <>
+                      <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
+                        <FileText className='h-3 w-3 shrink-0 text-indigo-500' />
+                        <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
+                          Vouchers
+                        </span>
+                        <div className='h-px flex-1 bg-border' />
+                        <span className='text-[10px] text-muted-foreground/50'>
+                          {savedVouchers.length}
+                        </span>
+                      </div>
+
+                      {savedVouchers.map((voucher) => {
+                        const isVoucherActive = isFileSelected && selectedVoucher?.id === voucher.id
+                        return (
+                          <div
+                            key={voucher.id}
+                            id={`voucher-card-${voucher.id}`}
+                            onClick={() => {
+                              useVoucherStore.getState().setSelectedVoucher(voucher)
+                              onSelectFile?.()
+                            }}
+                            className={[
+                              'group relative mx-3 my-0.5 flex cursor-pointer flex-col gap-1 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
+                              isVoucherActive
+                                ? 'border-indigo-200/50 bg-indigo-500/10 dark:border-indigo-900/30 dark:bg-indigo-950/20'
+                                : 'border-transparent bg-background hover:bg-indigo-500/5 hover:border-indigo-200/30',
+                            ].join(' ')}
+                          >
+                            {isVoucherActive && (
+                              <div className='absolute top-1 bottom-1 left-0 w-0.5 rounded-l-full bg-indigo-600' />
+                            )}
+                            <div className='flex items-center justify-between gap-2'>
+                              <div className='flex min-w-0 items-center gap-2'>
+                                <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-200/40 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-600 dark:border-indigo-800/40 dark:text-indigo-400'>
+                                  <FileText className='h-3.5 w-3.5' />
+                                </div>
+                                <div className='flex flex-col min-w-0'>
+                                  <span className='truncate text-sm font-semibold text-foreground'>
+                                    {voucher.fileName}
+                                  </span>
+                                
+                                </div>
+                              </div>
+                              <div className='flex flex-col items-end gap-1 shrink-0 ml-2'>
+                                <span className='rounded-full bg-indigo-500/10 px-1.5 py-0.5 text-[9px] font-bold text-indigo-600 dark:text-indigo-400'>
+                                  Voucher
+                                </span>
+                                <span className='text-[9px] text-muted-foreground/80 font-medium whitespace-nowrap'>
+                                  {voucher.date}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </>
                   )}
                 </>

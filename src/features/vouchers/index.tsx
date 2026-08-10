@@ -45,6 +45,8 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Search as HeaderSearch } from '@/components/search'
 import { formatDistanceToNow } from 'date-fns'
+import { useVoucherStore } from '@/stores/voucher-store'
+import { ReviewPanel } from '@/components/dynamic-form/ReviewPanel'
 
 import { AppHeader } from '@/components/layout/app-header'
 import { Main } from '@/components/layout/main'
@@ -135,8 +137,8 @@ const VOUCHERS_DATA: VoucherItem[] = [
     date: 'Aug 7, 2026 at 10:00 AM',
     from: 'Finance & Sales Dept',
     status: 'Active',
-    pdfUrl: '/aman voucher sample.pdf',
-    fileName: 'aman voucher sample.pdf',
+    pdfUrl: '',
+    fileName: 'Invoice_VCH-2026-001.pdf',
   },
   {
     id: 'voucher-2',
@@ -144,8 +146,8 @@ const VOUCHERS_DATA: VoucherItem[] = [
     date: 'Aug 7, 2026 at 02:30 PM',
     from: 'Operations Dept',
     status: 'Active',
-    pdfUrl: '/aman voucher sample.pdf',
-    fileName: 'aman voucher sample.pdf',
+    pdfUrl: '',
+    fileName: 'Invoice_VCH-2026-002.pdf',
   },
 ]
 
@@ -160,10 +162,9 @@ interface DirectoryChat {
 }
 
 export default function VouchersFeature() {
-  const [vouchers] = useState<VoucherItem[]>(VOUCHERS_DATA)
-  const [selectedVoucher, setSelectedVoucher] = useState<VoucherItem | null>(
-    VOUCHERS_DATA[0]
-  )
+  const vouchers = useVoucherStore((state) => state.vouchers)
+  const selectedVoucher = useVoucherStore((state) => state.selectedVoucher)
+  const setSelectedVoucher = useVoucherStore((state) => state.setSelectedVoucher)
   const [emails, setEmails] = useState<Email[]>(initialEmails)
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -290,7 +291,7 @@ export default function VouchersFeature() {
     setIsEmailSettingsOpen(false)
   }
 
-  const handleSelectVoucher = (voucher: VoucherItem) => {
+  const handleSelectVoucher = (voucher: import('@/stores/voucher-store').SavedVoucher) => {
     resetAllSelections()
     setSelectedVoucher(voucher)
   }
@@ -682,7 +683,7 @@ export default function VouchersFeature() {
       {/* Top Header & Search */}
       <div className='shrink-0 border-b border-border bg-background px-3 pt-2.5 pb-2 flex flex-col gap-2 select-none'>
         {/* 1. Header: Voucher Title + Top-Right Search & Bell Icons */}
-        <div className='flex items-center justify-between'>
+        <div className='hidden md:flex items-center justify-between'>
           {!isSidebarCollapsed && (
             <h1 className='text-xl font-black tracking-tight text-foreground'>
               Voucher
@@ -823,7 +824,7 @@ export default function VouchersFeature() {
               <ClipboardList className='h-4 w-4' />
             </button>
 
-            {/* Voucher Document Icon (FileText icon, replaces + icon) */}
+            {/* New Voucher Form (+ icon) */}
             <button
               onClick={() => {
                 resetAllSelections()
@@ -834,9 +835,9 @@ export default function VouchersFeature() {
                 isInvoiceMakerOpen &&
                   'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
               )}
-              title='Voucher Document Form'
+              title='New Voucher Form'
             >
-              <FileText className='h-4 w-4' />
+              <Plus className='h-4 w-4' />
             </button>
           </div>
         )}
@@ -1179,7 +1180,7 @@ export default function VouchersFeature() {
                 className='-ml-1 flex md:hidden h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
                 title='Close'
               >
-                <ArrowLeft className='h-5 w-5' />
+                <X className='h-5 w-5' />
               </button>
 
               <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-200/40 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-600 dark:border-indigo-800/40 dark:text-indigo-400'>
@@ -1214,7 +1215,7 @@ export default function VouchersFeature() {
                 className='-ml-1 flex md:hidden h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
                 title='Close'
               >
-                <ArrowLeft className='h-5 w-5' />
+                <X className='h-5 w-5' />
               </button>
 
               <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-200/40 bg-gradient-to-br from-red-500/20 to-rose-500/20 text-red-600 dark:border-red-800/40 dark:text-red-400'>
@@ -1234,26 +1235,37 @@ export default function VouchersFeature() {
             <HeaderActions
               onDelete={() => setSelectedVoucher(null)}
               onDownload={() => {
-                const link = document.createElement('a')
-                link.href = selectedVoucher.pdfUrl
-                link.download = selectedVoucher.fileName
-                link.click()
+                const url = selectedVoucher.pdfUrl || selectedVoucher.originalFileUrl || ''
+                if (url) {
+                  const link = document.createElement('a')
+                  link.href = url
+                  link.download = selectedVoucher.fileName
+                  link.click()
+                }
               }}
             />
           </div>
 
-          <div className='relative h-full min-h-0 w-full flex-1 overflow-hidden bg-background'>
-            <div className='doc-viewer-wrapper h-full w-full'>
-              <DynamicDocViewer
-                documents={[
-                  {
-                    uri: selectedVoucher.pdfUrl,
-                    fileName: selectedVoucher.fileName,
-                    fileType: 'pdf',
-                  },
-                ]}
+          <div className='relative h-full min-h-0 w-full flex-1 overflow-hidden bg-background flex flex-col'>
+            {selectedVoucher.editedJson ? (
+              <ReviewPanel
+                fileName={selectedVoucher.fileName}
+                fileUrl={selectedVoucher.pdfUrl || selectedVoucher.originalFileUrl || ''}
+                editedJson={selectedVoucher.editedJson}
               />
-            </div>
+            ) : (
+              <div className='doc-viewer-wrapper h-full w-full'>
+                <DynamicDocViewer
+                  documents={[
+                    {
+                      uri: selectedVoucher.pdfUrl || selectedVoucher.originalFileUrl || '',
+                      fileName: selectedVoucher.fileName,
+                      fileType: 'pdf',
+                    },
+                  ]}
+                />
+              </div>
+            )}
           </div>
         </div>
       ) : selectedDirectoryChat ? (

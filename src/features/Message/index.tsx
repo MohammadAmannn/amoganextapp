@@ -51,6 +51,8 @@ import CalendarTemplate from '@/features/calendartemplate'
 import KanbanTemplate from '@/features/kanbantemplate'
 import { emails as initialEmails, Email } from './data/emails'
 import { InvoiceMaker } from '../vouchers/components/invoice-maker'
+import { ReviewPanel } from '@/components/dynamic-form/ReviewPanel'
+import { useVoucherStore } from '@/stores/voucher-store'
 
 interface DirectoryChat {
   id: string
@@ -81,6 +83,7 @@ export default function MessageFeature() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [isKanbanOpen, setIsKanbanOpen] = useState(false)
   const [isFileOpen, setIsFileOpen] = useState(false)
+  const selectedVoucher = useVoucherStore((state) => state.selectedVoucher)
   const [isEmailSettingsOpen, setIsEmailSettingsOpen] = useState(false)
   const currentUser = useAuthStore((state) => state.auth.user)
   const router = useRouter()
@@ -500,10 +503,10 @@ export default function MessageFeature() {
 
                 <div className='min-w-0 flex-1'>
                   <p className='truncate text-sm font-semibold text-foreground'>
-                    New Voucher 
+                    {selectedVoucher ? selectedVoucher.fileName : 'New Voucher'}
                   </p>
                   <p className='truncate text-xs text-muted-foreground'>
-                    Create, review and print digital vouchers.
+                    {selectedVoucher ? `Saved Voucher · ${selectedVoucher.date}` : 'Create, review and print digital vouchers.'}
                   </p>
                 </div>
               </div>
@@ -514,7 +517,15 @@ export default function MessageFeature() {
             </div>
 
             <div className='relative h-full min-h-0 w-full flex-1 overflow-hidden bg-background flex flex-col'>
-              <InvoiceMaker />
+              {selectedVoucher && selectedVoucher.editedJson ? (
+                <ReviewPanel
+                  fileName={selectedVoucher.fileName}
+                  fileUrl={selectedVoucher.pdfUrl}
+                  editedJson={selectedVoucher.editedJson}
+                />
+              ) : (
+                <InvoiceMaker />
+              )}
             </div>
           </div>
         ) : selectedDirectoryChat ? (

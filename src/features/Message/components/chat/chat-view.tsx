@@ -1053,7 +1053,7 @@ export function ChatView({
               align='end'
               side='top'
               sideOffset={12}
-              className='w-40'
+              className='w-44 max-w-[calc(100vw-32px)]'
             >
               <DropdownMenuItem
                 onClick={() => imageInputRef.current?.click()}

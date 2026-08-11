@@ -224,7 +224,7 @@ export function ChatView({
   const [mapPreview, setMapPreview] = useState<ChatLocation | null>(null)
   const [previewImage, setPreviewImage] = useState<ChatAttachment | null>(null)
   const [isImageConverterOpen, setIsImageConverterOpen] = useState(false)
-  
+
   const handleRetryPdf = async (messageId: string) => {
     try {
       const res = await fetch('/api/process-pdf', {
@@ -556,15 +556,15 @@ export function ChatView({
       created_at: new Date().toISOString(),
       members: (membersCount && membersCount > 2)
         ? Array.from({ length: membersCount }).map((_, i) => ({
-            id: `m-${i}`,
-            name: `Member ${i + 1}`,
-            email: `member${i + 1}@example.com`,
-            avatar_url: ''
-          }))
+          id: `m-${i}`,
+          name: `Member ${i + 1}`,
+          email: `member${i + 1}@example.com`,
+          avatar_url: ''
+        }))
         : [
-            { id: currentUser?.accountNo || '1', name: currentUser?.name || 'You', email: currentUser?.email || '', avatar_url: '' },
-            { id: '2', name: chatName, email: 'partner@example.com', avatar_url: chatAvatar || '' }
-          ]
+          { id: currentUser?.accountNo || '1', name: currentUser?.name || 'You', email: currentUser?.email || '', avatar_url: '' },
+          { id: '2', name: chatName, email: 'partner@example.com', avatar_url: chatAvatar || '' }
+        ]
     } as Conversation)
 
     const displayRawMessages = rawMessages || messages.map(msg => ({
@@ -732,11 +732,7 @@ export function ChatView({
                       activeId === msg.id ? null : msg.id
                     )
                   }
-                  className={
-                    msg.content
-                      ? 'relative rounded-2xl rounded-tl-sm border border-border bg-background px-4 py-2 shadow-sm'
-                      : 'relative px-0 py-0'
-                  }
+                  className='relative px-1 py-0.5'
                 >
                   {msg.forwarded && (
                     <div className='mb-1 text-[10px] font-semibold text-muted-foreground'>
@@ -927,7 +923,7 @@ export function ChatView({
                     className={cn(
                       'pointer-events-none absolute -bottom-4 left-2 z-30 scale-95 opacity-0 transition-all duration-200 group-hover/message:pointer-events-auto group-hover/message:scale-100 group-hover/message:opacity-100',
                       activeToolbarMessageId === msg.id &&
-                        'pointer-events-auto scale-100 opacity-100'
+                      'pointer-events-auto scale-100 opacity-100'
                     )}
                   />
                 )}
@@ -1105,7 +1101,7 @@ export function ChatView({
             if (draft.trim()) return
             try {
               event.currentTarget.setPointerCapture(event.pointerId)
-            } catch (err) {}
+            } catch (err) { }
             void startRecording()
           }}
           onPointerUp={(event) => {
@@ -1114,7 +1110,7 @@ export function ChatView({
               if (event.currentTarget.hasPointerCapture(event.pointerId)) {
                 event.currentTarget.releasePointerCapture(event.pointerId)
               }
-            } catch (err) {}
+            } catch (err) { }
             stopRecording()
           }}
           onPointerCancel={(event) => {
@@ -1122,7 +1118,7 @@ export function ChatView({
               if (event.currentTarget.hasPointerCapture(event.pointerId)) {
                 event.currentTarget.releasePointerCapture(event.pointerId)
               }
-            } catch (err) {}
+            } catch (err) { }
             if (!draft.trim()) stopRecording()
           }}
           onContextMenu={(event) => event.preventDefault()}

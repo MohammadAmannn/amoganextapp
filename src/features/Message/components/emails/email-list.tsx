@@ -339,9 +339,9 @@ export function EmailList({
 
   return (
     <div className='flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background'>
-      <div className='shrink-0 border-b border-border bg-background px-3 pt-2.5 pb-2 flex flex-col gap-2'>
+      <div className='shrink-0 border-b border-border bg-background px-3 pt-2 pb-1.5 flex flex-col gap-1.5'>
         {/* 1. Header: Messages title + Search + Bell (Desktop only to prevent mobile duplicate) */}
-        <div className='hidden md:flex items-center justify-between pb-1 border-b border-border/40'>
+        <div className='hidden md:flex items-center justify-between pb-0.5 border-b border-border/40'>
           <h1 className='text-base font-bold tracking-tight text-foreground sm:text-lg'>
             Messages
           </h1>
@@ -492,7 +492,7 @@ export function EmailList({
       </div>
 
       <div className='min-h-0 flex-1 scrollbar-thin overflow-y-auto bg-background'>
-        <div className='flex flex-col gap-0.5 py-1'>
+        <div className='flex flex-col gap-0 py-0.5'>
           {filtered.length === 0 && contacts.length === 0 ? (
             <div className='flex flex-col items-center justify-center p-8 text-center text-muted-foreground'>
               <p className='text-sm font-medium'>No messages found</p>
@@ -856,7 +856,7 @@ export function EmailList({
                   {(categoryFilter === 'all' || categoryFilter === 'mail') && mailItems.length > 0 && (
                     <>
                       {!isCollapsed && (
-                        <div className='flex items-center gap-2 px-3 pt-2 pb-1'>
+                        <div className='flex items-center gap-2 px-3 pt-1.5 pb-0.5'>
                           <Mail className='h-3 w-3 shrink-0 text-indigo-500' />
                           <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
                             Mail
@@ -874,7 +874,7 @@ export function EmailList({
                   {(categoryFilter === 'all' || categoryFilter === 'chat') && chatItems.length > 0 && (
                     <>
                       {!isCollapsed && (
-                        <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
+                        <div className='flex items-center gap-2 px-3 pt-2 pb-0.5'>
                           <MessageSquare className='h-3 w-3 shrink-0 text-emerald-500' />
                           <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
                             Chats
@@ -893,7 +893,7 @@ export function EmailList({
                   {!isCollapsed && onSelectAiChat && (categoryFilter === 'all' || categoryFilter === 'ai' || isAiChatSelected) && (
                     <>
                       {!isCollapsed && (
-                        <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
+                        <div className='flex items-center gap-2 px-3 pt-2 pb-0.5'>
                           <Bot className='h-3 w-3 shrink-0 text-indigo-500' />
                           <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
                             AI
@@ -939,7 +939,7 @@ export function EmailList({
                   {!isCollapsed && onSelectCalendar && (categoryFilter === 'all' || categoryFilter === 'calendar' || isCalendarSelected) && (
                     <>
                       {!isCollapsed && (
-                        <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
+                        <div className='flex items-center gap-2 px-3 pt-2 pb-0.5'>
                           <Calendar className='h-3 w-3 shrink-0 text-amber-500' />
                           <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
                             Calendar
@@ -985,7 +985,7 @@ export function EmailList({
                   {!isCollapsed && onSelectTask && (categoryFilter === 'all' || categoryFilter === 'tasks' || isTaskSelected) && (
                     <>
                       {!isCollapsed && (
-                        <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
+                        <div className='flex items-center gap-2 px-3 pt-2 pb-0.5'>
                           <ClipboardList className='h-3 w-3 shrink-0 text-purple-500' />
                           <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
                             Tasks
@@ -1031,7 +1031,7 @@ export function EmailList({
                   {!isCollapsed && onSelectFile && (categoryFilter === 'all' || categoryFilter === 'vouchers' || isFileSelected) && (
                     <>
                       {categoryFilter === 'all' && (
-                        <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
+                        <div className='flex items-center gap-2 px-3 pt-2 pb-0.5'>
                           <FileText className='h-3 w-3 shrink-0 text-indigo-500' />
                           <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
                             Files

@@ -75,8 +75,10 @@ export function ReactDocViewerWrapper({
 
   const isWord = extension === 'docx' || extension === 'doc' || fileNameLower.endsWith('.docx') || fileNameLower.endsWith('.doc')
 
+  const isPdf = extension === 'pdf' || fileNameLower.endsWith('.pdf') || uriLower.includes('.pdf')
+
   useEffect(() => {
-    if (isImage || isWord || useFallback || !doc?.uri || !containerRef.current) return
+    if (isImage || isWord || isPdf || useFallback || !doc?.uri || !containerRef.current) return
 
     let viewer: any = null
     let active = true
@@ -114,7 +116,7 @@ export function ReactDocViewerWrapper({
         viewer.destroy().catch(() => {})
       }
     }
-  }, [doc?.uri, doc?.fileName, isImage, isWord, useFallback])
+  }, [doc?.uri, doc?.fileName, isImage, isWord, isPdf, useFallback])
 
   // Image files: Direct <img> for 100% mobile and desktop rendering
   if (isImage) {
@@ -132,6 +134,35 @@ export function ReactDocViewerWrapper({
   // Word (.docx, .doc) files: Render local Word document viewer without Microsoft Word error popup
   if (isWord) {
     return <LocalWordViewer uri={doc.uri} fileName={doc.fileName} />
+  }
+
+  // PDF (.pdf) files: Render PDF via DocViewer renderer on clean white background (no dark Chrome plugin flash)
+  if (isPdf && doc.uri) {
+    return (
+      <div className="doc-viewer-wrapper w-full h-full min-h-0 flex-1 relative overflow-hidden bg-background">
+        <DocViewer
+          key={doc.uri}
+          documents={documents}
+          pluginRenderers={safeRenderers}
+          style={{ width: '100%', height: '100%', backgroundColor: 'transparent' }}
+          config={{
+            header: {
+              disableHeader: true,
+              disableFileName: true,
+            },
+          }}
+          theme={{
+            primary: '#4f46e5',
+            secondary: '#ffffff',
+            tertiary: '#ffffff',
+            textPrimary: '#111827',
+            textSecondary: '#6b7280',
+            textTertiary: '#9ca3af',
+            disableThemeScrollbar: true,
+          }}
+        />
+      </div>
+    )
   }
 
   // Fallback renderer (with MSDocRenderer disabled)

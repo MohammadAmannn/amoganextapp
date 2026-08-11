@@ -16,6 +16,7 @@ export interface SavedVoucher {
   originalFileUrl?: string
   editedFileUrl?: string
   dbId?: string
+  _selectedAt?: number
 }
 
 interface VoucherStoreState {

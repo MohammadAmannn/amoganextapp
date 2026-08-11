@@ -12,11 +12,11 @@ export function ImageViewer({ fileUrl, fileName }: ImageViewerProps) {
 
   return (
     <>
-      <div className="relative max-w-sm rounded-lg overflow-hidden border border-border/40 shadow-xs">
+      <div className="relative max-w-sm rounded-2xl overflow-hidden">
         <img
           src={fileUrl}
           alt={fileName || 'Image'}
-          className="rounded-lg max-h-60 max-w-full object-cover cursor-pointer hover:opacity-90 transition-all duration-200"
+          className="rounded-2xl max-h-72 max-w-full object-cover cursor-pointer hover:opacity-95 transition-all duration-200"
           loading="lazy"
           onClick={() => setIsOpen(true)}
         />

@@ -229,7 +229,7 @@ export function DocumentViewer({
           onDelete={onDelete}
         />
       )}
-      <div className="flex-grow flex flex-col overflow-hidden bg-zinc-950/5 dark:bg-zinc-900/5 relative w-full min-h-0">
+      <div className="flex-grow flex flex-col overflow-hidden bg-background relative w-full min-h-0">
         {renderContent()}
       </div>
       {!hideHeader && (

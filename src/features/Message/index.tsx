@@ -522,8 +522,9 @@ export default function MessageFeature() {
           <KanbanTemplate embedded onBack={() => setIsKanbanOpen(false)} />
         ) : isFileOpen ? (
           <SafeDocumentPreview
+            key={`${selectedVoucher?.id || 'doc'}-${selectedVoucher?._selectedAt || 0}`}
             fileName={selectedVoucher?.fileName || 'invoice.pdf'}
-            fileUrl={selectedVoucher?.pdfUrl || selectedVoucher?.originalFileUrl}
+            fileUrl={selectedVoucher?.editedFileUrl || selectedVoucher?.pdfUrl || selectedVoucher?.originalFileUrl}
             editedJson={selectedVoucher?.editedJson}
             onClose={() => setIsFileOpen(false)}
             hideToggle={true}

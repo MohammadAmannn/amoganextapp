@@ -138,6 +138,14 @@
    REUSABLE DOCUMENT VIEWER OVERRIDES
    ========================================================== */
 
+/* Force doc-viewer container backgrounds to match application theme (eliminates dark flash) */
+#react-doc-viewer,
+#react-doc-viewer > div,
+.doc-viewer-wrapper,
+.zrimo-viewer-wrapper {
+  background-color: var(--background) !important;
+}
+
 /* Target the wrapper and force react-doc-viewer internal containers to use 100% height and width */
 .doc-viewer-wrapper,
 .doc-viewer-wrapper #react-doc-viewer, 
@@ -171,14 +179,30 @@
   height: 100% !important;
   max-height: 100% !important;
   overflow-y: auto !important;
-  background-color: var(--muted) !important;
+  background-color: var(--background) !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  padding: 1.5rem !important;
-  gap: 1.5rem !important;
+  padding: 0 1rem 1rem 1rem !important;
+  gap: 0.75rem !important;
   box-sizing: border-box !important;
   scrollbar-width: thin !important;
+}
+
+/* Ensure hidden pdf-controls take NO space (height:0 prevents gap) */
+.doc-viewer-wrapper #header-bar,
+.doc-viewer-wrapper #react-doc-viewer-header,
+.doc-viewer-wrapper #pdf-controls,
+.doc-viewer-wrapper #pdf-controls-bar,
+.doc-viewer-wrapper [id*="pdf-controls"],
+.doc-viewer-wrapper [class*="pdf-controls"],
+.doc-viewer-wrapper [class*="pdfControls"],
+.doc-viewer-wrapper #pdf-controls-wrapper {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 /* Override react-pdf Document class to layout centered column */
@@ -187,7 +211,7 @@
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  gap: 1.5rem !important;
+  gap: 1rem !important;
   background-color: transparent !important;
 }
 

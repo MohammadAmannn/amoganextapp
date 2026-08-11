@@ -973,7 +973,7 @@ export function EmailList({
                             Event
                           </span>
                         </div>
-                       
+
                         <span className='pl-10 text-[10px] text-muted-foreground/80 font-medium block'>
                           July 30, 2026 - Aug 05, 2026
                         </span>
@@ -1019,7 +1019,7 @@ export function EmailList({
                             Kanban
                           </span>
                         </div>
-                        
+
                         <span className='pl-10 text-[10px] text-muted-foreground/80 font-medium block'>
                           July 30, 2026 - Aug 10, 2026
                         </span>
@@ -1047,10 +1047,10 @@ export function EmailList({
                         <div className='mx-3 my-2 rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-xs text-muted-foreground'>
                           <FileText className='mx-auto h-7 w-7 opacity-30 mb-2 text-indigo-500' />
                           <p className='font-semibold text-foreground/80'>
-                            {searchQuery ? 'No matching vouchers found' : 'No vouchers yet'}
+                            {searchQuery ? 'No matching files found' : 'No Files yet'}
                           </p>
-                          <p className='text-[11px] opacity-70 mt-0.5'>
-                            {searchQuery ? `No files matching "${searchQuery}"` : 'Upload and save a voucher on the Voucher page to see it here.'}
+                          <p className='text-[11px] opacity-7 0 mt-0.5'>
+                            {searchQuery ? `No files matching "${searchQuery}"` : 'Upload and save a file on the Chat page to see it here.'}
                           </p>
                         </div>
                       ) : (
@@ -1080,7 +1080,10 @@ export function EmailList({
                               key={voucher.id}
                               id={`voucher-card-${voucher.id}`}
                               onClick={() => {
-                                useVoucherStore.getState().setSelectedVoucher(voucher)
+                                useVoucherStore.getState().setSelectedVoucher({
+                                  ...voucher,
+                                  _selectedAt: Date.now(),
+                                })
                                 onSelectFile?.()
                               }}
                               className={[
@@ -1155,7 +1158,7 @@ export function EmailList({
                                       </DropdownMenuItem>
 
                                       <DropdownMenuItem
-                                        onClick={() => {}}
+                                        onClick={() => { }}
                                         className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
                                       >
                                         <Star className='h-3.5 w-3.5 text-muted-foreground' />
@@ -1163,7 +1166,7 @@ export function EmailList({
                                       </DropdownMenuItem>
 
                                       <DropdownMenuItem
-                                        onClick={() => {}}
+                                        onClick={() => { }}
                                         className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
                                       >
                                         <Pin className='h-3.5 w-3.5 text-muted-foreground' />
@@ -1171,7 +1174,7 @@ export function EmailList({
                                       </DropdownMenuItem>
 
                                       <DropdownMenuItem
-                                        onClick={() => {}}
+                                        onClick={() => { }}
                                         className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
                                       >
                                         <Flag className='h-3.5 w-3.5 text-muted-foreground' />
@@ -1179,7 +1182,7 @@ export function EmailList({
                                       </DropdownMenuItem>
 
                                       <DropdownMenuItem
-                                        onClick={() => {}}
+                                        onClick={() => { }}
                                         className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
                                       >
                                         <Archive className='h-3.5 w-3.5 text-muted-foreground' />

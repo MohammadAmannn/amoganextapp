@@ -149,40 +149,43 @@ export function MessageBubble({
     setShowMobileToolbar(false)
   }
 
-  return (
-    <div
-      id={`msg-${message.id}`}
-      className={cn(
-        'group relative flex max-w-[85%] flex-col items-start gap-1 pb-3 transition-all duration-300 sm:max-w-[75%]',
-        {
-          'ms-auto items-end': isMe,
-        }
-      )}
-    >
-      {/* Sender name for group chats (not me) */}
-      {isGroup && !isMe && message.sender && (
-        <span className='px-1 text-[10px] leading-none font-semibold text-muted-foreground/80 select-none'>
-          {message.sender.name}
-        </span>
-      )}
+      const isPureAttachment = !message.deleted && message.message_type !== 'text' && message.message_type !== 'location' && !message.message
 
-      {/* Bubble Container */}
-      <div
-        onClick={handleBubbleClick}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        className={cn(
-          'group/bubble relative max-w-full rounded-2xl border px-4 py-2.5 text-sm leading-relaxed shadow-xs transition-all duration-200 select-text',
-          {
-            'rounded-tr-none border-emerald-200/50 bg-emerald-100 text-foreground dark:border-emerald-900/30 dark:bg-emerald-950/40':
-              isMe && !message.deleted,
-            'rounded-tl-none border-border/50 bg-card text-foreground':
-              !isMe && !message.deleted,
-            'rounded-2xl border-muted bg-muted/30 text-muted-foreground italic':
-              message.deleted,
-          }
-        )}
-      >
+      return (
+        <div
+          id={`msg-${message.id}`}
+          className={cn(
+            'group relative flex max-w-[85%] flex-col items-start gap-1 pb-3 transition-all duration-300 sm:max-w-[75%]',
+            {
+              'ms-auto items-end': isMe,
+            }
+          )}
+        >
+          {/* Sender name for group chats (not me) */}
+          {isGroup && !isMe && message.sender && (
+            <span className='px-1 text-[10px] leading-none font-semibold text-muted-foreground/80 select-none'>
+              {message.sender.name}
+            </span>
+          )}
+
+          {/* Bubble Container */}
+          <div
+            onClick={handleBubbleClick}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            className={cn(
+              'group/bubble relative max-w-full rounded-2xl text-sm leading-relaxed transition-all duration-200 select-text',
+              !isPureAttachment && 'border px-4 py-2.5 shadow-xs',
+              {
+                'rounded-tr-none border-emerald-200/50 bg-emerald-100 text-foreground dark:border-emerald-900/30 dark:bg-emerald-950/40':
+                  isMe && !message.deleted && !isPureAttachment,
+                'rounded-tl-none border-border/50 bg-card text-foreground':
+                  !isMe && !message.deleted && !isPureAttachment,
+                'rounded-2xl border-muted bg-muted/30 text-muted-foreground italic px-4 py-2.5':
+                  message.deleted,
+              }
+            )}
+          >
         {/* Forwarded Tag */}
         {message.forward && !message.deleted && (
           <span className='mb-1 flex items-center gap-1 text-[10px] leading-none font-extrabold text-muted-foreground opacity-80 select-none'>

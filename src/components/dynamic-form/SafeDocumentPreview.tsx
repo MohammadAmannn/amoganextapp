@@ -175,7 +175,7 @@ export function SafeDocumentPreview({
       </div>
 
       {/* Main Preview Content Body */}
-      <div className="relative flex-1 min-h-0 w-full overflow-hidden bg-muted/20 flex flex-col">
+      <div className="relative flex-1 min-h-0 w-full overflow-hidden bg-background flex flex-col">
         {viewMode === 'structured' && editedJson ? (
           <div className="w-full h-full min-h-0 overflow-auto">
             <ReviewPanel
@@ -184,7 +184,7 @@ export function SafeDocumentPreview({
               editedJson={editedJson}
             />
           </div>
-        ) : fileUrl ? (
+        ) : fileUrl && fileUrl !== 'null' && fileUrl !== 'undefined' && fileUrl.trim() !== '' ? (
           <div
             className="w-full h-full min-h-[300px] flex-1 flex flex-col transition-all duration-200 overflow-auto"
             style={{
@@ -193,6 +193,7 @@ export function SafeDocumentPreview({
             }}
           >
             <DocumentViewer
+              key={`${cleanName}-${fileUrl}`}
               fileUrl={fileUrl}
               fileName={cleanName}
               allowDownload={true}

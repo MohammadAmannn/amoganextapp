@@ -55,7 +55,7 @@ export function ImageConverterDialog({
 }: ImageConverterDialogProps) {
   const [selectedImages, setSelectedImages] = useState<ImageItem[]>([])
   const [targetFormat, setTargetFormat] = useState<string>('pdf')
-  const [pdfName, setPdfName] = useState<string>('editable')
+  const [pdfName, setPdfName] = useState<string>('')
   const [isConverting, setIsConverting] = useState<boolean>(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -75,10 +75,13 @@ export function ImageConverterDialog({
       }
     })
 
-    setSelectedImages((prev) => [...prev, ...newItems])
-    if (!pdfName.trim()) {
-      setPdfName('editable')
-    }
+    const defaultName = newItems[0]?.file.name.replace(/\.[^/.]+$/, '') || 'Converted_Document'
+    setSelectedImages((prev) => {
+      if (prev.length === 0 || !pdfName || pdfName === 'editable') {
+        setPdfName(defaultName)
+      }
+      return [...prev, ...newItems]
+    })
     e.target.value = ''
   }
 
@@ -88,7 +91,7 @@ export function ImageConverterDialog({
 
   const handleClearAll = () => {
     setSelectedImages([])
-    setPdfName('editable')
+    setPdfName('')
   }
 
   const handleConvertAndSend = async () => {
@@ -104,7 +107,8 @@ export function ImageConverterDialog({
         formData.append('file', item.file)
       })
 
-      const finalName = pdfName.trim() ? pdfName.trim() : 'editable'
+      const fallbackName = selectedImages[0]?.file.name.replace(/\.[^/.]+$/, '') || 'Converted_Document'
+      const finalName = pdfName.trim() && pdfName !== 'editable' ? pdfName.trim() : fallbackName
       formData.append('fileName', finalName)
       formData.append('targetFormat', targetFormat)
 
@@ -265,7 +269,7 @@ export function ImageConverterDialog({
                       type='text'
                       value={pdfName}
                       onChange={(e) => setPdfName(e.target.value)}
-                      placeholder='editable'
+                      placeholder='Enter document file name...'
                       className='h-9 rounded-xl text-xs pr-12 font-medium w-full min-w-0 truncate'
                     />
                     <span className='absolute right-2.5 text-[11px] font-bold text-muted-foreground select-none pointer-events-none'>

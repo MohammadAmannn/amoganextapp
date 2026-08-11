@@ -733,9 +733,9 @@ export function ChatView({
                     )
                   }
                   className={
-                    msg.attachment
+                    msg.content
                       ? 'relative rounded-2xl rounded-tl-sm border border-border bg-background px-4 py-2 shadow-sm'
-                      : 'relative px-1 py-0.5'
+                      : 'relative px-0 py-0'
                   }
                 >
                   {msg.forwarded && (
@@ -765,7 +765,7 @@ export function ChatView({
                     </div>
                   )}
                   {msg.attachment?.type === 'document' && (
-                    <div className='flex w-full max-w-80 min-w-60 items-center gap-2 rounded-xl border border-border/80 bg-card p-2 transition-colors hover:bg-muted/10'>
+                    <div className='flex w-full max-w-80 min-w-60 items-center gap-2.5 rounded-2xl border border-border/80 bg-card p-3 transition-colors hover:bg-muted/10 my-1 shadow-2xs'>
                       <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-amber-500/30 bg-amber-500/15 text-amber-600 dark:text-amber-400'>
                         <FileText className='h-4.5 w-4.5' />
                       </div>
@@ -831,11 +831,12 @@ export function ChatView({
                     <button
                       type='button'
                       onClick={() => setPreviewImage(msg.attachment!)}
+                      className='outline-none block my-1 overflow-hidden rounded-2xl cursor-pointer'
                     >
                       <img
                         src={msg.attachment.url}
                         alt={msg.attachment.name}
-                        className='max-h-64 rounded-lg object-cover'
+                        className='max-h-72 max-w-full rounded-2xl object-cover hover:opacity-95 transition-opacity'
                       />
                     </button>
                   )}

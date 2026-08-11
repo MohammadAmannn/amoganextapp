@@ -130,6 +130,7 @@ export function EmailList({
   const storeVouchers = useVoucherStore((state) => state.vouchers)
   const [dbVouchers, setDbVouchers] = useState<SavedVoucher[]>([])
   const [selectedAccount, setSelectedAccount] = useState<string>('all')
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'mail' | 'chat' | 'vouchers'>('all')
 
   // Fetch real vouchers from DB API, fall back to local store if unavailable
   useEffect(() => {
@@ -331,13 +332,16 @@ export function EmailList({
         <div className='rounded-xl border border-border/80 bg-muted/10 p-1 flex items-center justify-between gap-1'>
           {/* Mail / Email Settings Icon */}
           <button
-            onClick={onSelectEmailSettings}
+            onClick={() => {
+              setCategoryFilter((prev) => (prev === 'mail' ? 'all' : 'mail'))
+              onSelectEmailSettings?.()
+            }}
             className={cn(
               'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-              isEmailSettingsSelected &&
+              (categoryFilter === 'mail' || isEmailSettingsSelected) &&
               'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
             )}
-            title='Email Settings'
+            title='Mail Items'
           >
             <Mail className='h-4 w-4' />
           </button>
@@ -345,6 +349,7 @@ export function EmailList({
           {/* Chat Icon */}
           <button
             onClick={() => {
+              setCategoryFilter((prev) => (prev === 'chat' ? 'all' : 'chat'))
               const firstChat = chatItems[0]
               if (firstChat) {
                 if (firstChat.id.startsWith('conversation-')) {
@@ -360,7 +365,7 @@ export function EmailList({
             }}
             className={cn(
               'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-              (selectedContactId !== null || (selectedEmailId !== null && chatItems.some((c) => c.id === selectedEmailId))) &&
+              (categoryFilter === 'chat' || selectedContactId !== null || (selectedEmailId !== null && chatItems.some((c) => c.id === selectedEmailId))) &&
               'bg-background text-emerald-600 dark:text-emerald-400 shadow-sm border border-border/60 font-semibold'
             )}
             title='Chats & Direct Messages'
@@ -406,10 +411,13 @@ export function EmailList({
 
           {/* Voucher Icon (FileText icon for Vouchers list) */}
           <button
-            onClick={onSelectFile}
+            onClick={() => {
+              setCategoryFilter((prev) => (prev === 'vouchers' ? 'all' : 'vouchers'))
+              onSelectFile?.()
+            }}
             className={cn(
               'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-              isFileSelected && 'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
+              (categoryFilter === 'vouchers' || isFileSelected) && 'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
             )}
             title='Vouchers'
           >
@@ -799,7 +807,7 @@ export function EmailList({
 
               return (
                 <>
-                  {mailItems.length > 0 && (
+                  {(categoryFilter === 'all' || categoryFilter === 'mail') && mailItems.length > 0 && (
                     <>
                       {!isCollapsed && (
                         <div className='flex items-center gap-2 px-3 pt-2 pb-1'>
@@ -817,7 +825,7 @@ export function EmailList({
                     </>
                   )}
 
-                  {chatItems.length > 0 && (
+                  {(categoryFilter === 'all' || categoryFilter === 'chat') && chatItems.length > 0 && (
                     <>
                       {!isCollapsed && (
                         <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
@@ -974,7 +982,7 @@ export function EmailList({
                   )}
 
                   {/* Real Saved Vouchers cards */}
-                  {!isCollapsed && onSelectFile && (
+                  {!isCollapsed && onSelectFile && (categoryFilter === 'all' || categoryFilter === 'vouchers' || isFileSelected) && (
                     <>
                       <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
                         <FileText className='h-3 w-3 shrink-0 text-indigo-500' />

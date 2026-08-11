@@ -51,9 +51,7 @@ export function SafeDocumentPreview({
   )
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const cleanName = fileName && !fileName.toLowerCase().includes('aman')
-    ? fileName
-    : 'my test fiile 1.pdf'
+  const cleanName = fileName || 'document.pdf'
 
   const handleZoomIn = () => setZoom((z) => Math.min(z + 25, 250))
   const handleZoomOut = () => setZoom((z) => Math.max(z - 25, 50))

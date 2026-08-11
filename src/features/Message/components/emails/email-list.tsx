@@ -130,37 +130,74 @@ export function EmailList({
   const storeVouchers = useVoucherStore((state) => state.vouchers)
   const [dbVouchers, setDbVouchers] = useState<SavedVoucher[]>([])
   const [selectedAccount, setSelectedAccount] = useState<string>('all')
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'mail' | 'chat' | 'vouchers'>('all')
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'mail' | 'chat' | 'vouchers' | 'ai' | 'calendar' | 'tasks'>('all')
 
-  // Fetch real vouchers from DB API, fall back to local store if unavailable
+  // Fetch real vouchers from DB API with background polling for instant live updates without page refresh
   useEffect(() => {
     let cancelled = false
-    fetch('/api/vouchers')
-      .then((r) => r.ok ? r.json() : null)
-      .then((json) => {
-        if (cancelled || !json?.data) return
-        const mapped: SavedVoucher[] = json.data.map((v: any) => ({
-          id: v.id,
-          voucherNo: v.voucher_no,
-          date: new Date(v.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          from: v.vendor_name || 'Vendor',
-          userName: 'Aman',
-          status: v.status || 'Active',
-          fileName: v.file_name,
-          originalFileUrl: v.original_file_url || undefined,
-          editedFileUrl: v.edited_file_url || undefined,
-          editedJson: v.edited_json || null,
-          pdfUrl: v.edited_file_url || v.original_file_url || undefined,
-          createdAt: v.created_at,
-        }))
-        setDbVouchers(mapped)
-        useVoucherStore.getState().setVouchers(mapped)
-      })
-      .catch(() => { /* Keep store vouchers */ })
-    return () => { cancelled = true }
+
+    const loadFiles = () => {
+      fetch('/api/vouchers')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((json) => {
+          if (cancelled || !json?.data) return
+          const mapped: SavedVoucher[] = json.data.map((v: any) => ({
+            id: v.id,
+            voucherNo: v.voucher_no,
+            date: new Date(v.created_at).toLocaleString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            from: v.vendor_name || 'Vendor',
+            userName: v.user_name || v.customer_name || v.vendor_name || 'Aman',
+            status: v.status || 'Active',
+            fileName: v.file_name,
+            originalFileUrl: v.original_file_url || undefined,
+            editedFileUrl: v.edited_file_url || undefined,
+            editedJson: v.edited_json || null,
+            pdfUrl: v.edited_file_url || v.original_file_url || undefined,
+            createdAt: v.created_at,
+          }))
+
+          setDbVouchers(mapped)
+          const storeState = useVoucherStore.getState()
+          storeState.setVouchers(mapped)
+
+          // If no file is currently selected, pick top file automatically
+          if (!storeState.selectedVoucher && mapped.length > 0) {
+            const sorted = [...mapped].sort((a, b) => {
+              const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+              const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+              return timeB - timeA
+            })
+            storeState.setSelectedVoucher(sorted[0])
+          }
+        })
+        .catch(() => {
+          /* Keep store vouchers */
+        })
+    }
+
+    loadFiles()
+    const interval = setInterval(loadFiles, 3000)
+
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
   }, [])
 
-  const savedVouchers = storeVouchers
+  const savedVouchers = React.useMemo(() => {
+    const list = dbVouchers.length > 0 ? dbVouchers : storeVouchers
+    return [...list].sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return timeB - timeA
+    })
+  }, [dbVouchers, storeVouchers])
 
   const filteredSavedVouchers = React.useMemo(() => {
     if (!searchQuery.trim()) return savedVouchers
@@ -375,10 +412,13 @@ export function EmailList({
 
           {/* AI Assistant Icon */}
           <button
-            onClick={onSelectAiChat}
+            onClick={() => {
+              setCategoryFilter((prev) => (prev === 'ai' ? 'all' : 'ai'))
+              onSelectAiChat?.()
+            }}
             className={cn(
               'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-              isAiChatSelected && 'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
+              (categoryFilter === 'ai' || isAiChatSelected) && 'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
             )}
             title='AI Assistant'
           >
@@ -387,10 +427,13 @@ export function EmailList({
 
           {/* Calendar Icon */}
           <button
-            onClick={onSelectCalendar}
+            onClick={() => {
+              setCategoryFilter((prev) => (prev === 'calendar' ? 'all' : 'calendar'))
+              onSelectCalendar?.()
+            }}
             className={cn(
               'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-              isCalendarSelected && 'bg-background text-amber-600 dark:text-amber-400 shadow-sm border border-border/60 font-semibold'
+              (categoryFilter === 'calendar' || isCalendarSelected) && 'bg-background text-amber-600 dark:text-amber-400 shadow-sm border border-border/60 font-semibold'
             )}
             title='Calendar Schedule'
           >
@@ -399,10 +442,13 @@ export function EmailList({
 
           {/* Tasks / Kanban Icon */}
           <button
-            onClick={onSelectTask}
+            onClick={() => {
+              setCategoryFilter((prev) => (prev === 'tasks' ? 'all' : 'tasks'))
+              onSelectTask?.()
+            }}
             className={cn(
               'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-              isTaskSelected && 'bg-background text-purple-600 dark:text-purple-400 shadow-sm border border-border/60 font-semibold'
+              (categoryFilter === 'tasks' || isTaskSelected) && 'bg-background text-purple-600 dark:text-purple-400 shadow-sm border border-border/60 font-semibold'
             )}
             title='Tasks & Kanban Board'
           >
@@ -844,7 +890,7 @@ export function EmailList({
                   )}
 
                   {/* AI Chat card */}
-                  {!isCollapsed && onSelectAiChat && (
+                  {!isCollapsed && onSelectAiChat && (categoryFilter === 'all' || categoryFilter === 'ai' || isAiChatSelected) && (
                     <>
                       {!isCollapsed && (
                         <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
@@ -890,7 +936,7 @@ export function EmailList({
                   )}
 
                   {/* Calendar card */}
-                  {!isCollapsed && onSelectCalendar && (
+                  {!isCollapsed && onSelectCalendar && (categoryFilter === 'all' || categoryFilter === 'calendar' || isCalendarSelected) && (
                     <>
                       {!isCollapsed && (
                         <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
@@ -936,7 +982,7 @@ export function EmailList({
                   )}
 
                   {/* Task / Kanban card */}
-                  {!isCollapsed && onSelectTask && (
+                  {!isCollapsed && onSelectTask && (categoryFilter === 'all' || categoryFilter === 'tasks' || isTaskSelected) && (
                     <>
                       {!isCollapsed && (
                         <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
@@ -984,16 +1030,18 @@ export function EmailList({
                   {/* Real Saved Vouchers cards */}
                   {!isCollapsed && onSelectFile && (categoryFilter === 'all' || categoryFilter === 'vouchers' || isFileSelected) && (
                     <>
-                      <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
-                        <FileText className='h-3 w-3 shrink-0 text-indigo-500' />
-                        <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
-                          Vouchers
-                        </span>
-                        <div className='h-px flex-1 bg-border' />
-                        <span className='text-[10px] text-muted-foreground/50'>
-                          {filteredSavedVouchers.length}
-                        </span>
-                      </div>
+                      {categoryFilter === 'all' && (
+                        <div className='flex items-center gap-2 px-3 pt-3 pb-1'>
+                          <FileText className='h-3 w-3 shrink-0 text-indigo-500' />
+                          <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
+                            Files
+                          </span>
+                          <div className='h-px flex-1 bg-border' />
+                          <span className='text-[10px] text-muted-foreground/50'>
+                            {filteredSavedVouchers.length}
+                          </span>
+                        </div>
+                      )}
 
                       {filteredSavedVouchers.length === 0 ? (
                         <div className='mx-3 my-2 rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-xs text-muted-foreground'>

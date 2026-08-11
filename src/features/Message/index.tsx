@@ -185,6 +185,20 @@ export default function MessageFeature() {
     void fetchContactsAndGroups()
   }, [currentUser?.accountNo, currentUser?.email])
 
+  // Automatically open Files view with the latest file on initial page load
+  useEffect(() => {
+    setIsFileOpen(true)
+    const storeState = useVoucherStore.getState()
+    if (storeState.vouchers && storeState.vouchers.length > 0) {
+      const sorted = [...storeState.vouchers].sort((a, b) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        return timeB - timeA
+      })
+      storeState.setSelectedVoucher(sorted[0])
+    }
+  }, [])
+
   const handleSendDirectoryChatMessage = (
     content: string,
     attachment?: ChatAttachment
@@ -438,6 +452,17 @@ export default function MessageFeature() {
             setIsKanbanOpen(false)
             setIsEmailSettingsOpen(false)
             setIsFileOpen(true)
+
+            // Automatically select top (latest) file as default ONLY if no file is currently selected
+            const storeState = useVoucherStore.getState()
+            if (!storeState.selectedVoucher && storeState.vouchers && storeState.vouchers.length > 0) {
+              const sorted = [...storeState.vouchers].sort((a, b) => {
+                const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+                const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+                return timeB - timeA
+              })
+              storeState.setSelectedVoucher(sorted[0])
+            }
           } : undefined}
           isFileSelected={isFileOpen}
           onSelectEmailSettings={!doneMode ? () => {
@@ -477,6 +502,7 @@ export default function MessageFeature() {
             fileName={previewAttachment.fileName}
             fileUrl={previewAttachment.fileUrl}
             onClose={() => setPreviewAttachment(null)}
+            hideToggle={true}
           />
         ) : isEmailSettingsOpen ? (
           <MessageEmailSettings
@@ -500,6 +526,7 @@ export default function MessageFeature() {
             fileUrl={selectedVoucher?.pdfUrl || selectedVoucher?.originalFileUrl}
             editedJson={selectedVoucher?.editedJson}
             onClose={() => setIsFileOpen(false)}
+            hideToggle={true}
           />
         ) : selectedDirectoryChat ? (
 

@@ -11,21 +11,69 @@ export async function GET() {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ success: true, data: [] })
     }
 
-    const { data, error } = await supabase
-      .from('vouchers')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(50)
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    // 1. Fetch vouchers table strictly belonging to logged-in user
+    let voucherRows: any[] = []
+    try {
+      const { data: vData } = await supabase
+        .from('vouchers')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(100)
+      if (vData) voucherRows = vData
+    } catch (e) {
+      console.warn('Vouchers table fetch error:', e)
     }
 
-    return NextResponse.json({ success: true, data: data ?? [] })
+    // 2. Fetch chat_messages table attachments strictly belonging to logged-in user
+    let chatFileRows: any[] = []
+    try {
+      const { data: cData } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('owner_user_id', user.id)
+        .or('file_name.neq.null,file_url.neq.null')
+        .order('created_at', { ascending: false })
+        .limit(100)
+
+      if (cData) {
+        chatFileRows = cData.map((msg: any) => ({
+          id: `chat-file-${msg.id}`,
+          voucher_no: msg.id ? String(msg.id).slice(0, 8) : 'file',
+          file_name: msg.file_name || msg.message || 'Attached File',
+          original_file_url: msg.file_url || undefined,
+          edited_file_url: msg.file_url || undefined,
+          vendor_name: msg.sender_name || 'Uploaded Document',
+          customer_name: user?.email ? user.email.split('@')[0] : 'Aman',
+          user_name: user?.email ? user.email.split('@')[0] : 'Aman',
+          created_at: msg.created_at || new Date().toISOString(),
+          status: msg.processing_status || 'Active',
+          edited_json: msg.file_content_json || null,
+        }))
+      }
+    } catch (e) {
+      console.warn('Chat files fetch error:', e)
+    }
+
+    // Combine all user files and sort by created_at DESC (newest first)
+    const allFiles = [...voucherRows, ...chatFileRows]
+    allFiles.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+    // Deduplicate by filename + url
+    const uniqueFiles: any[] = []
+    const seen = new Set<string>()
+    for (const f of allFiles) {
+      const key = (f.file_name || '') + (f.original_file_url || '')
+      if (!seen.has(key)) {
+        seen.add(key)
+        uniqueFiles.push(f)
+      }
+    }
+
+    return NextResponse.json({ success: true, data: uniqueFiles })
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Internal error' }, { status: 500 })
   }

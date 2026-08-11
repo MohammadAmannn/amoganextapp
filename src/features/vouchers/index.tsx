@@ -1214,6 +1214,8 @@ export default function VouchersFeature() {
             fileUrl={selectedVoucher.pdfUrl || selectedVoucher.originalFileUrl}
             editedJson={selectedVoucher.editedJson}
             onClose={() => setSelectedVoucher(null)}
+            defaultViewMode="structured"
+            showToggle={true}
           />
         </div>
       ) : selectedDirectoryChat ? (

@@ -34,6 +34,9 @@ interface SafeDocumentPreviewProps {
   fileUrl?: string
   editedJson?: any
   onClose?: () => void
+  defaultViewMode?: 'document' | 'structured'
+  showToggle?: boolean
+  hideToggle?: boolean
 }
 
 export function SafeDocumentPreview({
@@ -41,14 +44,22 @@ export function SafeDocumentPreview({
   fileUrl,
   editedJson,
   onClose,
+  defaultViewMode,
+  showToggle = false,
+  hideToggle = false,
 }: SafeDocumentPreviewProps) {
   const [zoom, setZoom] = useState(105)
   const [rotation, setRotation] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const { downloadFile } = useDownloadFile()
-  const [viewMode, setViewMode] = useState<'document' | 'structured'>(
-    editedJson && !fileUrl ? 'structured' : 'document'
-  )
+  
+  const initialMode = hideToggle
+    ? 'document'
+    : defaultViewMode
+    ? defaultViewMode
+    : 'document'
+
+  const [viewMode, setViewMode] = useState<'document' | 'structured'>(initialMode)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const cleanName = fileName || 'document.pdf'
@@ -122,8 +133,8 @@ export function SafeDocumentPreview({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {/* View Mode Toggle if JSON exists */}
-          {editedJson && fileUrl && (
+          {/* View Mode Toggle if AI voucher JSON exists and hideToggle is false */}
+          {!hideToggle && editedJson && (
             <div className="flex items-center rounded-lg border border-border bg-muted/40 p-0.5 shrink-0">
               <button
                 type="button"

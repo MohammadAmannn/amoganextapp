@@ -542,6 +542,8 @@ export function InvoiceMaker() {
             fileUrl={originalFileUrl}
             editedJson={editedJson || savedReviewData || initialInvoice}
             onClose={() => setTab('review')}
+            defaultViewMode="structured"
+            showToggle={true}
           />
         </div>
       )}

@@ -16,6 +16,7 @@ import {
   Send,
   ArrowLeft,
   Download,
+  Eye,
   X,
   Loader2,
   FileText,
@@ -28,11 +29,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 import { FileUploadProgress } from "../chat/file-upload-progress"
+import { useDownloadFile } from "@/components/DocumentViewer/hooks"
 
 interface NewEmailProps {
   onCancel: () => void
   onSend: (emailData: any) => void
   onSaveDraft: (emailData: any) => void
+  onPreviewAttachment?: (attachment: { name: string; url?: string }) => void
 }
 
 interface Attachment {
@@ -40,6 +43,7 @@ interface Attachment {
   name: string
   type: string
   size: string
+  url?: string
 }
 
 // Mock data for templates, email accounts, and contacts
@@ -64,7 +68,8 @@ const mockContacts = [
   { id: "5", email: "mike.brown@example.com", name: "Mike Brown" },
 ]
 
-export function NewEmail({ onCancel, onSend, onSaveDraft }: NewEmailProps) {
+export function NewEmail({ onCancel, onSend, onSaveDraft, onPreviewAttachment }: NewEmailProps) {
+  const { downloadFile, isDownloading } = useDownloadFile()
   const [subject, setSubject] = useState("")
   const [from, setFrom] = useState(mockEmailAccounts[0].id)
   const [to, setTo] = useState<string[]>([])
@@ -132,11 +137,14 @@ export function NewEmail({ onCancel, onSend, onSaveDraft }: NewEmailProps) {
         status: 'uploading',
       })
 
-      const newAttachment = {
+      const fileObjectUrl = URL.createObjectURL(file)
+
+      const newAttachment: Attachment = {
         id: Date.now() + Math.random().toString(36).substring(2, 9),
         name: file.name,
         type: file.type,
         size: formatFileSize(file.size),
+        url: fileObjectUrl,
       }
 
       const interval = setInterval(() => {
@@ -424,9 +432,36 @@ export function NewEmail({ onCancel, onSend, onSaveDraft }: NewEmailProps) {
                     </div>
                   </div>
                   <div className="flex items-center space-x-1 shrink-0">
-                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer" title="Download">
-                      <Download className="h-3.5 w-3.5" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                      onClick={() => {
+                        if (attachment.url) {
+                          downloadFile(attachment.url, attachment.name)
+                        }
+                      }}
+                      disabled={isDownloading}
+                      title="Download"
+                    >
+                      {isDownloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
                       <span className="sr-only">Download</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                      onClick={() => {
+                        if (onPreviewAttachment && attachment.url) {
+                          onPreviewAttachment({ name: attachment.name, url: attachment.url })
+                        }
+                      }}
+                      title="View file"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      <span className="sr-only">View</span>
                     </Button>
                     <Button
                       type="button"

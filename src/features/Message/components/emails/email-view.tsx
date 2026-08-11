@@ -43,11 +43,14 @@ interface EmailRecipient {
   email: string
 }
 
+import { useDownloadFile } from "@/components/DocumentViewer/hooks"
+
 interface EmailViewProps {
   email: Email
   onBack: () => void
   onDelete: (id: string) => void
   onStartChat?: () => void
+  onPreviewAttachment?: (attachment: { name: string; url?: string }) => void
 }
 
 interface Attachment {
@@ -55,9 +58,11 @@ interface Attachment {
   name: string
   type: string
   size: string
+  url?: string
 }
 
-export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewProps) {
+export function EmailView({ email, onBack, onDelete, onStartChat, onPreviewAttachment }: EmailViewProps) {
+  const { downloadFile, isDownloading } = useDownloadFile()
   const [subject, setSubject] = useState(email.subject)
   const [emailBody, setEmailBody] = useState("")
   const [attachments, setAttachments] = useState<Attachment[]>([])
@@ -95,6 +100,7 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
         name: file.name,
         type: file.type,
         size: formatFileSize(file.size),
+        url: URL.createObjectURL(file),
       }))
 
       await new Promise((resolve) => setTimeout(resolve, 1500))
@@ -315,11 +321,34 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
                     </div>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
-                      <Download className="h-3.5 w-3.5" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                      onClick={() => {
+                        if (attachment.url) {
+                          downloadFile(attachment.url, attachment.name)
+                        }
+                      }}
+                      disabled={isDownloading}
+                      title="Download"
+                    >
+                      {isDownloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
                       <span className="sr-only">Download</span>
                     </Button>
-                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                      onClick={() => {
+                        if (onPreviewAttachment && attachment.url) {
+                          onPreviewAttachment({ name: attachment.name, url: attachment.url })
+                        }
+                      }}
+                      title="View file"
+                    >
                       <Eye className="h-3.5 w-3.5" />
                       <span className="sr-only">View</span>
                     </Button>
@@ -327,8 +356,9 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive cursor-pointer"
                       onClick={() => removeAttachment(attachment.id)}
+                      title="Remove"
                     >
                       <X className="h-3.5 w-3.5" />
                       <span className="sr-only">Remove</span>

@@ -87,10 +87,20 @@ export function useDownloadFile() {
   const [isDownloading, setIsDownloading] = useState(false)
 
   const downloadFile = async (url: string, name: string) => {
+    if (!url) return
     setIsDownloading(true)
     try {
-      const response = await fetch(url)
-      if (!response.ok) throw new Error('Network response was not ok')
+      // 1. Try fetching via API proxy to guarantee Content-Disposition attachment download
+      const proxyUrl = `/api/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`
+      let response = await fetch(proxyUrl)
+
+      // 2. If proxy response fails, fall back to direct fetch
+      if (!response.ok) {
+        response = await fetch(url)
+      }
+
+      if (!response.ok) throw new Error('Failed to retrieve file content')
+
       const blob = await response.blob()
       const blobUrl = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -101,7 +111,15 @@ export function useDownloadFile() {
       link.parentNode?.removeChild(link)
       window.URL.revokeObjectURL(blobUrl)
     } catch (e) {
-      window.open(url, '_blank')
+      console.error('File download error:', e)
+      try {
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', name)
+        document.body.appendChild(link)
+        link.click()
+        link.parentNode?.removeChild(link)
+      } catch {}
     } finally {
       setIsDownloading(false)
     }

@@ -87,6 +87,7 @@ export default function MessageFeature() {
   const [isKanbanOpen, setIsKanbanOpen] = useState(false)
   const [isFileOpen, setIsFileOpen] = useState(false)
   const selectedVoucher = useVoucherStore((state) => state.selectedVoucher)
+  const [previewAttachment, setPreviewAttachment] = useState<{ fileName: string; fileUrl: string } | null>(null)
   const [isEmailSettingsOpen, setIsEmailSettingsOpen] = useState(false)
   const currentUser = useAuthStore((state) => state.auth.user)
   const router = useRouter()
@@ -458,7 +459,7 @@ export default function MessageFeature() {
       <div
         className={cn(
           'relative flex h-full min-h-0 flex-1 flex-col overflow-hidden',
-          !selectedEmail && !selectedDirectoryChat && !isAiChatOpen && !isCalendarOpen && !isKanbanOpen && !isFileOpen && !isEmailSettingsOpen && 'hidden md:flex'
+          !selectedEmail && !selectedDirectoryChat && !isAiChatOpen && !isCalendarOpen && !isKanbanOpen && !isFileOpen && !isEmailSettingsOpen && !previewAttachment && 'hidden md:flex'
         )}
       >
         {/* Mobile back button (only for email view — chat has its own) */}
@@ -471,7 +472,13 @@ export default function MessageFeature() {
           </button>
         )}
 
-        {isEmailSettingsOpen ? (
+        {previewAttachment ? (
+          <SafeDocumentPreview
+            fileName={previewAttachment.fileName}
+            fileUrl={previewAttachment.fileUrl}
+            onClose={() => setPreviewAttachment(null)}
+          />
+        ) : isEmailSettingsOpen ? (
           <MessageEmailSettings
             contacts={contacts}
             groups={groups}
@@ -532,6 +539,7 @@ export default function MessageFeature() {
             email={selectedEmail}
             onBack={() => setSelectedEmail(null)}
             onDelete={handleDelete}
+            onPreviewAttachment={(att) => setPreviewAttachment({ fileName: att.name, fileUrl: att.url || '/project.pdf' })}
           />
         ) : (
           <div className='flex h-full flex-col items-center justify-center gap-3 bg-background p-8 text-muted-foreground'>
@@ -555,7 +563,8 @@ export default function MessageFeature() {
             isCalendarOpen ||
             isKanbanOpen ||
             isFileOpen ||
-            isEmailSettingsOpen) &&
+            isEmailSettingsOpen ||
+            previewAttachment) &&
             'hidden'
         )}
       >
@@ -578,6 +587,7 @@ export default function MessageFeature() {
             <div className='mt-0 flex h-full flex-grow flex-col overflow-hidden bg-background'>
               <NewEmail
                 onCancel={() => setIsComposing(false)}
+                onPreviewAttachment={(att) => setPreviewAttachment({ fileName: att.name, fileUrl: att.url || '/project.pdf' })}
                 onSend={(emailData) => {
                   toast.success('Message sent successfully!')
                   const newEmail: Email = {

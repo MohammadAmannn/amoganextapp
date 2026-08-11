@@ -34,6 +34,12 @@ export function DocumentViewer({
   fullscreen = false,
   messageId,
   hideHeader = false,
+  avatarInitials,
+  folderPath,
+  timestamp,
+  onArchive,
+  onShare,
+  onDelete,
 }: DocumentViewerProps) {
   const extension = (propExtension || getFileExtension(fileName, fileUrl)).toLowerCase()
   const { downloadFile, isDownloading } = useDownloadFile()
@@ -148,7 +154,7 @@ export function DocumentViewer({
     }
 
     if (viewerSupportedExtensions.includes(extension)) {
-      const documents = [{ uri: fileUrl, fileName: fileName }]
+      const documents = [{ uri: fileUrl, fileName: fileName, fileType: extension }]
       return (
         <div className="doc-viewer-wrapper flex-grow w-full h-full relative bg-background flex flex-col min-h-0">
           <ReactDocViewerWrapper documents={documents} />
@@ -215,7 +221,12 @@ export function DocumentViewer({
           allowDownload={allowDownload}
           onClose={onClose}
           onBack={onBack}
-          messageId={messageId}
+          avatarInitials={avatarInitials}
+          folderPath={folderPath}
+          timestamp={timestamp}
+          onArchive={onArchive}
+          onShare={onShare}
+          onDelete={onDelete}
         />
       )}
       <div className="flex-grow flex flex-col overflow-hidden bg-zinc-950/5 dark:bg-zinc-900/5 relative w-full min-h-0">

@@ -97,34 +97,12 @@ const LeafletMap = dynamic(() => import('@/components/ui/leaflet-map'), {
   ssr: false,
 })
 
-// Custom inline PDF & Document Viewer components powered by @cyntler/react-doc-viewer
+// Custom inline PDF & Document Viewer components powered by common ReactDocViewerWrapper
 const DynamicDocViewer = dynamic(
   () =>
-    import('@cyntler/react-doc-viewer').then((mod) => {
-      return function WrappedDocViewer({ documents }: { documents: any[] }) {
-        return (
-          <mod.default
-            documents={documents}
-            pluginRenderers={mod.DocViewerRenderers}
-            theme={{
-              primary: '#10b981', // Emerald primary to match application theme
-              secondary: '#ffffff',
-              tertiary: '#f3f4f6',
-              textPrimary: '#1f2937',
-              textSecondary: '#6b7280',
-            }}
-            config={{
-              header: {
-                disableHeader: true,
-                disableFileName: true,
-                retainURLParams: false,
-              },
-            }}
-            style={{ height: '100%' }}
-          />
-        )
-      }
-    }),
+    import('@/components/DocumentViewer/ReactDocViewerWrapper').then(
+      (mod) => mod.ReactDocViewerWrapper
+    ),
   {
     ssr: false,
     loading: () => (
@@ -146,12 +124,12 @@ function getFileTypeFromFileName(fileName: string): string | undefined {
   return undefined
 }
 
-function DocPreviewViewer({ url, name }: { url: string; name: string }) {
-  const fileType = getFileTypeFromFileName(name)
-  const docs = [{ uri: url, fileName: name, fileType: fileType }]
+import { SafeDocumentPreview } from '@/components/dynamic-form/SafeDocumentPreview'
+
+function DocPreviewViewer({ url, name, onClose }: { url: string; name: string; onClose?: () => void }) {
   return (
     <div className='doc-viewer-wrapper h-full w-full'>
-      <DynamicDocViewer documents={docs} />
+      <SafeDocumentPreview fileName={name} fileUrl={url} onClose={onClose} />
     </div>
   )
 }
@@ -1263,41 +1241,13 @@ export function ChatWindow({
   if (previewDoc) {
     return (
       <div className='animate-in fade-in flex h-full w-full flex-col overflow-hidden rounded-none border-0 border-border bg-card shadow-xs duration-200 sm:rounded-xl sm:border'>
-        {/* Preview Header */}
-        <div className='flex flex-none shrink-0 items-center justify-between border-b border-border bg-muted/10 p-4 select-none'>
-          <div className='flex min-w-0 items-center gap-3'>
-            <Button
-              size='icon'
-              variant='ghost'
-              onClick={() => setPreviewDoc(null)}
-              className='h-8.5 w-8.5 shrink-0 cursor-pointer rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground'
-              title='Close Preview'
-            >
-              <X className='h-5 w-5' />
-            </Button>
-            <span className='truncate text-sm font-bold text-foreground'>
-              {previewDoc.name}
-            </span>
-          </div>
-          {/* Action buttons */}
-          <div className='flex shrink-0 items-center gap-1.5'>
-            <Button
-              size='icon'
-              variant='ghost'
-              onClick={() => downloadFileFromUrl(previewDoc.url, previewDoc.name)}
-              className='h-8.5 w-8.5 cursor-pointer rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground'
-              title='Download Document'
-            >
-              <Download className='h-4.5 w-4.5' />
-            </Button>
-          </div>
-        </div>
-
-        {/* Doc Viewer Container */}
         <div className='relative h-full min-h-0 w-full flex-1 overflow-hidden bg-background'>
-          <DocPreviewViewer url={previewDoc.url} name={previewDoc.name} />
+          <DocPreviewViewer
+            url={previewDoc.url}
+            name={previewDoc.name}
+            onClose={() => setPreviewDoc(null)}
+          />
         </div>
-        {/* REMOVED: LocationPicker was incorrectly placed here */}
       </div>
     )
   }

@@ -10,4 +10,11 @@ export interface DocumentViewerProps {
   fullscreen?: boolean
   messageId?: string
   hideHeader?: boolean
+  avatarInitials?: string
+  folderPath?: string
+  timestamp?: string
+  onArchive?: () => void
+  onShare?: () => void
+  onDelete?: () => void
 }
+

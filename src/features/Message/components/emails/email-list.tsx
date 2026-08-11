@@ -7,6 +7,9 @@ import {
   MoreHorizontal,
   CornerUpLeft,
   CornerUpRight,
+  Reply,
+  Forward,
+  Share2,
   Pin,
   Star,
   Heart,
@@ -157,6 +160,20 @@ export function EmailList({
   }, [])
 
   const savedVouchers = storeVouchers
+
+  const filteredSavedVouchers = React.useMemo(() => {
+    if (!searchQuery.trim()) return savedVouchers
+    const q = searchQuery.trim().toLowerCase()
+    return savedVouchers.filter((voucher) => {
+      const fileNameMatch = (voucher.fileName || '').toLowerCase().includes(q)
+      const fromMatch = (voucher.from || '').toLowerCase().includes(q)
+      const userMatch = (voucher.userName || '').toLowerCase().includes(q)
+      const jsonMatch = voucher.editedJson
+        ? JSON.stringify(voucher.editedJson).toLowerCase().includes(q)
+        : false
+      return fileNameMatch || fromMatch || userMatch || jsonMatch
+    })
+  }, [savedVouchers, searchQuery])
 
 
   const emailAccounts = React.useMemo(() => {
@@ -966,18 +983,22 @@ export function EmailList({
                         </span>
                         <div className='h-px flex-1 bg-border' />
                         <span className='text-[10px] text-muted-foreground/50'>
-                          {savedVouchers.length}
+                          {filteredSavedVouchers.length}
                         </span>
                       </div>
 
-                      {savedVouchers.length === 0 ? (
+                      {filteredSavedVouchers.length === 0 ? (
                         <div className='mx-3 my-2 rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-xs text-muted-foreground'>
                           <FileText className='mx-auto h-7 w-7 opacity-30 mb-2 text-indigo-500' />
-                          <p className='font-semibold text-foreground/80'>No vouchers yet</p>
-                          <p className='text-[11px] opacity-70 mt-0.5'>Upload and save a voucher on the Voucher page to see it here.</p>
+                          <p className='font-semibold text-foreground/80'>
+                            {searchQuery ? 'No matching vouchers found' : 'No vouchers yet'}
+                          </p>
+                          <p className='text-[11px] opacity-70 mt-0.5'>
+                            {searchQuery ? `No files matching "${searchQuery}"` : 'Upload and save a voucher on the Voucher page to see it here.'}
+                          </p>
                         </div>
                       ) : (
-                        savedVouchers.map((voucher) => {
+                        filteredSavedVouchers.map((voucher) => {
                           const isVoucherActive = isFileSelected && selectedVoucher?.id === voucher.id
 
                           // Helper to extract JSON values safely
@@ -996,9 +1017,7 @@ export function EmailList({
                           }
 
                           const vendor = getVal('vendor', 'businessName', 'company', 'from') || voucher.from || 'Vendor'
-                          const invoiceNo = getVal('invoiceNumber', 'invoiceNo', 'voucherNo') || voucher.voucherNo
-                          const total = getVal('total', 'totalAmount', 'grandTotal', 'amount')
-                          const currency = getVal('currency') || 'USD'
+                          const username = voucher.userName || getVal('userName', 'user', 'owner') || voucher.from || 'System User'
 
                           return (
                             <div
@@ -1032,22 +1051,109 @@ export function EmailList({
                                     </span>
                                   </div>
                                 </div>
-                                <span className='rounded-full bg-indigo-500/10 px-2 py-0.5 text-[9px] font-bold text-indigo-600 dark:text-indigo-400 shrink-0'>
-                                  Voucher
-                                </span>
                               </div>
 
                               <div className='flex items-center justify-between border-t border-border/40 pt-2 text-[11px] text-muted-foreground'>
-                                <div className='flex items-center gap-2 truncate'>
-                                  <span>Invoice: <strong className='text-foreground/80 font-semibold'>#{invoiceNo}</strong></span>
+                                <div className='flex items-center gap-2 truncate min-w-0 flex-1'>
+                                  <span className='truncate'>User: <strong className='text-foreground/80 font-semibold'>{username}</strong></span>
                                   <span>·</span>
-                                  <span>{voucher.date}</span>
+                                  <span className='shrink-0'>{voucher.date}</span>
                                 </div>
-                                {total && (
-                                  <span className='font-black text-xs text-indigo-600 dark:text-indigo-400 shrink-0 ml-2'>
-                                    {currency} {total}
-                                  </span>
-                                )}
+
+                                {/* 3-dot dropdown menu in place of price */}
+                                <div className='shrink-0 ml-2' onClick={(e) => e.stopPropagation()}>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <button
+                                        type='button'
+                                        className='flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer'
+                                        title='Message actions'
+                                      >
+                                        <MoreHorizontal className='h-4 w-4' />
+                                      </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent
+                                      align='end'
+                                      className='w-40 border border-border bg-popover text-popover-foreground shadow-md rounded-xl p-1'
+                                    >
+                                      <DropdownMenuItem
+                                        onClick={() => {
+                                          useVoucherStore.getState().setSelectedVoucher(voucher)
+                                          onSelectFile?.()
+                                        }}
+                                        className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
+                                      >
+                                        <Reply className='h-3.5 w-3.5 text-muted-foreground' />
+                                        <span>Reply</span>
+                                      </DropdownMenuItem>
+
+                                      <DropdownMenuItem
+                                        onClick={() => {
+                                          useVoucherStore.getState().setSelectedVoucher(voucher)
+                                          onSelectFile?.()
+                                        }}
+                                        className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
+                                      >
+                                        <Forward className='h-3.5 w-3.5 text-muted-foreground' />
+                                        <span>Forward</span>
+                                      </DropdownMenuItem>
+
+                                      <DropdownMenuItem
+                                        onClick={() => {}}
+                                        className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
+                                      >
+                                        <Star className='h-3.5 w-3.5 text-muted-foreground' />
+                                        <span>Favorite</span>
+                                      </DropdownMenuItem>
+
+                                      <DropdownMenuItem
+                                        onClick={() => {}}
+                                        className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
+                                      >
+                                        <Pin className='h-3.5 w-3.5 text-muted-foreground' />
+                                        <span>Pin</span>
+                                      </DropdownMenuItem>
+
+                                      <DropdownMenuItem
+                                        onClick={() => {}}
+                                        className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
+                                      >
+                                        <Flag className='h-3.5 w-3.5 text-muted-foreground' />
+                                        <span>Flag</span>
+                                      </DropdownMenuItem>
+
+                                      <DropdownMenuItem
+                                        onClick={() => {}}
+                                        className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
+                                      >
+                                        <Archive className='h-3.5 w-3.5 text-muted-foreground' />
+                                        <span>Archive</span>
+                                      </DropdownMenuItem>
+
+                                      <DropdownMenuItem
+                                        onClick={() => {
+                                          if (voucher.pdfUrl || voucher.originalFileUrl) {
+                                            navigator.clipboard?.writeText(voucher.pdfUrl || voucher.originalFileUrl || '')
+                                          }
+                                        }}
+                                        className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
+                                      >
+                                        <Share2 className='h-3.5 w-3.5 text-muted-foreground' />
+                                        <span>Share</span>
+                                      </DropdownMenuItem>
+
+                                      <DropdownMenuItem
+                                        onClick={() => {
+                                          useVoucherStore.getState().deleteVoucher(voucher.id)
+                                        }}
+                                        className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium text-destructive hover:text-destructive rounded-lg hover:bg-destructive/10'
+                                      >
+                                        <Trash2 className='h-3.5 w-3.5 text-destructive' />
+                                        <span className='text-destructive'>Delete</span>
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
                               </div>
                             </div>
                           )

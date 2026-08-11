@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { toast } from 'sonner'
+import { SafeDocumentPreview } from '@/components/dynamic-form/SafeDocumentPreview'
 import { ImageConverterDialog, ConvertedPdfResult } from '@/components/image-converter-dialog'
 import { DocConverterDialog, ConvertedDocResult } from '@/components/doc-converter-dialog'
 import { DocumentScannerModal } from '@/features/chattemplate/scanner/DocumentScannerModal'
@@ -612,41 +613,11 @@ export function ChatView({
   if (previewDoc) {
     return (
       <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-background md:relative md:z-auto'>
-        <div className='flex items-center justify-between gap-3 border-b border-border px-4 py-3'>
-          <div className='flex min-w-0 items-center gap-3'>
-            <button
-              type='button'
-              onClick={() => setPreviewDoc(null)}
-              className='rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground'
-              aria-label='Close document preview'
-            >
-              <X className='h-5 w-5' />
-            </button>
-            <span className='truncate text-sm font-semibold'>
-              {previewDoc.name}
-            </span>
-          </div>
-          <button
-            type='button'
-            onClick={() => downloadFileFromUrl(previewDoc.url, previewDoc.name)}
-            className='rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer'
-            aria-label='Download document'
-            title='Download document'
-          >
-            <Download className='h-5 w-5' />
-          </button>
-        </div>
-        <div className='min-h-0 flex-1 overflow-hidden'>
-          <DynamicDocViewer
-            documents={[
-              {
-                uri: previewDoc.url,
-                fileName: previewDoc.name,
-                fileType: getFileType(previewDoc.name),
-              },
-            ]}
-          />
-        </div>
+        <SafeDocumentPreview
+          fileName={previewDoc.name}
+          fileUrl={previewDoc.url}
+          onClose={() => setPreviewDoc(null)}
+        />
       </div>
     )
   }

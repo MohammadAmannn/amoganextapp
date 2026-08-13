@@ -21,6 +21,7 @@ import {
   Loader2,
   FileText,
 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -71,10 +72,10 @@ const mockContacts = [
 export function NewEmail({ onCancel, onSend, onSaveDraft, onPreviewAttachment }: NewEmailProps) {
   const { downloadFile, isDownloading } = useDownloadFile()
   const [subject, setSubject] = useState("")
-  const [from, setFrom] = useState(mockEmailAccounts[0].id)
-  const [to, setTo] = useState<string[]>([])
-  const [cc, setCc] = useState<string[]>([])
-  const [bcc, setBcc] = useState<string[]>([])
+  const [from, setFrom] = useState("ask@morrai.com")
+  const [toInput, setToInput] = useState("")
+  const [ccInput, setCcInput] = useState("")
+  const [bccInput, setBccInput] = useState("")
   const [template, setTemplate] = useState(mockTemplates[0].id)
   const [body, setBody] = useState("")
   const [showCc, setShowCc] = useState(false)
@@ -88,6 +89,7 @@ export function NewEmail({ onCancel, onSend, onSaveDraft, onPreviewAttachment }:
     },
   ])
   const [isUploading, setIsUploading] = useState(false)
+  const [isSending, setIsSending] = useState(false)
   const [uploadingFile, setUploadingFile] = useState<{
     fileName: string
     fileSize: number
@@ -97,27 +99,67 @@ export function NewEmail({ onCancel, onSend, onSaveDraft, onPreviewAttachment }:
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleSend = () => {
-    const emailData = {
-      subject,
-      from,
-      to,
-      cc,
-      bcc,
-      body,
-      template,
-      attachments,
+  const handleSend = async () => {
+    const parseRecipients = (raw: string) => {
+      return raw
+        .split(",")
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0)
     }
-    onSend(emailData)
+
+    const resolvedTo = parseRecipients(toInput)
+    const resolvedCc = parseRecipients(ccInput)
+    const resolvedBcc = parseRecipients(bccInput)
+
+    if (resolvedTo.length === 0) {
+      toast.error("Please specify at least one recipient in the 'To' field.")
+      return
+    }
+
+    setIsSending(true)
+    try {
+      const res = await fetch("/api/mail/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: resolvedTo,
+          subject: subject || "(No Subject)",
+          html: body || "",
+        }),
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        toast.success("Email sent successfully")
+        
+        onSend({
+          from,
+          to: resolvedTo,
+          cc: resolvedCc,
+          bcc: resolvedBcc,
+          subject: subject || "(No Subject)",
+          body: body || "",
+        })
+      } else {
+        toast.error(data.message || "Failed to send email")
+      }
+    } catch (err: any) {
+      console.error("Error sending email:", err)
+      toast.error("Failed to send email. Check credentials or connection.")
+    } finally {
+      setIsSending(false)
+    }
   }
 
   const handleSaveDraft = () => {
     const emailData = {
       subject,
       from,
-      to,
-      cc,
-      bcc,
+      to: toInput,
+      cc: ccInput,
+      bcc: bccInput,
       body,
       template,
       attachments,
@@ -190,66 +232,7 @@ export function NewEmail({ onCancel, onSend, onSaveDraft, onPreviewAttachment }:
     return "FILE"
   }
 
-  // Helper function to render contact selection
-  const renderContactSelection = (
-    selectedContacts: string[],
-    setSelectedContacts: (contacts: string[]) => void,
-    placeholder: string,
-  ) => {
-    return (
-      <div className="flex flex-wrap gap-2 items-center border rounded-md p-2 min-h-10">
-        {selectedContacts.map((contactId) => {
-          const contact = mockContacts.find((c) => c.id === contactId)
-          if (!contact) return null
 
-          return (
-            <div
-              key={contact.id}
-              className="bg-blue-100 text-blue-800 rounded-full px-3 py-1 text-sm flex items-center"
-            >
-              {contact.name}
-              <button
-                className="ml-2 text-blue-500 hover:text-blue-700 font-bold"
-                onClick={() => setSelectedContacts(selectedContacts.filter((id) => id !== contact.id))}
-              >
-                ×
-              </button>
-            </div>
-          )
-        })}
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <button className="text-gray-500 hover:text-gray-700 text-xs cursor-pointer select-none">
-              {selectedContacts.length === 0 ? placeholder : "Add more..."}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[300px] p-0" align="start">
-            <div className="max-h-[300px] overflow-auto p-1 bg-background border rounded-lg shadow-md">
-              {mockContacts.map((contact) => (
-                <div key={contact.id} className="flex items-center gap-2 p-2 hover:bg-muted rounded-md">
-                  <Checkbox
-                    id={`contact-${contact.id}`}
-                    checked={selectedContacts.includes(contact.id)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedContacts([...selectedContacts, contact.id])
-                      } else {
-                        setSelectedContacts(selectedContacts.filter((id) => id !== contact.id))
-                      }
-                    }}
-                  />
-                  <label htmlFor={`contact-${contact.id}`} className="text-xs cursor-pointer select-none flex-1">
-                    {contact.name} <span className="text-muted-foreground">({contact.email})</span>
-                  </label>
-                </div>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
-    )
-  }
 
   return (
     <div className="flex flex-col h-full bg-background rounded-xl overflow-hidden">
@@ -296,18 +279,13 @@ export function NewEmail({ onCancel, onSend, onSaveDraft, onPreviewAttachment }:
         {/* From */}
         <div className="space-y-1">
           <Label htmlFor="from" className="text-xs font-semibold">From</Label>
-          <Select value={from} onValueChange={setFrom}>
-            <SelectTrigger id="from" className="h-9 text-xs">
-              <SelectValue placeholder="Select your email" />
-            </SelectTrigger>
-            <SelectContent>
-              {mockEmailAccounts.map((account) => (
-                <SelectItem key={account.id} value={account.id} className="text-xs">
-                  {account.name} ({account.email})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Input
+            id="from"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            placeholder="ask@morai.com"
+            className="h-9 text-xs"
+          />
         </div>
 
         {/* To */}
@@ -329,14 +307,26 @@ export function NewEmail({ onCancel, onSend, onSaveDraft, onPreviewAttachment }:
               </button>
             </div>
           </div>
-          {renderContactSelection(to, setTo, "Select recipients")}
+          <Input
+            id="to"
+            placeholder="Recipient email address (e.g. recipient@example.com)"
+            value={toInput}
+            onChange={(e) => setToInput(e.target.value)}
+            className="h-9 text-xs"
+          />
         </div>
 
         {/* Cc */}
         {showCc && (
           <div className="space-y-1">
             <Label htmlFor="cc" className="text-xs font-semibold">Cc</Label>
-            {renderContactSelection(cc, setCc, "Select Cc recipients")}
+            <Input
+              id="cc"
+              placeholder="Cc recipients (comma separated)"
+              value={ccInput}
+              onChange={(e) => setCcInput(e.target.value)}
+              className="h-9 text-xs"
+            />
           </div>
         )}
 
@@ -344,7 +334,13 @@ export function NewEmail({ onCancel, onSend, onSaveDraft, onPreviewAttachment }:
         {showBcc && (
           <div className="space-y-1">
             <Label htmlFor="bcc" className="text-xs font-semibold">Bcc</Label>
-            {renderContactSelection(bcc, setBcc, "Select Bcc recipients")}
+            <Input
+              id="bcc"
+              placeholder="Bcc recipients (comma separated)"
+              value={bccInput}
+              onChange={(e) => setBccInput(e.target.value)}
+              className="h-9 text-xs"
+            />
           </div>
         )}
 
@@ -521,9 +517,23 @@ export function NewEmail({ onCancel, onSend, onSaveDraft, onPreviewAttachment }:
             <Save className="h-3.5 w-3.5 mr-1.5" />
             Save as Draft
           </Button>
-          <Button onClick={handleSend} size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer">
-            <Send className="h-3.5 w-3.5 mr-1.5" />
-            Send
+          <Button 
+            onClick={handleSend} 
+            disabled={isSending} 
+            size="sm" 
+            className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer min-w-[80px]"
+          >
+            {isSending ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              <>
+                <Send className="h-3.5 w-3.5 mr-1.5" />
+                Send
+              </>
+            )}
           </Button>
         </div>
       </div>

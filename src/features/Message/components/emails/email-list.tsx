@@ -29,6 +29,7 @@ import {
   FolderOpen,
   Plus,
   Settings,
+  Loader2,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useNotificationStore, DbNotification } from '@/stores/notification-store'
@@ -80,6 +81,10 @@ interface EmailListProps {
   isNotificationSelected?: boolean
   activeTab?: string
   onTabChange?: (tab: string) => void
+  isComposing?: boolean
+  onComposeChange?: (composing: boolean) => void
+  isEmailsLoading?: boolean
+  emailsError?: string | null
 }
 
 function getLabelVariant(
@@ -132,6 +137,10 @@ export function EmailList({
   isNotificationSelected,
   activeTab,
   onTabChange,
+  isComposing,
+  onComposeChange,
+  isEmailsLoading,
+  emailsError,
 }: EmailListProps) {
   const router = useRouter()
   const { notifications, unreadCount } = useNotificationStore()
@@ -533,29 +542,63 @@ export function EmailList({
           </button>
         </div>
 
-        {/* 3. Search input (placed below toolbar icons) */}
-        <div className='relative min-w-0 flex-1'>
-          <Search className='absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60' />
-          <Input
-            placeholder='Search...'
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className='h-8 w-full rounded-md border-border bg-muted/10 pr-7 pl-8 text-xs focus-visible:ring-1 focus-visible:ring-ring'
-          />
-          {searchQuery && (
+        {/* 3. Search input (placed below toolbar icons) + New Button */}
+        {!isCollapsed ? (
+          <div className='flex items-center gap-1.5 w-full'>
+            <div className='relative min-w-0 flex-1'>
+              <Search className='absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60' />
+              <Input
+                placeholder='Search...'
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className='h-8 w-full rounded-md border-border bg-muted/10 pr-7 pl-8 text-xs focus-visible:ring-1 focus-visible:ring-ring'
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className='absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+                >
+                  <X className='h-3 w-3' />
+                </button>
+              )}
+            </div>
+
             <button
-              onClick={() => setSearchQuery('')}
-              className='absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+              onClick={() => onComposeChange?.(true)}
+              className='inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-100 font-semibold text-xs transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-sm border border-transparent'
+              title='Compose New Email'
             >
-              <X className='h-3 w-3' />
+              <Mail className='h-3.5 w-3.5' />
+              <span>New</span>
+              <Plus className='h-3 w-3' />
             </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className='flex justify-center w-full'>
+            <button
+              onClick={() => onComposeChange?.(true)}
+              className='flex items-center justify-center p-2 rounded-lg bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-sm border border-transparent'
+              title='Compose New Email'
+            >
+              <Mail className='h-3.5 w-3.5' />
+            </button>
+          </div>
+        )}
       </div>
 
       <div className='min-h-0 flex-1 scrollbar-thin overflow-y-auto bg-background'>
         <div className='flex flex-col gap-0 py-0.5'>
-          {filtered.length === 0 && contacts.length === 0 ? (
+          {isEmailsLoading ? (
+            <div className='flex flex-col items-center justify-center p-8 text-center text-muted-foreground gap-2'>
+              <Loader2 className='h-5 w-5 animate-spin text-indigo-500' />
+              <p className='text-xs'>Loading emails...</p>
+            </div>
+          ) : emailsError ? (
+            <div className='flex flex-col items-center justify-center p-8 text-center text-muted-foreground gap-1.5'>
+              <span className='text-sm font-semibold text-destructive'>Unable to load emails</span>
+              <span className='text-xs text-muted-foreground/60 max-w-[200px] break-words'>{emailsError}</span>
+            </div>
+          ) : filtered.length === 0 && contacts.length === 0 ? (
             <div className='flex flex-col items-center justify-center p-8 text-center text-muted-foreground'>
               <p className='text-sm font-medium'>No messages found</p>
               <p className='mt-1 text-xs text-muted-foreground/60'>

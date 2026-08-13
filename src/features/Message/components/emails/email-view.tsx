@@ -61,6 +61,40 @@ interface Attachment {
   url?: string
 }
 
+function sanitizeHtml(html: string): string {
+  if (typeof window === 'undefined') return html
+
+  try {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html')
+    
+    // 1. Remove script tags
+    const scripts = doc.querySelectorAll('script')
+    scripts.forEach(script => script.remove())
+
+    // 2. Remove inline handlers & dangerous protocols
+    const allElements = doc.querySelectorAll('*')
+    allElements.forEach(el => {
+      const attrs = el.attributes
+      for (let i = attrs.length - 1; i >= 0; i--) {
+        const attrName = attrs[i].name.toLowerCase()
+        if (attrName.startsWith('on')) {
+          el.removeAttribute(attrs[i].name)
+        }
+      }
+      const href = el.getAttribute('href')
+      if (href && href.toLowerCase().trim().startsWith('javascript:')) {
+        el.removeAttribute('href')
+      }
+    })
+
+    return doc.body.innerHTML
+  } catch (e) {
+    console.error('HTML Sanitization error:', e)
+    return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+  }
+}
+
 export function EmailView({ email, onBack, onDelete, onStartChat, onPreviewAttachment }: EmailViewProps) {
   const { downloadFile, isDownloading } = useDownloadFile()
   const [subject, setSubject] = useState(email.subject)
@@ -79,7 +113,7 @@ export function EmailView({ email, onBack, onDelete, onStartChat, onPreviewAttac
     let processedBody = email.body
     // Remove the h2 heading with "Weekly Team Updates"
     processedBody = processedBody.replace(/<h2>Weekly Team Updates<\/h2>/, "")
-    setEmailBody(processedBody)
+    setEmailBody(sanitizeHtml(processedBody))
     
     setAttachments(
       email.attachments?.map((att) => ({

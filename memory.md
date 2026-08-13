@@ -517,3 +517,28 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
   - Built an automated Node.js test script `node scripts/test-auth-flow.cjs` that verifies HTTP status codes, redirect location targets, and `Set-Cookie` header contracts across `/api/auth/mobile-login`, `/api/auth/mobile-set-cookie`, and `/api/auth/mobile-logout`.
   - Enforced automated execution of this self-test suite before every release to guarantee 100% zero-regression mobile auth workflows.
   - Eliminates dark blank screen glitches during sign-out on mobile, redirecting cleanly to `/sign-in`.
+
+---
+
+## 42. Real Hostinger Email Integration & Default Messages Inbox View Fix
+* **Hostinger Email SMTP & IMAP Integration**:
+  - Connected existing Messages page UI to real Hostinger email account (`ask@morrai.com`).
+  - Outgoing Mail (SMTP): Uses `smtp.hostinger.com:587` with STARTTLS (`secure: false`, `requireTLS: true`) via `nodemailer`.
+  - Incoming Mail (IMAP): Uses `imap.hostinger.com:993` with SSL/TLS (`secure: true`) via `imapflow` and `mailparser`.
+* **Backend API Routes & Configuration**:
+  - `config/mail.json` — Stores email credentials securely (added to `.gitignore`).
+  - `src/lib/email/mailer.ts` — Nodemailer SMTP transporter.
+  - `src/lib/email/imap.ts` — ImapFlow client connection creator.
+  - `src/lib/email/email-parser.ts` — MIME parsing logic.
+  - `GET /api/mail/inbox` — IMAP endpoint fetching and parsing 20 recent inbox messages into UI JSON structure.
+  - `POST /api/mail/send` — SMTP endpoint executing outgoing email transmission.
+  - `GET /api/mail/test` — Developer verification endpoint for SMTP server credentials.
+* **Client-Side HTML Sanitizer & XSS Protection**:
+  - Implemented `sanitizeHtml` using browser-native `DOMParser` in `email-view.tsx`. Strips `<script>` tags, inline event handlers (`on...`), and `javascript:` URIs from received external HTML email contents before rendering.
+* **Compose UI & Custom Address Input**:
+  - Updated `new-email.tsx` composer component: prefilled default `From` address to `ask@morrai.com`.
+  - Converted `To`, `Cc`, and `Bcc` fields to clean text inputs allowing custom recipient email typing (supporting single or comma-separated addresses).
+* **Default Messages Page Load Fix**:
+  - Removed `setIsFileOpen(true)` from initial page load `useEffect` in `src/features/Message/index.tsx`. Navigating to `/message` now loads the main Messages Inbox by default instead of forcing open the Files view panel.
+* **Developer Guide**:
+  - Created `mail.md` detailing system architecture, file inventory, Hostinger configurations, API payloads, and testing instructions.

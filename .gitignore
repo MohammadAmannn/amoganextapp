@@ -69,3 +69,6 @@ google-services.json
 amogaapp-56698-firebase-adminsdk-*.json
 *.pem
 *.key
+
+# Mailer configuration credentials
+config/mail.json

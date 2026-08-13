@@ -78,6 +78,8 @@ export default function MessageFeature() {
   const [activeTab, setActiveTab] = useState('inbox')
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isComposing, setIsComposing] = useState(false)
+  const [isEmailsLoading, setIsEmailsLoading] = useState(false)
+  const [emailsError, setEmailsError] = useState<string | null>(null)
   const [contacts, setContacts] = useState<Contact[]>([])
   const [groups, setGroups] = useState<Group[]>([])
   const [selectedDirectoryChat, setSelectedDirectoryChat] =
@@ -188,13 +190,52 @@ export default function MessageFeature() {
     }
   }
 
+  const fetchInbox = async () => {
+    setIsEmailsLoading(true)
+    setEmailsError(null)
+    try {
+      const res = await fetch('/api/mail/inbox')
+      const data = await res.json()
+      if (data.success) {
+        const mappedEmails: Email[] = data.emails.map((email: any) => ({
+          id: email.id,
+          name: email.fromName || email.from.split('@')[0],
+          email: email.from,
+          replyTo: email.from,
+          subject: email.subject,
+          preview: email.text ? email.text.substring(0, 100) : '',
+          body: email.html || email.text || '',
+          date: new Date(email.date),
+          read: email.isRead,
+          labels: email.isRead ? ['inbox'] : ['unread', 'inbox'],
+          avatarInitials: (email.fromName || email.from)
+            .split('@')[0]
+            .slice(0, 2)
+            .toUpperCase(),
+          from: undefined,
+        }))
+        setEmails((prev) => {
+          const chats = prev.filter((e) => e.isChat)
+          return [...mappedEmails, ...chats]
+        })
+      } else {
+        setEmailsError(data.message || 'Unable to load emails')
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch inbox:', err)
+      setEmailsError('Unable to load emails')
+    } finally {
+      setIsEmailsLoading(false)
+    }
+  }
+
   useEffect(() => {
     void fetchContactsAndGroups()
+    void fetchInbox()
   }, [currentUser?.accountNo, currentUser?.email])
 
-  // Automatically open Files view with the latest file on initial page load
+  // Set default state on initial page load
   useEffect(() => {
-    setIsFileOpen(true)
     const storeState = useVoucherStore.getState()
     if (storeState.vouchers && storeState.vouchers.length > 0) {
       const sorted = [...storeState.vouchers].sort((a, b) => {
@@ -229,6 +270,19 @@ export default function MessageFeature() {
     }))
   }
 
+  const handleOpenNewMail = () => {
+    setSelectedEmail(null)
+    setSelectedDirectoryChat(null)
+    setIsAiChatOpen(false)
+    setIsCalendarOpen(false)
+    setIsKanbanOpen(false)
+    setIsFileOpen(false)
+    setIsEmailSettingsOpen(false)
+    setIsNotificationOpen(false)
+    setSelectedNotification(null)
+    setIsComposing(true)
+  }
+
   const handleSelectContact = async (contact: Contact) => {
     if (!currentUser) return
     setSelectedEmail(null)
@@ -239,6 +293,7 @@ export default function MessageFeature() {
     setIsEmailSettingsOpen(false)
     setIsNotificationOpen(false)
     setSelectedNotification(null)
+    setIsComposing(false)
     const conversationId = await getOrCreateDirectConversation(
       currentUser.accountNo,
       contact.contactUserId
@@ -267,6 +322,7 @@ export default function MessageFeature() {
     setIsEmailSettingsOpen(false)
     setIsNotificationOpen(false)
     setSelectedNotification(null)
+    setIsComposing(false)
     setSelectedDirectoryChat({
       id: `conversation-${conversation.id}`,
       conversationId: conversation.id,
@@ -312,6 +368,7 @@ export default function MessageFeature() {
     setIsEmailSettingsOpen(false)
     setIsNotificationOpen(false)
     setSelectedNotification(null)
+    setIsComposing(false)
     setSelectedDirectoryChat({
       id: `group-${group.id}`,
       conversationId: conversation.id,
@@ -333,6 +390,7 @@ export default function MessageFeature() {
     setIsEmailSettingsOpen(false)
     setIsNotificationOpen(false)
     setSelectedNotification(null)
+    setIsComposing(false)
     setSelectedEmail(email)
     if (!email.read) {
       setEmails((prev) =>
@@ -351,6 +409,7 @@ export default function MessageFeature() {
     setIsEmailSettingsOpen(false)
     setIsNotificationOpen(true)
     setSelectedNotification(notif)
+    setIsComposing(false)
     setSelectedNotificationMessage(null)
 
     // Mark notification as read
@@ -465,7 +524,7 @@ export default function MessageFeature() {
       <div
         className={cn(
           'flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-r border-border transition-all duration-300 ease-in-out',
-          (selectedEmail || selectedDirectoryChat || isAiChatOpen || isCalendarOpen || isKanbanOpen || isFileOpen || isEmailSettingsOpen) && 'hidden md:flex',
+          (selectedEmail || selectedDirectoryChat || isAiChatOpen || isCalendarOpen || isKanbanOpen || isFileOpen || isEmailSettingsOpen || isComposing) && 'hidden md:flex',
           isSidebarCollapsed ? 'w-20' : 'w-full md:w-[340px] lg:w-[380px]'
         )}
       >
@@ -485,6 +544,13 @@ export default function MessageFeature() {
               return next
             })
           }
+          isComposing={isComposing}
+          onComposeChange={(composing) => {
+            if (composing) handleOpenNewMail()
+            else setIsComposing(false)
+          }}
+          isEmailsLoading={isEmailsLoading}
+          emailsError={emailsError}
           contacts={contacts}
           selectedContactId={
             selectedDirectoryChat ? selectedDirectoryChat.id : null
@@ -501,6 +567,7 @@ export default function MessageFeature() {
             setIsEmailSettingsOpen(false)
             setIsNotificationOpen(false)
             setSelectedNotification(null)
+            setIsComposing(false)
             setIsAiChatOpen(true)
           } : undefined}
           isAiChatSelected={isAiChatOpen}
@@ -513,6 +580,7 @@ export default function MessageFeature() {
             setIsEmailSettingsOpen(false)
             setIsNotificationOpen(false)
             setSelectedNotification(null)
+            setIsComposing(false)
             setIsCalendarOpen(true)
           } : undefined}
           isCalendarSelected={isCalendarOpen}
@@ -525,6 +593,7 @@ export default function MessageFeature() {
             setIsEmailSettingsOpen(false)
             setIsNotificationOpen(false)
             setSelectedNotification(null)
+            setIsComposing(false)
             setIsKanbanOpen(true)
           } : undefined}
           isTaskSelected={isKanbanOpen}
@@ -537,6 +606,7 @@ export default function MessageFeature() {
             setIsEmailSettingsOpen(false)
             setIsNotificationOpen(false)
             setSelectedNotification(null)
+            setIsComposing(false)
             setIsFileOpen(true)
 
             // Automatically select top (latest) file as default ONLY if no file is currently selected
@@ -560,6 +630,7 @@ export default function MessageFeature() {
             setIsFileOpen(false)
             setIsNotificationOpen(false)
             setSelectedNotification(null)
+            setIsComposing(false)
             setIsEmailSettingsOpen(true)
           } : undefined}
           isEmailSettingsSelected={isEmailSettingsOpen}
@@ -576,7 +647,7 @@ export default function MessageFeature() {
       <div
         className={cn(
           'relative flex h-full min-h-0 flex-1 flex-col overflow-hidden',
-          !selectedEmail && !selectedDirectoryChat && !isAiChatOpen && !isCalendarOpen && !isKanbanOpen && !isFileOpen && !isEmailSettingsOpen && !isNotificationOpen && !previewAttachment && 'hidden md:flex'
+          !selectedEmail && !selectedDirectoryChat && !isAiChatOpen && !isCalendarOpen && !isKanbanOpen && !isFileOpen && !isEmailSettingsOpen && !isNotificationOpen && !previewAttachment && !isComposing && 'hidden md:flex'
         )}
       >
         {/* Mobile back button (only for email view — chat has its own) */}
@@ -595,6 +666,37 @@ export default function MessageFeature() {
             fileUrl={previewAttachment.fileUrl}
             onClose={() => setPreviewAttachment(null)}
             hideToggle={true}
+          />
+        ) : isComposing ? (
+          <NewEmail
+            onCancel={() => setIsComposing(false)}
+            onPreviewAttachment={(att) => setPreviewAttachment({ fileName: att.name, fileUrl: att.url || '' })}
+            onSend={(emailData) => {
+              const newEmail: Email = {
+                id: String(Date.now()),
+                from: undefined,
+                name: 'Me',
+                email: 'user@example.com',
+                replyTo: 'user@example.com',
+                subject: emailData.subject || '(No Subject)',
+                preview: emailData.body
+                  ? emailData.body.replace(/<[^>]*>/g, '').substring(0, 100)
+                  : '(No Content)',
+                body: emailData.body || '',
+                date: new Date(),
+                read: true,
+                labels: ['sent'],
+                avatarInitials: 'ME',
+                done: true,
+              }
+              setEmails((prev) => [newEmail, ...prev])
+              fetchInbox()
+              setIsComposing(false)
+            }}
+            onSaveDraft={() => {
+              toast.success('Draft saved!')
+              setIsComposing(false)
+            }}
           />
         ) : isNotificationOpen && selectedNotification ? (
           <NotificationDetailPanel
@@ -712,89 +814,51 @@ export default function MessageFeature() {
           onValueChange={setActiveTab}
           className='flex h-full min-h-0 flex-1 flex-col overflow-hidden'
         >
-          {/* ── Compose view ──────────────────────────────────────────── */}
-          {isComposing ? (
-            <div className='mt-0 flex h-full flex-grow flex-col overflow-hidden bg-background'>
-              <NewEmail
-                onCancel={() => setIsComposing(false)}
-                onPreviewAttachment={(att) => setPreviewAttachment({ fileName: att.name, fileUrl: att.url || '' })}
-                onSend={(emailData) => {
-                  toast.success('Message sent successfully!')
-                  const newEmail: Email = {
-                    id: String(Date.now()),
-                    from: undefined,
-                    name: 'Me',
-                    email: 'user@example.com',
-                    replyTo: 'user@example.com',
-                    subject: emailData.subject || '(No Subject)',
-                    preview: emailData.body
-                      ? emailData.body.replace(/<[^>]*>/g, '').substring(0, 100)
-                      : '(No Content)',
-                    body: emailData.body || '',
-                    date: new Date(),
-                    read: true,
-                    labels: ['sent'],
-                    avatarInitials: 'ME',
-                    done: true,
-                  }
-                  setEmails((prev) => [newEmail, ...prev])
-                  setIsComposing(false)
-                }}
-                onSaveDraft={() => {
-                  toast.success('Draft saved!')
-                  setIsComposing(false)
-                }}
-              />
+          <TabsContent
+            value='inbox'
+            className='mt-0 flex h-full min-h-0 flex-1 flex-row overflow-hidden bg-background focus-visible:outline-none'
+          >
+            {renderInboxPanel()}
+          </TabsContent>
+
+          <TabsContent
+            value='send'
+            className='mt-0 flex h-full min-h-0 flex-1 flex-row overflow-hidden bg-background focus-visible:outline-none'
+          >
+            {renderInboxPanel(true)}
+          </TabsContent>
+
+          <TabsContent
+            value='folder'
+            className='mt-0 flex flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8'
+          >
+            <div className='w-full max-w-3xl mx-auto'>
+              <LinksTab />
             </div>
-          ) : (
-            <>
-              <TabsContent
-                value='inbox'
-                className='mt-0 flex h-full min-h-0 flex-1 flex-row overflow-hidden bg-background focus-visible:outline-none'
-              >
-                {renderInboxPanel()}
-              </TabsContent>
+          </TabsContent>
 
-              <TabsContent
-                value='send'
-                className='mt-0 flex h-full min-h-0 flex-1 flex-row overflow-hidden bg-background focus-visible:outline-none'
-              >
-                {renderInboxPanel(true)}
-              </TabsContent>
+          <TabsContent
+            value='contact'
+            className='mt-0 flex min-h-0 flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8'
+          >
+            <ContactManagerTab
+              contacts={contacts}
+              onRefresh={fetchContactsAndGroups}
+              onSelectContact={handleSelectContact}
+            />
+          </TabsContent>
 
-              <TabsContent
-                value='folder'
-                className='mt-0 flex flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8'
-              >
-                <div className='w-full max-w-3xl mx-auto'>
-                  <LinksTab />
-                </div>
-              </TabsContent>
-
-              <TabsContent
-                value='contact'
-                className='mt-0 flex min-h-0 flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8'
-              >
-                <ContactManagerTab
-                  contacts={contacts}
-                  onRefresh={fetchContactsAndGroups}
-                  onSelectContact={handleSelectContact}
-                />
-              </TabsContent>
-
-              <TabsContent
-                value='groups'
-                className='mt-0 flex min-h-0 flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8'
-              >
-                <GroupManagerTab
-                  groups={groups}
-                  contacts={contacts}
-                  onRefresh={fetchContactsAndGroups}
-                  onSelectGroup={handleSelectGroup}
-                />
-              </TabsContent>
-            </>
-          )}
+          <TabsContent
+            value='groups'
+            className='mt-0 flex min-h-0 flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8'
+          >
+            <GroupManagerTab
+              groups={groups}
+              contacts={contacts}
+              onRefresh={fetchContactsAndGroups}
+              onSelectGroup={handleSelectGroup}
+            />
+          </TabsContent>
         </Tabs>
       </Main>
     </>

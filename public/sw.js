@@ -1,4 +1,4 @@
-﻿// ── Offline-first Service Worker ──────────────────────────────────────
+// ── Offline-first Service Worker ──────────────────────────────────────
 // Caches the app shell on install, then for every navigation request:
 //   - if online  → network first (and update the cache)
 //   - if offline → serve /offline.html (our custom doodle page)
@@ -34,6 +34,16 @@ self.addEventListener('activate', (event) => {
 // ── Fetch ──────────────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   const { request } = event
+  const url = new URL(request.url)
+
+  // Never intercept API routes, auth callbacks, or Next.js internals
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/auth/') ||
+    url.pathname.startsWith('/_next/')
+  ) {
+    return
+  }
 
   // Only intercept same-origin GET navigation requests (page loads)
   if (

@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/server'
+import { getServerSession } from 'next-auth'
+import { authOptions, stringToUuid } from '@/lib/auth'
 import { getSharedFileMetadata, generateSignedUrl } from '@/services/file.service'
 import SecureDocumentClientPage from '@/components/document/SecureDocumentClientPage'
 
@@ -17,15 +19,32 @@ export default async function SecureDocumentPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+  const session = await getServerSession(authOptions)
   const supabase = await createClient()
 
-  // 1. Authenticate user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user: { id: string; email: string; name?: string; avatar_url?: string } | null = null
+
+  if (session?.user) {
+    const sUser = session.user as any
+    user = {
+      id: stringToUuid(sUser.id || sUser.email),
+      email: sUser.email!,
+      name: sUser.name || sUser.email?.split('@')[0],
+      avatar_url: sUser.image || undefined,
+    }
+  } else {
+    const { data: { user: sbUser } } = await supabase.auth.getUser()
+    if (sbUser) {
+      user = {
+        id: sbUser.id,
+        email: sbUser.email!,
+        name: sbUser.user_metadata?.name || sbUser.email!.split('@')[0],
+        avatar_url: sbUser.user_metadata?.avatar_url || undefined,
+      }
+    }
+  }
 
   if (!user) {
-    // Redirect to login page and redirect back to this page
     redirect(`/sign-in?redirect=${encodeURIComponent(`/files/document/${id}`)}`)
   }
 
@@ -52,9 +71,9 @@ export default async function SecureDocumentPage({
         .from('profiles')
         .insert({
           id: user.id,
-          name: user.user_metadata?.name || user.user_metadata?.full_name || user.email!.split('@')[0],
-          email: user.email!,
-          avatar: user.user_metadata?.avatar_url || null,
+          name: user.name || user.email.split('@')[0],
+          email: user.email,
+          avatar: user.avatar_url || null,
         })
       
       if (insertError) {

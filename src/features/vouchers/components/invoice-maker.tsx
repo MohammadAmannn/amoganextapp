@@ -255,17 +255,21 @@ export function InvoiceMaker() {
       } catch { /* Non-fatal — continue with local save */ }
 
       // Update local Zustand store
-      useVoucherStore.getState().addVoucher({
+      const fileUrlToUse = storedOriginalUrl || originalFileUrl
+      const added = useVoucherStore.getState().addVoucher({
         voucherNo: invoiceNo,
         date: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
         from: vendorName,
         userName: 'Aman',
         status: 'Active',
         fileName: cleanName,
-        originalFileUrl: storedOriginalUrl,
+        originalFileUrl: fileUrlToUse,
+        editedFileUrl: fileUrlToUse,
+        pdfUrl: fileUrlToUse,
         editedJson: finalJson,
         dbId: savedDbId,
       })
+      useVoucherStore.getState().setSelectedVoucher(added)
     } catch { /* Ignore */ }
 
     setTimeout(() => {
@@ -476,7 +480,7 @@ export function InvoiceMaker() {
             <LoadingState message={scanStatus} progressPct={progressPct} />
           ) : error ? (
             <ErrorState error={error} onRetry={() => { setError(null); setTab('select') }} />
-          ) : editedJson ? (
+          ) : (
             <div className="flex-1 flex flex-col min-h-0">
               {/* File info header */}
               <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
@@ -512,10 +516,9 @@ export function InvoiceMaker() {
                 </div>
               </div>
 
-
               <DynamicJsonForm
-                jsonData={ocrJson || editedJson}
-                editedJson={editedJson}
+                jsonData={editedJson || ocrJson || initialInvoice}
+                editedJson={editedJson || ocrJson || initialInvoice}
                 onChange={(newJson) => {
                   setEditedJson(newJson)
                   setSavedReviewData(newJson)
@@ -523,12 +526,6 @@ export function InvoiceMaker() {
                 onSave={handleSaveForm}
                 isSaving={saving}
               />
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
-              <UploadCloud className="size-10 mb-4 opacity-40" />
-              <p className="text-sm font-semibold">No document loaded.</p>
-              <p className="text-xs mt-1">Go back to Step 1 and upload a file.</p>
             </div>
           )}
         </section>

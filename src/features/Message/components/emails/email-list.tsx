@@ -28,9 +28,10 @@ import {
   FileText,
   FolderOpen,
   Plus,
+  Settings,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useNotificationStore } from '@/stores/notification-store'
+import { useNotificationStore, DbNotification } from '@/stores/notification-store'
 import { Search as HeaderSearch } from '@/components/search'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -73,6 +74,10 @@ interface EmailListProps {
   isFileSelected?: boolean
   onSelectEmailSettings?: () => void
   isEmailSettingsSelected?: boolean
+  onSelectNotificationMode?: () => void
+  onSelectNotification?: (notification: DbNotification) => void
+  selectedNotificationId?: string | null
+  isNotificationSelected?: boolean
   activeTab?: string
   onTabChange?: (tab: string) => void
 }
@@ -121,16 +126,32 @@ export function EmailList({
   isFileSelected,
   onSelectEmailSettings,
   isEmailSettingsSelected,
+  onSelectNotificationMode,
+  onSelectNotification,
+  selectedNotificationId,
+  isNotificationSelected,
   activeTab,
   onTabChange,
 }: EmailListProps) {
   const router = useRouter()
-  const { unreadCount } = useNotificationStore()
+  const { notifications, unreadCount } = useNotificationStore()
   const selectedVoucher = useVoucherStore((state) => state.selectedVoucher)
   const storeVouchers = useVoucherStore((state) => state.vouchers)
   const [dbVouchers, setDbVouchers] = useState<SavedVoucher[]>([])
   const [selectedAccount, setSelectedAccount] = useState<string>('all')
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'mail' | 'chat' | 'vouchers' | 'ai' | 'calendar' | 'tasks'>('all')
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'mail' | 'chat' | 'vouchers' | 'ai' | 'calendar' | 'tasks' | 'notification'>('all')
+
+  const filteredNotifications = React.useMemo(() => {
+    if (!searchQuery.trim()) return notifications
+    const q = searchQuery.trim().toLowerCase()
+    return notifications.filter((notif) => {
+      const senderName = notif.message_text.split(' send you a msg')[0] || 'Someone'
+      return (
+        senderName.toLowerCase().includes(q) ||
+        notif.message_text.toLowerCase().includes(q)
+      )
+    })
+  }, [notifications, searchQuery])
 
   // Fetch real vouchers from DB API with background polling for instant live updates without page refresh
   useEffect(() => {
@@ -191,8 +212,25 @@ export function EmailList({
   }, [])
 
   const savedVouchers = React.useMemo(() => {
-    const list = dbVouchers.length > 0 ? dbVouchers : storeVouchers
-    return [...list].sort((a, b) => {
+    const map = new Map<string, SavedVoucher>()
+    const getFileKey = (v: SavedVoucher) => {
+      const name = (v.fileName || '').toLowerCase().trim()
+      const url = (v.originalFileUrl || v.editedFileUrl || v.pdfUrl || '').trim()
+      if (name && url) return `${name}_${url}`
+      if (name) return name
+      return v.id
+    }
+
+    for (const v of dbVouchers) {
+      const key = getFileKey(v)
+      if (key) map.set(key, v)
+    }
+    for (const v of storeVouchers) {
+      const key = getFileKey(v)
+      if (key && !map.has(key)) map.set(key, v)
+    }
+
+    return Array.from(map.values()).sort((a, b) => {
       const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
       const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0
       return timeB - timeA
@@ -340,20 +378,41 @@ export function EmailList({
   return (
     <div className='flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background'>
       <div className='shrink-0 border-b border-border bg-background px-3 pt-2 pb-1.5 flex flex-col gap-1.5'>
-        {/* 1. Header: Messages title + Search + Bell (Desktop only to prevent mobile duplicate) */}
+        {/* 1. Header: Messages title + Settings + Bell (Desktop only to prevent mobile duplicate) */}
         <div className='hidden md:flex items-center justify-between pb-0.5 border-b border-border/40'>
           <h1 className='text-base font-bold tracking-tight text-foreground sm:text-lg'>
             Messages
           </h1>
           <div className='flex items-center gap-1 sm:gap-1.5'>
-            <HeaderSearch iconOnly />
+            <Button
+              variant='ghost'
+              size='icon'
+              className={cn(
+                'relative size-7 shrink-0 transition-colors',
+                isEmailSettingsSelected && 'bg-accent text-accent-foreground'
+              )}
+              aria-label='Settings'
+              title='Email Settings'
+              onClick={() => {
+                onSelectEmailSettings?.()
+              }}
+            >
+              <Settings className='size-4' />
+            </Button>
 
             <Button
               variant='ghost'
               size='icon'
-              className='relative size-7 shrink-0'
+              className={cn(
+                'relative size-7 shrink-0 transition-colors',
+                (categoryFilter === 'notification' || isNotificationSelected) && 'bg-accent text-accent-foreground'
+              )}
               aria-label='Notifications'
-              onClick={() => router.push('/notification')}
+              title='Notifications'
+              onClick={() => {
+                setCategoryFilter((prev) => (prev === 'notification' ? 'all' : 'notification'))
+                onSelectNotificationMode?.()
+              }}
             >
               <Bell className='size-4' />
               {unreadCount > 0 && (
@@ -367,15 +426,18 @@ export function EmailList({
 
         {/* 2. Toolbar (Horizontal Icon Navigation) placed on top of search bar */}
         <div className='rounded-xl border border-border/80 bg-muted/10 p-1 flex items-center justify-between gap-1'>
-          {/* Mail / Email Settings Icon */}
+          {/* Mail Items Icon */}
           <button
             onClick={() => {
               setCategoryFilter((prev) => (prev === 'mail' ? 'all' : 'mail'))
-              onSelectEmailSettings?.()
+              const firstMail = mailItems[0]
+              if (firstMail) {
+                onSelectEmail(firstMail)
+              }
             }}
             className={cn(
               'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-              (categoryFilter === 'mail' || isEmailSettingsSelected) &&
+              (categoryFilter === 'mail' || (selectedEmailId !== null && !isEmailSettingsSelected && !isNotificationSelected && mailItems.some((m) => m.id === selectedEmailId))) &&
               'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
             )}
             title='Mail Items'
@@ -886,6 +948,81 @@ export function EmailList({
                         </div>
                       )}
                       {chatItems.map(renderCard)}
+                    </>
+                  )}
+
+                  {/* Notification cards */}
+                  {!isCollapsed && onSelectNotification && (categoryFilter === 'all' || categoryFilter === 'notification' || isNotificationSelected) && (
+                    <>
+                      {(categoryFilter === 'all' || categoryFilter === 'notification') && (
+                        <div className='flex items-center gap-2 px-3 pt-2 pb-0.5'>
+                          <Bell className='h-3 w-3 shrink-0 text-indigo-500' />
+                          <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
+                            Notifications
+                          </span>
+                          <div className='h-px flex-1 bg-border' />
+                          <span className='text-[10px] text-muted-foreground/50'>
+                            {filteredNotifications.length}
+                          </span>
+                        </div>
+                      )}
+                      {filteredNotifications.length === 0 ? (
+                        categoryFilter === 'notification' && (
+                          <div className='mx-3 my-2 rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-xs text-muted-foreground'>
+                            <Bell className='mx-auto h-7 w-7 opacity-30 mb-2 text-indigo-500' />
+                            <p className='font-semibold text-foreground/80'>No notifications</p>
+                            <p className='text-[11px] opacity-70 mt-0.5'>
+                              {searchQuery ? `No notifications matching "${searchQuery}"` : 'You have no notifications at this time.'}
+                            </p>
+                          </div>
+                        )
+                      ) : (
+                        filteredNotifications.map((notif) => {
+                          const isSelected = isNotificationSelected && selectedNotificationId === notif.id
+                          const senderName = notif.message_text.split(' send you a msg')[0] || 'Someone'
+
+                          return (
+                            <div
+                              key={notif.id}
+                              id={`notification-card-${notif.id}`}
+                              onClick={() => {
+                                setCategoryFilter('notification')
+                                onSelectNotification(notif)
+                              }}
+                              className={cn(
+                                'group relative mx-3 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2 transition-all duration-200 select-none border',
+                                isSelected
+                                  ? 'border-indigo-200/50 bg-indigo-500/10 dark:border-indigo-900/30 dark:bg-indigo-950/20'
+                                  : 'border-transparent bg-background hover:bg-muted/30',
+                                !notif.read && 'bg-primary/5'
+                              )}
+                            >
+                              {isSelected && (
+                                <div className='absolute top-1 bottom-1 left-0 w-0.5 rounded-l-full bg-indigo-600' />
+                              )}
+                              <div className='flex items-center justify-between'>
+                                <div className='flex min-w-0 items-center gap-1.5'>
+                                  <span className={cn('truncate text-sm font-medium text-foreground', !notif.read && 'font-semibold')}>
+                                    {senderName}
+                                  </span>
+                                  {!notif.read && (
+                                    <span className='inline-flex h-1.5 w-1.5 flex-shrink-0 rounded-full bg-indigo-600' />
+                                  )}
+                                  <Badge className='h-4 rounded border-indigo-200/30 bg-indigo-500/10 px-1.5 py-0 text-[9px] font-medium text-indigo-600 dark:text-indigo-400'>
+                                    Notification
+                                  </Badge>
+                                </div>
+                                <span className='ml-2 shrink-0 text-[10px] whitespace-nowrap text-muted-foreground'>
+                                  {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
+                                </span>
+                              </div>
+                              <p className='line-clamp-1 text-xs text-muted-foreground/70'>
+                                {notif.message_text}
+                              </p>
+                            </div>
+                          )
+                        })
+                      )}
                     </>
                   )}
 

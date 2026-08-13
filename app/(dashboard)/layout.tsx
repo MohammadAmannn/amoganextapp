@@ -28,7 +28,7 @@ export default function DashboardLayout({
     )
     if (hasAuthParams) return
 
-    if (!auth.accessToken || !auth.user) {
+    if (!auth.user) {
       const currentPath = window.location.pathname + window.location.search
       router.replace(`/sign-in?redirect=${encodeURIComponent(currentPath)}`)
       return
@@ -42,7 +42,7 @@ export default function DashboardLayout({
   }, [auth, router, isHydrated])
 
   // While hydrating auth state, show nothing (no stacked page / spinner)
-  if (!isHydrated || !auth.accessToken || !auth.user) {
+  if (!isHydrated || !auth.user) {
     return null
   }
 

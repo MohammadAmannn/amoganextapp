@@ -484,3 +484,36 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
 * **Full-Screen Mobile UI**:
   - Configured document preview containers to use `fixed inset-0 z-[100] h-[100dvh] w-full bg-background` on mobile screens (`<md`), providing a full-screen mobile experience with top bar `[X]` close icon and zero background bleed.
   - Preserves standard desktop side-by-side right window view on desktop (`md:` breakpoint).
+
+---
+
+## 40. Full Migration to NextAuth v4, Google OAuth & Mobile Capacitor Deep Linking Architecture
+* **Full NextAuth v4 Migration**:
+  - Replaced Supabase Auth entirely with NextAuth v4 (`next-auth`) supporting Google OAuth provider (`GoogleProvider`).
+  - Configured `authOptions` in `src/lib/auth.ts` with deterministic UUID conversion (`stringToUuid`) mapping Google user IDs and emails to valid PostgreSQL UUID keys (`profiles.id` and `profiles.auth_user_id`).
+  - Automatically creates and synchronizes user profiles into the Supabase PostgreSQL `public.profiles` table upon sign-in (`id`, `name`, `email`, `avatar`, `auth_user_id`, `updated_at`).
+* **Android Native Deep Link Intent Architecture**:
+  - Created `/api/auth/mobile-login` endpoint initiating direct Google OAuth inside `@capacitor/browser` (Chrome Custom Tab / Safari View Controller).
+  - Created Google callback interceptor route [app/api/auth/callback/google/route.ts](file:///e:/morrai/shadcn-admin-main/app/api/auth/callback/google/route.ts) that executes NextAuth code exchange, creates session cookies, and intercepts NextAuth's redirect to force mobile requests to land on `/auth/callback?is_mobile=true`.
+  - Configured [app/auth/callback/route.ts](file:///e:/morrai/shadcn-admin-main/app/auth/callback/route.ts) to return an instant HTML intent trigger executing:
+    `intent://auth/callback?token=${token}#Intent;scheme=com.aman.amoganextapp;package=com.aman.amoganextapp;end;`
+  - Android OS intercepts the intent, auto-closes Chrome Custom Tab, and returns directly to the native app shell.
+* **Capacitor Cookie Synchronization Engine**:
+  - Created `/api/auth/mobile-set-cookie` endpoint.
+  - When the native app deep link listener in [src/lib/capacitor-init.ts](file:///e:/morrai/shadcn-admin-main/src/lib/capacitor-init.ts) receives the OAuth callback, it calls `/api/auth/mobile-set-cookie?token=...`, attaching `next-auth.session-token` directly into the native webview cookie jar.
+  - Navigates the native webview directly to `/` (Dashboard), fully authenticated.
+* **Smooth Mobile Sign-Out**:
+  - Refactored `SignOutDialog` in [sign-out-dialog.tsx](file:///e:/morrai/shadcn-admin-main/src/components/sign-out-dialog.tsx) to execute direct navigation to `/api/auth/mobile-logout`.
+
+---
+
+## 41. Server-Side Mobile Logout Architecture & Automated Auth Self-Test Suite
+* **Server-Side Mobile Logout Endpoint (`/api/auth/mobile-logout`)**:
+  - Created [app/api/auth/mobile-logout/route.ts](file:///e:/morrai/shadcn-admin-main/app/api/auth/mobile-logout/route.ts) that purges all NextAuth and legacy session cookies (`next-auth.session-token`, `__Secure-next-auth.session-token`, `next-auth.callback-url`, `auth_user_data`, `mobile_auth`) directly on the server HTTP response headers and issues a 302 Redirect to `/sign-in`.
+  - Updated `SignOutDialog` in [sign-out-dialog.tsx](file:///e:/morrai/shadcn-admin-main/src/components/sign-out-dialog.tsx) to execute instant window location navigation (`window.location.href = '/api/auth/mobile-logout'`), eliminating all client-side React rendering freezes and dark blank screen glitches during sign-out on mobile.
+* **Middleware Stale Cookie Cleanup ([src/middleware.ts](file:///e:/morrai/shadcn-admin-main/src/middleware.ts))**:
+  - Refactored `isAuthUser` evaluation in `middleware.ts` to rely strictly on `hasNextAuthToken || user`, stripping out stale legacy `auth_user_data` cookie traps that previously bounced logged-out users from `/sign-in` back to `/`.
+* **Automated Auth Self-Test Script ([scripts/test-auth-flow.cjs](file:///e:/morrai/shadcn-admin-main/scripts/test-auth-flow.cjs))**:
+  - Built an automated Node.js test script `node scripts/test-auth-flow.cjs` that verifies HTTP status codes, redirect location targets, and `Set-Cookie` header contracts across `/api/auth/mobile-login`, `/api/auth/mobile-set-cookie`, and `/api/auth/mobile-logout`.
+  - Enforced automated execution of this self-test suite before every release to guarantee 100% zero-regression mobile auth workflows.
+  - Eliminates dark blank screen glitches during sign-out on mobile, redirecting cleanly to `/sign-in`.

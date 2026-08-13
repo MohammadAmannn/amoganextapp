@@ -3,12 +3,14 @@ import { createQuery } from '../../shared/api/queryBuilder'
 import { Contact } from './contacts.types'
 import { mapToContact } from './contacts.mapper'
 import { triggerContactAlert } from '@/services/db-alert.service'
+import { stringToUuid } from '@/lib/auth'
 
 /**
  * Fetch all contacts for a specific owner/user.
  */
 export async function getContacts(userId: string): Promise<Contact[]> {
   try {
+    const validUserId = stringToUuid(userId)
     const query = createQuery()
       .select(`
         id,
@@ -26,7 +28,7 @@ export async function getContacts(userId: string): Promise<Contact[]> {
           mobile
         )
       `)
-      .eq('owner_id', userId)
+      .eq('owner_id', validUserId)
       .order('created_at', { ascending: false })
 
     const data = await apiClient.get<any[]>(`/rest/v1/contacts${query.toString()}`)
@@ -48,6 +50,7 @@ export async function createContact(
   nickname?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const validOwnerId = stringToUuid(ownerId)
     const emailLower = contactEmail.trim().toLowerCase()
 
     // 1. Search for existing profile by email
@@ -60,7 +63,7 @@ export async function createContact(
     const profile = profiles[0] || null
 
     // 2. Prevent adding yourself
-    if (profile && profile.id === ownerId) {
+    if (profile && profile.id === validOwnerId) {
       return { success: false, error: 'You cannot add yourself as a contact.' }
     }
 
@@ -68,7 +71,7 @@ export async function createContact(
     if (profile) {
       const existingQuery = createQuery()
         .select('id')
-        .eq('owner_id', ownerId)
+        .eq('owner_id', validOwnerId)
         .or(`email.ilike.${emailLower},contact_user_id.eq.${profile.id}`)
         .limit(1)
 
@@ -79,7 +82,7 @@ export async function createContact(
     } else {
       const existingQuery = createQuery()
         .select('id')
-        .eq('owner_id', ownerId)
+        .eq('owner_id', validOwnerId)
         .ilike('email', emailLower)
         .limit(1)
 
@@ -132,11 +135,11 @@ export async function createContact(
 
     // 4. Create the contact entry with user_uuid
     const contactData = {
-      owner_id: ownerId,
+      owner_id: validOwnerId,
       contact_user_id: contactUserId,
       nickname: nickname?.trim() || null,
       email: emailLower,
-      user_uuid: ownerId
+      user_uuid: validOwnerId
     }
 
     await apiClient.post('/rest/v1/contacts', contactData)
@@ -162,6 +165,7 @@ export async function updateContact(
   nickname: string
 ): Promise<boolean> {
   try {
+    const validOwnerId = stringToUuid(ownerId)
     // Fetch contact details to resolve contactUserId for alert
     const contactQuery = createQuery()
       .select('contact_user_id')
@@ -174,14 +178,14 @@ export async function updateContact(
     // Update nickname
     const updateQuery = createQuery()
       .eq('id', contactId)
-      .eq('owner_id', ownerId)
+      .eq('owner_id', validOwnerId)
 
     await apiClient.patch(`/rest/v1/contacts${updateQuery.toString()}`, {
       nickname: nickname.trim() || null
     })
 
     if (contactData) {
-      triggerContactAlert('update', ownerId, contactData.contact_user_id).catch((err) =>
+      triggerContactAlert('update', validOwnerId, contactData.contact_user_id).catch((err) =>
         console.error('[DB Alerts] Error sending contact updated alert:', err)
       )
     }
@@ -198,6 +202,7 @@ export async function updateContact(
  */
 export async function deleteContact(contactId: string, ownerId: string): Promise<boolean> {
   try {
+    const validOwnerId = stringToUuid(ownerId)
     // Fetch contact details to resolve contactUserId for alert
     const contactQuery = createQuery()
       .select('contact_user_id')
@@ -210,12 +215,12 @@ export async function deleteContact(contactId: string, ownerId: string): Promise
     // Delete contact
     const deleteQuery = createQuery()
       .eq('id', contactId)
-      .eq('owner_id', ownerId)
+      .eq('owner_id', validOwnerId)
 
     await apiClient.delete(`/rest/v1/contacts${deleteQuery.toString()}`)
 
     if (contactData) {
-      triggerContactAlert('delete', ownerId, contactData.contact_user_id).catch((err) =>
+      triggerContactAlert('delete', validOwnerId, contactData.contact_user_id).catch((err) =>
         console.error('[DB Alerts] Error sending contact deleted alert:', err)
       )
     }

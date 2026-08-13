@@ -1,19 +1,12 @@
-// app/auth/callback/route.ts
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/server'
+import { getToken } from 'next-auth/jwt'
+import { cookies } from 'next/headers'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
-  const code = searchParams.get('code')
+  const isMobile = searchParams.get('is_mobile') === 'true' || searchParams.get('mobile') === 'true'
   const next = searchParams.get('next') ?? '/'
 
-  console.log('🔍 [Auth Callback] Received request:')
-  console.log('  - Code present:', !!code)
-  console.log('  - Next param:', next)
-  console.log('  - All params:', Object.fromEntries(searchParams))
-  console.log('  - Origin:', origin)
-
-  // If there's an error param from OAuth
   const error = searchParams.get('error')
   if (error) {
     console.error('❌ [Auth Callback] OAuth error:', error)
@@ -24,46 +17,68 @@ export async function GET(request: Request) {
     return NextResponse.redirect(errorUrl)
   }
 
-  if (code) {
+  if (isMobile) {
+    const secret = process.env.NEXTAUTH_SECRET || 'secret_next_auth_shadcn_admin_key_2026_super_secure'
+
+    // Retrieve raw NextAuth JWT session token from request
+    let rawToken: string | null = null
     try {
-      console.log('✅ [Auth Callback] Exchanging code for session...')
-      const supabase = await createClient()
-      const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-      
-      if (exchangeError) {
-        console.error('❌ [Auth Callback] Exchange error:', exchangeError)
-        throw exchangeError
-      }
-      
-      console.log('✅ [Auth Callback] Session exchange successful!')
-      console.log('  - User:', data.user?.email)
-      console.log('  - User ID:', data.user?.id)  // ✅ Log the user ID
-      console.log('  - Session:', data.session ? 'present' : 'null')
-      
-      // ✅ The user data will be set in the client-side useEffect
-      // We don't need to set it here since the client will handle it
-      
-      // Redirect to the next parameter
-      const redirectUrl = new URL(next, origin)
-      
-      // ✅ Add a query param to trigger client-side auth refresh
-      redirectUrl.searchParams.set('auth', 'success')
-      
-      console.log('  - Redirecting to:', redirectUrl.toString())
-      return NextResponse.redirect(redirectUrl)
-      
-    } catch (err: any) {
-      console.error('❌ [Auth Callback] Exception:', err)
-      const errorUrl = new URL('/sign-in', origin)
-      errorUrl.searchParams.set('error', 'AuthExchangeError')
-      errorUrl.searchParams.set('error_description', err.message || 'Unknown error')
-      return NextResponse.redirect(errorUrl)
+      rawToken = await getToken({ req: request as any, secret, raw: true })
+    } catch (e) {
+      console.error('❌ [Auth Callback] Error fetching raw token:', e)
     }
+
+    if (!rawToken) {
+      try {
+        const cookieStore = await cookies()
+        rawToken =
+          cookieStore.get('next-auth.session-token')?.value ||
+          cookieStore.get('__Secure-next-auth.session-token')?.value ||
+          null
+      } catch (err) {
+        console.error('❌ [Auth Callback] Cookie store error:', err)
+      }
+    }
+
+    const tokenParam = rawToken ? `&token=${encodeURIComponent(rawToken)}` : ''
+    const customScheme = `com.aman.amoganextapp://auth/callback?next=${encodeURIComponent(next)}${tokenParam}`
+    const androidIntent = `intent://auth/callback?next=${encodeURIComponent(next)}${tokenParam}#Intent;scheme=com.aman.amoganextapp;package=com.aman.amoganextapp;end;`
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Opening App...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    window.location.replace("${androidIntent}");
+  </script>
+</head>
+<body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui,-apple-system,sans-serif;background:#09090b;color:#fff;text-align:center;margin:0;padding:20px;">
+  <div style="max-width:400px;">
+    <div style="margin-bottom:16px;font-size:36px;">📱</div>
+    <h2 style="margin:0 0 8px 0;font-size:20px;font-weight:600;">Success! Opening App...</h2>
+    <p style="margin:0 0 20px 0;font-size:14px;color:#a1a1aa;">Login complete. Returning to your mobile app...</p>
+    <a id="intent-btn" href="${androidIntent}" style="display:inline-block;padding:12px 24px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:14px;">Open Mobile App</a>
+  </div>
+  <script>
+    setTimeout(function() {
+      window.location.replace("${customScheme}");
+    }, 150);
+  </script>
+</body>
+</html>`
+
+    return new NextResponse(html, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store, max-age=0',
+      },
+    })
   }
 
-  console.warn('⚠️ [Auth Callback] No code parameter found!')
-  const errorUrl = new URL('/sign-in', origin)
-  errorUrl.searchParams.set('error', 'MissingCode')
-  errorUrl.searchParams.set('error_description', 'No authorization code provided')
-  return NextResponse.redirect(errorUrl)
+  const redirectUrl = new URL(next, origin)
+  redirectUrl.searchParams.set('auth', 'success')
+  return NextResponse.redirect(redirectUrl)
 }

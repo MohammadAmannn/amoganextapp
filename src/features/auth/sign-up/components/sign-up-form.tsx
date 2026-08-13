@@ -1,5 +1,6 @@
 'use client'
 
+import { signIn } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
@@ -22,6 +23,7 @@ import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
 import { useAuthStore } from '@/stores/auth-store'
 import { createClient } from '@/lib/client'
+import { isCapacitor } from '@/lib/platform'
 
 const formSchema = z
   .object({
@@ -50,46 +52,21 @@ export function SignUpForm({
   const { setUser, setAccessToken } = useAuthStore((state) => state.auth)
 
   const handleGoogleLogin = async () => {
-    console.log('🔄 [Google Login] Starting...')
     setIsGoogleLoading(true)
-    
     try {
-      const supabase = createClient()
-      const redirectUrl = new URL('/auth/callback', window.location.origin)
-      
-      console.log('  - Redirect URL:', redirectUrl.toString())
-      
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectUrl.toString(),
-        },
-      })
-      
-      if (error) {
-        console.error('Signup error:', error)
-        
-        // Handle specific Supabase error codes
-        if (error.message?.includes('already registered') || 
-            error.message?.includes('User already registered')) {
-          toast.error('This email is already registered. Please sign in instead.')
-          router.push(`/sign-in?email=${encodeURIComponent(emailParam)}`)
-          return
-        }
-        
-        if (error.message?.includes('Database error saving new user')) {
-          toast.error('We encountered a database issue. Please try again or contact support.')
-          return
-        }
-        
-        throw error
+      if (isCapacitor()) {
+        const { getMobileGoogleAuthUrl } = await import('@/lib/auth-mobile')
+        const { Browser } = await import('@capacitor/browser')
+        const googleAuthUrl = getMobileGoogleAuthUrl('/')
+        await Browser.open({ url: googleAuthUrl, windowName: '_self' })
+      } else {
+        await signIn('google', {
+          callbackUrl: '/',
+        })
       }
-      
-      console.log('✅ [Google Login] Redirecting to Google...')
-      
     } catch (err: any) {
-      console.error('❌ [Google Login] Error:', err)
-      toast.error(err.message || 'Google signup failed. Please try again.')
+      console.error('[Google Login] Error:', err)
+      toast.error(err.message || 'Google sign in failed. Please try again.')
       setIsGoogleLoading(false)
     }
   }

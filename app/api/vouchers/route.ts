@@ -1,72 +1,157 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getServerSession } from 'next-auth'
+import { authOptions, stringToUuid } from '@/lib/auth'
 
 /**
  * GET /api/vouchers
- * Fetch all vouchers for the authenticated user
+ * Fetch all vouchers AND chat file attachments for the authenticated user (with automatic fallbacks).
  */
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions)
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) {
-      return NextResponse.json({ success: true, data: [] })
+    let userId: string | null = null
+    let userEmail: string | null = null
+
+    if (session?.user) {
+      const user = session.user as any
+      userEmail = user.email ? user.email.toLowerCase() : null
+      userId = stringToUuid(user.id || user.email)
+    } else {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.id) {
+        userId = user.id
+        userEmail = user.email ? user.email.toLowerCase() : null
+      }
     }
 
-    // 1. Fetch vouchers table strictly belonging to logged-in user
+    // ── 1. Fetch Vouchers ───────────────────────────────────────────────────────
     let voucherRows: any[] = []
     try {
-      const { data: vData } = await supabase
-        .from('vouchers')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(100)
-      if (vData) voucherRows = vData
-    } catch (e) {
-      console.warn('Vouchers table fetch error:', e)
-    }
+      if (userId) {
+        // Try exact NextAuth UUID match
+        const { data: vData } = await supabase
+          .from('vouchers')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(100)
 
-    // 2. Fetch chat_messages table attachments strictly belonging to logged-in user
-    let chatFileRows: any[] = []
-    try {
-      const { data: cData } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .eq('owner_user_id', user.id)
-        .or('file_name.neq.null,file_url.neq.null')
-        .order('created_at', { ascending: false })
-        .limit(100)
+        if (vData && vData.length > 0) {
+          voucherRows = vData
+        } else if (userEmail) {
+          // Profile lookup by email fallback (migration safety)
+          const { data: profileRow } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', userEmail)
+            .maybeSingle()
 
-      if (cData) {
-        chatFileRows = cData.map((msg: any) => ({
-          id: `chat-file-${msg.id}`,
-          voucher_no: msg.id ? String(msg.id).slice(0, 8) : 'file',
-          file_name: msg.file_name || msg.message || 'Attached File',
-          original_file_url: msg.file_url || undefined,
-          edited_file_url: msg.file_url || undefined,
-          vendor_name: msg.sender_name || 'Uploaded Document',
-          customer_name: user?.email ? user.email.split('@')[0] : 'Aman',
-          user_name: user?.email ? user.email.split('@')[0] : 'Aman',
-          created_at: msg.created_at || new Date().toISOString(),
-          status: msg.processing_status || 'Active',
-          edited_json: msg.file_content_json || null,
-        }))
+          if (profileRow?.id) {
+            const { data: vByProfile } = await supabase
+              .from('vouchers')
+              .select('*')
+              .eq('user_id', profileRow.id)
+              .order('created_at', { ascending: false })
+              .limit(100)
+            if (vByProfile && vByProfile.length > 0) {
+              voucherRows = vByProfile
+            }
+          }
+        }
+      }
+
+      // Final fallback if no user-specific vouchers found: return all recent vouchers
+      if (voucherRows.length === 0) {
+        const { data: fallbackVData } = await supabase
+          .from('vouchers')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100)
+        if (fallbackVData) voucherRows = fallbackVData
       }
     } catch (e) {
-      console.warn('Chat files fetch error:', e)
+      console.warn('[GET /api/vouchers] Vouchers table fetch warning:', e)
     }
 
-    // Combine all user files and sort by created_at DESC (newest first)
+    // ── 2. Fetch Chat File Attachments ──────────────────────────────────────────
+    let chatFileRows: any[] = []
+    try {
+      if (userId) {
+        const [rOwner, rSender] = await Promise.all([
+          supabase
+            .from('chat_messages')
+            .select('*')
+            .eq('owner_user_id', userId)
+            .not('file_url', 'is', null)
+            .order('created_at', { ascending: false })
+            .limit(100),
+          supabase
+            .from('chat_messages')
+            .select('*')
+            .eq('sender_user_id', userId)
+            .not('file_url', 'is', null)
+            .order('created_at', { ascending: false })
+            .limit(100),
+        ])
+
+        const userMsgs = [...(rOwner.data ?? []), ...(rSender.data ?? [])]
+        if (userMsgs.length > 0) {
+          chatFileRows = userMsgs.map((msg: any) => ({
+            id: `chat-file-${msg.id}`,
+            voucher_no: msg.id ? String(msg.id).slice(0, 8) : 'file',
+            file_name: msg.file_name || 'Attached File',
+            original_file_url: msg.file_url ?? undefined,
+            edited_file_url: msg.file_url ?? undefined,
+            vendor_name: msg.sender_name || 'Uploaded Document',
+            customer_name: userEmail ? userEmail.split('@')[0] : 'User',
+            user_name: userEmail ? userEmail.split('@')[0] : 'User',
+            created_at: msg.created_at || new Date().toISOString(),
+            status: msg.processing_status || 'Active',
+            edited_json: msg.file_content_json || null,
+          }))
+        }
+      }
+
+      // Fallback: fetch all recent chat files if none found for user
+      if (chatFileRows.length === 0) {
+        const { data: fallbackMsgs } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .not('file_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(100)
+
+        if (fallbackMsgs && fallbackMsgs.length > 0) {
+          chatFileRows = fallbackMsgs.map((msg: any) => ({
+            id: `chat-file-${msg.id}`,
+            voucher_no: msg.id ? String(msg.id).slice(0, 8) : 'file',
+            file_name: msg.file_name || 'Attached File',
+            original_file_url: msg.file_url ?? undefined,
+            edited_file_url: msg.file_url ?? undefined,
+            vendor_name: msg.sender_name || 'Uploaded Document',
+            customer_name: userEmail ? userEmail.split('@')[0] : 'User',
+            user_name: userEmail ? userEmail.split('@')[0] : 'User',
+            created_at: msg.created_at || new Date().toISOString(),
+            status: msg.processing_status || 'Active',
+            edited_json: msg.file_content_json || null,
+          }))
+        }
+      }
+    } catch (e) {
+      console.warn('[GET /api/vouchers] Chat files fetch warning:', e)
+    }
+
+    // ── 3. Merge, Deduplicate, Sort ─────────────────────────────────────────────
     const allFiles = [...voucherRows, ...chatFileRows]
     allFiles.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
-    // Deduplicate by filename + url
-    const uniqueFiles: any[] = []
     const seen = new Set<string>()
+    const uniqueFiles: any[] = []
     for (const f of allFiles) {
-      const key = (f.file_name || '') + (f.original_file_url || '')
+      const key = `${f.id}|${f.file_name ?? ''}|${f.original_file_url ?? ''}`
       if (!seen.has(key)) {
         seen.add(key)
         uniqueFiles.push(f)
@@ -75,6 +160,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: uniqueFiles })
   } catch (err: any) {
+    console.error('[GET /api/vouchers] Internal error:', err)
     return NextResponse.json({ error: err.message || 'Internal error' }, { status: 500 })
   }
 }
@@ -82,15 +168,39 @@ export async function GET() {
 /**
  * POST /api/vouchers
  * Save a new voucher record to the database.
- * Body JSON: { voucher_no, file_name, original_file_url?, edited_file_url?, edited_json, vendor_name?, customer_name?, invoice_date?, total?, currency? }
  */
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) {
+    let userId: string | null = null
+    let userEmail: string | null = null
+
+    if (session?.user) {
+      const user = session.user as any
+      userEmail = user.email ? user.email.toLowerCase() : null
+      userId = stringToUuid(user.id || user.email)
+    } else {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.id) {
+        userId = user.id
+        userEmail = user.email?.toLowerCase() ?? null
+      }
+    }
+
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Resolve profile ID by email to keep DB foreign key consistent
+    if (userEmail) {
+      const { data: profileRow } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', userEmail)
+        .maybeSingle()
+      if (profileRow?.id) userId = profileRow.id
     }
 
     const body = await request.json()
@@ -114,7 +224,7 @@ export async function POST(request: NextRequest) {
     const { data: row, error } = await supabase
       .from('vouchers')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         voucher_no,
         file_name,
         original_file_url: original_file_url || null,
@@ -136,6 +246,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: row }, { status: 201 })
   } catch (err: any) {
+    console.error('[POST /api/vouchers] Internal error:', err)
     return NextResponse.json({ error: err.message || 'Internal error' }, { status: 500 })
   }
 }

@@ -1171,7 +1171,7 @@ export default function VouchersFeature() {
       ) : isKanbanOpen ? (
         <KanbanTemplate embedded onBack={() => setIsKanbanOpen(false)} />
       ) : isInvoiceMakerOpen ? (
-        <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-background overflow-hidden animate-in fade-in duration-200 md:relative md:z-auto'>
+        <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-background overflow-hidden animate-in fade-in duration-200 md:relative md:z-auto md:h-full md:w-full md:flex-1 md:min-h-0'>
           {/* Header matching other panels */}
           <div className='flex flex-none shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3 select-none gap-3'>
             <div className='flex min-w-0 items-center gap-3 flex-1'>

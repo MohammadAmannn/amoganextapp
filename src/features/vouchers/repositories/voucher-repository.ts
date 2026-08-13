@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
+import { useAuthStore } from '@/stores/auth-store'
+import { stringToUuid } from '@/lib/auth'
 
 export interface VoucherRecord {
   id: string
@@ -18,14 +20,45 @@ export interface VoucherRecord {
   updated_at: string
 }
 
+async function getActiveUserId(): Promise<string | null> {
+  try {
+    const supabase = createClient()
+
+    // Prefer Supabase session UUID directly
+    const { data: user } = await supabase.auth.getUser()
+    if (user?.user?.id) return user.user.id
+  } catch {}
+
+  const storeUser = useAuthStore.getState().auth.user
+  if (!storeUser?.email && !storeUser?.id) return null
+
+  try {
+    // Resolve the profile UUID by email — ensures new NextAuth users get the right UUID
+    const supabase = createClient()
+    const email = storeUser.email?.toLowerCase()
+    if (email) {
+      const { data: profileRow } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle()
+      if (profileRow?.id) return profileRow.id
+    }
+  } catch {}
+
+  // Last resort: derive from stored id
+  if (storeUser?.id) return stringToUuid(storeUser.id)
+  return null
+}
+
+
 /** Upload a file to Supabase Storage under `vouchers/${userId}/` folder in `chat-files` bucket */
 export async function uploadVoucherFile(
   file: File,
   subfolder: 'originals' | 'edited' = 'originals'
 ): Promise<string> {
   const supabase = createClient()
-  const { data: user } = await supabase.auth.getUser()
-  const userId = user?.user?.id || 'anonymous'
+  const userId = (await getActiveUserId()) || 'anonymous'
 
   const fileExt = file.name.split('.').pop() || 'bin'
   const uniqueName = `${crypto.randomUUID()}.${fileExt}`
@@ -49,8 +82,7 @@ export async function uploadVoucherBlob(
   fileName: string
 ): Promise<string> {
   const supabase = createClient()
-  const { data: user } = await supabase.auth.getUser()
-  const userId = user?.user?.id || 'anonymous'
+  const userId = (await getActiveUserId()) || 'anonymous'
 
   const uniqueName = `${crypto.randomUUID()}_${fileName}`
   const path = `vouchers/${userId}/edited/${uniqueName}`
@@ -81,9 +113,9 @@ export async function saveVoucher(data: {
   currency?: string
 }): Promise<VoucherRecord | null> {
   const supabase = createClient()
+  const userId = await getActiveUserId()
 
-  const { data: user } = await supabase.auth.getUser()
-  if (!user?.user?.id) {
+  if (!userId) {
     throw new Error('Not authenticated')
   }
 
@@ -91,7 +123,7 @@ export async function saveVoucher(data: {
     .from('vouchers')
     .insert({
       ...data,
-      user_id: user.user.id,
+      user_id: userId,
     })
     .select('*')
     .single()
@@ -106,20 +138,33 @@ export async function saveVoucher(data: {
 /** Fetch all vouchers for the current user */
 export async function getUserVouchers(): Promise<VoucherRecord[]> {
   const supabase = createClient()
+  const userId = await getActiveUserId()
 
-  const { data: user } = await supabase.auth.getUser()
-  if (!user?.user?.id) return []
+  if (!userId) {
+    // If no specific userId, query recent vouchers or return empty
+    const { data } = await supabase
+      .from('vouchers')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50)
+    return (data ?? []) as VoucherRecord[]
+  }
 
   const { data, error } = await supabase
     .from('vouchers')
     .select('*')
-    .eq('user_id', user.user.id)
+    .or(`user_id.eq.${userId}`)
     .order('created_at', { ascending: false })
     .limit(50)
 
   if (error) {
     console.error('Failed to fetch vouchers:', error.message)
-    return []
+    const { data: fallbackData } = await supabase
+      .from('vouchers')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50)
+    return (fallbackData ?? []) as VoucherRecord[]
   }
 
   return (data ?? []) as VoucherRecord[]

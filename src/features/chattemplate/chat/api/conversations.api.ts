@@ -2,13 +2,14 @@ import { apiClient } from '../../shared/api/apiClient'
 import { createQuery } from '../../shared/api/queryBuilder'
 import { Conversation, Profile, Message } from '../types/chat.types'
 import { createMessage } from './messages.api'
+import { stringToUuid } from '@/lib/auth'
 
 /**
  * Fetch all conversations for a specific user.
  */
 export async function getUserConversations(userId: string): Promise<Conversation[]> {
   try {
-    const businessUserId = userId
+    const businessUserId = stringToUuid(userId)
 
     // 1. Get the list of conversation IDs the user belongs to
     const memberQuery = createQuery().select('conversation_id').eq('user_id', businessUserId)

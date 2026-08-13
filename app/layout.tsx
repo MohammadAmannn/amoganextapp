@@ -32,7 +32,9 @@ export default function RootLayout({
           </Suspense>
           {children}
           <Analytics />
-          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ''} />
+          {process.env.NEXT_PUBLIC_GA_ID ? (
+            <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+          ) : null}
         </Providers>
       </body>
     </html>

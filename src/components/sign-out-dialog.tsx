@@ -1,7 +1,5 @@
 'use client'
 
-import { useRouter, usePathname } from 'next/navigation'
-import { useAuthStore } from '@/stores/auth-store'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { createClient } from '@/lib/client'
 
@@ -11,20 +9,26 @@ interface SignOutDialogProps {
 }
 
 export function SignOutDialog({ open, onOpenChange }: SignOutDialogProps) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const { auth } = useAuthStore()
-
-  const handleSignOut = async () => {
+  const handleSignOut = () => {
     try {
       const supabase = createClient()
-      await supabase.auth.signOut()
+      supabase.auth.signOut().catch(() => {})
     } catch (err) {
-      console.error('Error signing out from Supabase:', err)
+      // ignore
     }
-    auth.reset()
-    // Preserve current location for redirect after sign-in
-    router.replace(`/sign-in?redirect=${encodeURIComponent(pathname)}`)
+
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.clear()
+        sessionStorage.clear()
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // Direct window location navigation to server-side logout route.
+    // Purges session cookies on response and redirects instantly to /sign-in (zero blank screen).
+    window.location.href = '/api/auth/mobile-logout'
   }
 
   return (

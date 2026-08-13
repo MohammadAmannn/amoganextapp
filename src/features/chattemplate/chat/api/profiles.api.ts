@@ -92,13 +92,25 @@ async function ensureProfileExistsInternal(user: {
     const avatar = user.picture || null
 
     try {
-      const inserted = await apiClient.post<any[]>('/rest/v1/profiles', {
-        id: user.accountNo,
-        name,
-        avatar,
-        email: user.email,
-        mobile: user.mobile || null,
-      })
+      let inserted: any[] = []
+      try {
+        inserted = await apiClient.post<any[]>('/rest/v1/profiles', {
+          id: user.accountNo,
+          auth_user_id: user.accountNo,
+          name,
+          avatar,
+          email: user.email,
+          mobile: user.mobile || null,
+        })
+      } catch (err) {
+        inserted = await apiClient.post<any[]>('/rest/v1/profiles', {
+          id: user.accountNo,
+          name,
+          avatar,
+          email: user.email,
+          mobile: user.mobile || null,
+        })
+      }
       const newProfile = inserted[0] || null
 
       if (!newProfile) {

@@ -46,6 +46,9 @@ import { ContactManagerTab } from './components/tabs/contact-manager-tab'
 import { GroupManagerTab } from './components/tabs/group-manager-tab'
 import { AiChatPanel } from './components/panels/ai-chat-panel'
 import { MessageEmailSettings } from './components/panels/message-email-settings'
+import { NotificationDetailPanel, ChatMessageDetail } from './components/panels/notification-detail-panel'
+import { createClient } from '@/lib/supabase/client'
+import { DbNotification } from '@/stores/notification-store'
 import { HeaderActions } from './components/chat/header-actions'
 import CalendarTemplate from '@/features/calendartemplate'
 import KanbanTemplate from '@/features/kanbantemplate'
@@ -89,6 +92,10 @@ export default function MessageFeature() {
   const selectedVoucher = useVoucherStore((state) => state.selectedVoucher)
   const [previewAttachment, setPreviewAttachment] = useState<{ fileName: string; fileUrl: string } | null>(null)
   const [isEmailSettingsOpen, setIsEmailSettingsOpen] = useState(false)
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  const [selectedNotification, setSelectedNotification] = useState<DbNotification | null>(null)
+  const [selectedNotificationMessage, setSelectedNotificationMessage] = useState<ChatMessageDetail | null>(null)
+  const [isFetchingNotificationMessage, setIsFetchingNotificationMessage] = useState(false)
   const currentUser = useAuthStore((state) => state.auth.user)
   const router = useRouter()
   const { unreadCount } = useNotificationStore()
@@ -230,6 +237,8 @@ export default function MessageFeature() {
     setIsKanbanOpen(false)
     setIsFileOpen(false)
     setIsEmailSettingsOpen(false)
+    setIsNotificationOpen(false)
+    setSelectedNotification(null)
     const conversationId = await getOrCreateDirectConversation(
       currentUser.accountNo,
       contact.contactUserId
@@ -256,6 +265,8 @@ export default function MessageFeature() {
     setIsKanbanOpen(false)
     setIsFileOpen(false)
     setIsEmailSettingsOpen(false)
+    setIsNotificationOpen(false)
+    setSelectedNotification(null)
     setSelectedDirectoryChat({
       id: `conversation-${conversation.id}`,
       conversationId: conversation.id,
@@ -299,6 +310,8 @@ export default function MessageFeature() {
       return
     }
     setIsEmailSettingsOpen(false)
+    setIsNotificationOpen(false)
+    setSelectedNotification(null)
     setSelectedDirectoryChat({
       id: `group-${group.id}`,
       conversationId: conversation.id,
@@ -318,11 +331,76 @@ export default function MessageFeature() {
     setIsKanbanOpen(false)
     setIsFileOpen(false)
     setIsEmailSettingsOpen(false)
+    setIsNotificationOpen(false)
+    setSelectedNotification(null)
     setSelectedEmail(email)
     if (!email.read) {
       setEmails((prev) =>
         prev.map((e) => (e.id === email.id ? { ...e, read: true } : e))
       )
+    }
+  }
+
+  const handleSelectNotification = async (notif: DbNotification) => {
+    setSelectedEmail(null)
+    setSelectedDirectoryChat(null)
+    setIsAiChatOpen(false)
+    setIsCalendarOpen(false)
+    setIsKanbanOpen(false)
+    setIsFileOpen(false)
+    setIsEmailSettingsOpen(false)
+    setIsNotificationOpen(true)
+    setSelectedNotification(notif)
+    setSelectedNotificationMessage(null)
+
+    // Mark notification as read
+    const store = useNotificationStore.getState()
+    if (!notif.read) {
+      void store.markAsRead(notif.id)
+    }
+
+    if (notif.message_id) {
+      setIsFetchingNotificationMessage(true)
+      const supabase = createClient()
+      try {
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .select(`
+            *,
+            sender:profiles!sender_user_id (
+              id,
+              name,
+              email,
+              avatar
+            )
+          `)
+          .eq('id', notif.message_id)
+          .maybeSingle()
+
+        if (!error && data) {
+          setSelectedNotificationMessage(data as ChatMessageDetail)
+        }
+      } catch (err) {
+        console.error('Error fetching notification message detail:', err)
+      } finally {
+        setIsFetchingNotificationMessage(false)
+      }
+    }
+  }
+
+  const handleSelectNotificationMode = () => {
+    setSelectedEmail(null)
+    setSelectedDirectoryChat(null)
+    setIsAiChatOpen(false)
+    setIsCalendarOpen(false)
+    setIsKanbanOpen(false)
+    setIsFileOpen(false)
+    setIsEmailSettingsOpen(false)
+    setIsNotificationOpen(true)
+
+    const notifications = useNotificationStore.getState().notifications
+    if (notifications.length > 0 && !selectedNotification) {
+      void handleSelectNotification(notifications[0])
     }
   }
 
@@ -421,6 +499,8 @@ export default function MessageFeature() {
             setIsKanbanOpen(false)
             setIsFileOpen(false)
             setIsEmailSettingsOpen(false)
+            setIsNotificationOpen(false)
+            setSelectedNotification(null)
             setIsAiChatOpen(true)
           } : undefined}
           isAiChatSelected={isAiChatOpen}
@@ -431,6 +511,8 @@ export default function MessageFeature() {
             setIsKanbanOpen(false)
             setIsFileOpen(false)
             setIsEmailSettingsOpen(false)
+            setIsNotificationOpen(false)
+            setSelectedNotification(null)
             setIsCalendarOpen(true)
           } : undefined}
           isCalendarSelected={isCalendarOpen}
@@ -441,6 +523,8 @@ export default function MessageFeature() {
             setIsCalendarOpen(false)
             setIsFileOpen(false)
             setIsEmailSettingsOpen(false)
+            setIsNotificationOpen(false)
+            setSelectedNotification(null)
             setIsKanbanOpen(true)
           } : undefined}
           isTaskSelected={isKanbanOpen}
@@ -451,6 +535,8 @@ export default function MessageFeature() {
             setIsCalendarOpen(false)
             setIsKanbanOpen(false)
             setIsEmailSettingsOpen(false)
+            setIsNotificationOpen(false)
+            setSelectedNotification(null)
             setIsFileOpen(true)
 
             // Automatically select top (latest) file as default ONLY if no file is currently selected
@@ -472,9 +558,15 @@ export default function MessageFeature() {
             setIsCalendarOpen(false)
             setIsKanbanOpen(false)
             setIsFileOpen(false)
+            setIsNotificationOpen(false)
+            setSelectedNotification(null)
             setIsEmailSettingsOpen(true)
           } : undefined}
           isEmailSettingsSelected={isEmailSettingsOpen}
+          onSelectNotificationMode={!doneMode ? handleSelectNotificationMode : undefined}
+          onSelectNotification={!doneMode ? handleSelectNotification : undefined}
+          selectedNotificationId={selectedNotification?.id ?? null}
+          isNotificationSelected={isNotificationOpen}
           activeTab={activeTab}
           onTabChange={setActiveTab}
         />
@@ -484,7 +576,7 @@ export default function MessageFeature() {
       <div
         className={cn(
           'relative flex h-full min-h-0 flex-1 flex-col overflow-hidden',
-          !selectedEmail && !selectedDirectoryChat && !isAiChatOpen && !isCalendarOpen && !isKanbanOpen && !isFileOpen && !isEmailSettingsOpen && !previewAttachment && 'hidden md:flex'
+          !selectedEmail && !selectedDirectoryChat && !isAiChatOpen && !isCalendarOpen && !isKanbanOpen && !isFileOpen && !isEmailSettingsOpen && !isNotificationOpen && !previewAttachment && 'hidden md:flex'
         )}
       >
         {/* Mobile back button (only for email view — chat has its own) */}
@@ -503,6 +595,16 @@ export default function MessageFeature() {
             fileUrl={previewAttachment.fileUrl}
             onClose={() => setPreviewAttachment(null)}
             hideToggle={true}
+          />
+        ) : isNotificationOpen && selectedNotification ? (
+          <NotificationDetailPanel
+            notification={selectedNotification}
+            messageDetail={selectedNotificationMessage}
+            isLoadingMessage={isFetchingNotificationMessage}
+            onClose={() => {
+              setIsNotificationOpen(false)
+              setSelectedNotification(null)
+            }}
           />
         ) : isEmailSettingsOpen ? (
           <MessageEmailSettings
@@ -567,7 +669,7 @@ export default function MessageFeature() {
             email={selectedEmail}
             onBack={() => setSelectedEmail(null)}
             onDelete={handleDelete}
-            onPreviewAttachment={(att) => setPreviewAttachment({ fileName: att.name, fileUrl: att.url || '/project.pdf' })}
+            onPreviewAttachment={(att) => setPreviewAttachment({ fileName: att.name, fileUrl: att.url || '' })}
           />
         ) : (
           <div className='flex h-full flex-col items-center justify-center gap-3 bg-background p-8 text-muted-foreground'>
@@ -615,7 +717,7 @@ export default function MessageFeature() {
             <div className='mt-0 flex h-full flex-grow flex-col overflow-hidden bg-background'>
               <NewEmail
                 onCancel={() => setIsComposing(false)}
-                onPreviewAttachment={(att) => setPreviewAttachment({ fileName: att.name, fileUrl: att.url || '/project.pdf' })}
+                onPreviewAttachment={(att) => setPreviewAttachment({ fileName: att.name, fileUrl: att.url || '' })}
                 onSend={(emailData) => {
                   toast.success('Message sent successfully!')
                   const newEmail: Email = {

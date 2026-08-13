@@ -6,16 +6,18 @@ import { SafeDocumentPreview } from '@/components/dynamic-form/SafeDocumentPrevi
 interface DocViewerPanelProps {
   onBack: () => void
   fileName?: string
+  fileUrl?: string
 }
 
 export function DocViewerPanel({
   onBack,
-  fileName = 'demo.pdf',
+  fileName = 'document.pdf',
+  fileUrl,
 }: DocViewerPanelProps) {
   return (
     <SafeDocumentPreview
       fileName={fileName}
-      fileUrl="/project.pdf"
+      fileUrl={fileUrl}
       onClose={onBack}
     />
   )

@@ -1,119 +1,110 @@
-# Shadcn Admin Dashboard
+# AmogaApp — Enterprise Dashboard, Messaging & Voucher Platform
 
-Admin Dashboard UI crafted with Shadcn and Vite. Built with responsiveness and accessibility in mind.
+AmogaApp is a full-featured, production-ready enterprise dashboard and real-time messaging application built with **Next.js 15 App Router**, **TypeScript**, **NextAuth v4**, **Supabase PostgreSQL**, **Capacitor Mobile (Android/iOS)**, and **Tailwind CSS**.
 
-![alt text](public/images/shadcn-admin.png)
+---
 
-[![Sponsored by Clerk](https://img.shields.io/badge/Sponsored%20by-Clerk-5b6ee1?logo=clerk)](https://go.clerk.com/GttUAaK)
+## 🚀 Key Features
 
-I've been creating dashboard UIs at work and for my personal projects. I always wanted to make a reusable collection of dashboard UI for future projects; and here it is now. While I've created a few custom components, some of the code is directly adapted from ShadcnUI examples.
+### 🔐 Authentication & Profile Sync
+- **NextAuth v4 Integration**: Complete authentication system supporting **Google OAuth** and credentials login.
+- **Deterministic UUID Mapping**: Custom `stringToUuid` generator in NextAuth maps Google numeric IDs and user emails to valid PostgreSQL UUID keys (`profiles.id` and `profiles.auth_user_id`).
+- **Profile Synchronization**: Automatically creates and updates user profiles in the Supabase PostgreSQL `public.profiles` table upon sign-in.
+- **Capacitor Mobile OAuth**: Native deep link intent architecture (`com.aman.amoganextapp://auth/callback` & `intent://auth/callback`) with Chrome Custom Tab handoff and native webview cookie synchronization via `/api/auth/mobile-set-cookie`.
+- **Seamless Logout**: Instant sign-out redirection to `/sign-in` with zero UI freezing or blank screens.
 
-> This is not a starter project (template) though. I'll probably make one in the future.
+### 🧾 Invoice & Voucher Management
+- **OCR AI Form Extraction**: Extract invoice fields from uploaded PDF/image documents automatically.
+- **Vector PDF Generator**: Popup-free 1-click A4 PDF voucher generation using `jsPDF`.
+- **Right-Window Document Viewer**: Side-by-side document preview powered by `@cyntler/react-doc-viewer` with Zoom, Rotate, Fullscreen, and Original vs. Voucher View toggles.
+- **User-Scoped Isolation**: Vouchers and uploaded files are isolated in user-scoped paths (`vouchers/${userId}/originals/` & `vouchers/${userId}/edited/`).
 
-## Features
+### 💬 Real-Time Messaging & Chat
+- **Supabase Realtime**: Live message delivery, typing indicators, and voice note recording broadcasts.
+- **Media Attachments**: Support for text, images, videos, audio voice notes, and document files.
+- **Document Scanner**: Built-in OpenCV WebAssembly document scanner with 4-corner edge detection, perspective transformation, and image filters.
+- **PDF & Document Converter**: Built-in multi-format document converter (PDF, DOCX, XLSX, TXT, PNG, JPG).
+- **Asynchronous PDF Text Processing**: Non-blocking background PDF text extraction and layout parsing (`pdftext` & `pdf2json`).
 
-- Light/dark mode
-- Responsive
-- Accessible
-- With built-in Sidebar component
-- Global search command
-- 10+ pages
-- Extra custom components
-- RTL support
+---
 
-<details>
-<summary>Customized Components (click to expand)</summary>
+## 🛠️ Tech Stack
 
-This project uses Shadcn UI components, but some have been slightly modified for better RTL (Right-to-Left) support and other improvements. These customized components differ from the original Shadcn UI versions.
+- **Framework**: Next.js 15 (App Router) + React 19
+- **Authentication**: NextAuth v4 + Google Provider
+- **Database & Storage**: Supabase PostgreSQL + Supabase Storage
+- **Mobile Container**: Capacitor 7 (Android / iOS) + `@capacitor/browser` + `@capacitor/app`
+- **Styling**: Tailwind CSS + Shadcn UI + Lucide Icons
+- **State Management**: Zustand (Persisted Stores)
+- **Document Viewer**: `@cyntler/react-doc-viewer`
+- **PDF Generation**: `jsPDF` + `pdf-lib`
 
-If you want to update components using the Shadcn CLI (e.g., `npx shadcn@latest add <component>`), it's generally safe for non-customized components. For the listed customized ones, you may need to manually merge changes to preserve the project's modifications and avoid overwriting RTL support or other updates.
+---
 
-> If you don't require RTL support, you can safely update the 'RTL Updated Components' via the Shadcn CLI, as these changes are primarily for RTL compatibility. The 'Modified Components' may have other customizations to consider.
+## ⚙️ Environment Variables Setup
 
-### Modified Components
+Create a `.env.local` file in the root directory:
 
-- scroll-area
-- sonner
-- separator
+```env
+# NextAuth Configuration
+NEXTAUTH_URL=https://amoganextapp.vercel.app
+NEXTAUTH_SECRET=your_nextauth_secret_key
 
-### RTL Updated Components
+# Google OAuth Credentials
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
 
-- alert-dialog
-- calendar
-- command
-- dialog
-- dropdown-menu
-- select
-- table
-- sheet
-- sidebar
-- switch
+# Supabase Credentials
+NEXT_PUBLIC_SUPABASE_URL=https://your-supabase-project.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
 
-**Notes:**
-
-- **Modified Components**: These have general updates, potentially including RTL adjustments.
-- **RTL Updated Components**: These have specific changes for RTL language support (e.g., layout, positioning).
-- For implementation details, check the source files in `src/components/ui/`.
-- All other Shadcn UI components in the project are standard and can be safely updated via the CLI.
-
-</details>
-
-## Tech Stack
-
-**UI:** [ShadcnUI](https://ui.shadcn.com) (TailwindCSS + RadixUI)
-
-**Build Tool:** [Vite](https://vitejs.dev/)
-
-**Routing:** [TanStack Router](https://tanstack.com/router/latest)
-
-**Type Checking:** [TypeScript](https://www.typescriptlang.org/)
-
-**Linting/Formatting:** [ESLint](https://eslint.org/) & [Prettier](https://prettier.io/)
-
-**Icons:** [Lucide Icons](https://lucide.dev/icons/), [Tabler Icons](https://tabler.io/icons) (Brand icons only)
-
-**Auth (partial):** [Clerk](https://go.clerk.com/GttUAaK)
-
-## Run Locally
-
-Clone the project
-
-```bash
-  git clone https://github.com/satnaing/shadcn-admin.git
+# OpenRouter AI SDK (Optional for AI Chat)
+OPENROUTER_API_KEY=your_openrouter_api_key
 ```
 
-Go to the project directory
+---
 
+## 🏃 Local Development
+
+### 1. Install Dependencies
 ```bash
-  cd shadcn-admin
+npm install
 ```
 
-Install dependencies
-
+### 2. Run Next.js Development Server
 ```bash
-  pnpm install
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 📱 Mobile App (Capacitor Android)
+
+### 1. Sync Capacitor
+```bash
+npx cap sync android
 ```
 
-Start the server
-
+### 2. Open Android Studio
 ```bash
-  pnpm run dev
+npx cap open android
 ```
 
-## Sponsoring this project ❤️
+### 3. Build & Run
+Build and deploy directly to an Android device or emulator from Android Studio.
 
-If you find this project helpful or use this in your own work, consider [sponsoring me](https://github.com/sponsors/satnaing) to support development and maintenance. You can [buy me a coffee](https://buymeacoffee.com/satnaing) as well. Don’t worry, every penny helps. Thank you! 🙏
+---
 
-For questions or sponsorship inquiries, feel free to reach out at [satnaingdev@gmail.com](mailto:satnaingdev@gmail.com).
+## 🚢 Production Deployment
 
-### Current Sponsor
+Deploy directly to Vercel:
 
-- [Clerk](https://go.clerk.com/GttUAaK) - authentication and user management for the modern web
+```bash
+vercel --prod
+```
 
-## Author
+---
 
-Crafted with 🤍 by [@satnaing](https://github.com/satnaing)
-
-## License
-
-Licensed under the [MIT License](https://choosealicense.com/licenses/mit/)
+## 📄 License
+MIT License. Built for production deployment.

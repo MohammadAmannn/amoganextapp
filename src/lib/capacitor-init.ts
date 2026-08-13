@@ -1,11 +1,9 @@
-import { createClient } from '@/lib/supabase/client'
 import { isCapacitor } from '@/lib/platform'
 
 /**
  * Initializes Capacitor Native Handlers:
  * 1. Deep Linking (OAuth Redirects for Google Login)
  * 2. Android Back Button navigation
- * 3. App Resume Session Restoration
  *
  * SAFELY RETURNS IMMEDIATELY IF RUNNING ON BROWSER (Zero Web Regression).
  */
@@ -19,7 +17,7 @@ export function initializeCapacitorHandlers(router: any, onAuthSuccess?: () => v
   ]).then(([{ App }, { Browser }]) => {
     // 1. DEEP LINK LISTENER (Handles com.aman.amoganextapp://auth/callback)
     App.addListener('appUrlOpen', async (data: { url: string }) => {
-      console.log('[Capacitor Init] App opened via Deep Link URL:', data.url)
+      console.log('📱 [Capacitor Init] App opened via Deep Link URL:', data.url)
 
       try {
         const urlObj = new URL(data.url)
@@ -32,43 +30,23 @@ export function initializeCapacitorHandlers(router: any, onAuthSuccess?: () => v
         }
 
         // Handle Auth Callback Deep Link
-        if (data.url.includes('auth/callback') || urlObj.pathname.includes('callback') || urlObj.hash || urlObj.search) {
-          const supabase = createClient()
+        if (data.url.includes('auth/callback') || urlObj.pathname.includes('callback')) {
+          const token = urlObj.searchParams.get('token')
+          const next = urlObj.searchParams.get('next') || '/'
 
-          // A) Hash fragment based callback (#access_token=...&refresh_token=...)
-          if (data.url.includes('#')) {
-            const hashParams = new URLSearchParams(data.url.split('#')[1])
-            const accessToken = hashParams.get('access_token')
-            const refreshToken = hashParams.get('refresh_token')
+          if (onAuthSuccess) onAuthSuccess()
 
-            if (accessToken && refreshToken) {
-              const { error } = await supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken,
-              })
-              if (!error) {
-                if (onAuthSuccess) onAuthSuccess()
-                const nextUrl = hashParams.get('next') || '/'
-                router.push(nextUrl)
-                return
-              }
-            }
+          if (token) {
+            console.log('📱 [Capacitor Init] Deep link session token received. Syncing cookie to native webview...')
+            window.location.href = `/api/auth/mobile-set-cookie?token=${encodeURIComponent(token)}&next=${encodeURIComponent(next)}`
+          } else {
+            console.log('📱 [Capacitor Init] Deep link auth success without token. Navigating native webview to:', next)
+            window.location.href = next
           }
-
-          // B) Search params based callback (?code=...)
-          const code = urlObj.searchParams.get('code')
-          if (code) {
-            const { error } = await supabase.auth.exchangeCodeForSession(code)
-            if (!error) {
-              if (onAuthSuccess) onAuthSuccess()
-              const nextUrl = urlObj.searchParams.get('next') || '/'
-              router.push(nextUrl)
-              return
-            }
-          }
+          return
         }
       } catch (err) {
-        console.error('[Capacitor Init] Error handling deep link:', err)
+        console.error('❌ [Capacitor Init] Error handling deep link:', err)
       }
     })
 
@@ -83,19 +61,7 @@ export function initializeCapacitorHandlers(router: any, onAuthSuccess?: () => v
         window.history.back()
       }
     })
-
-    // 3. APP RESUME / SESSION RESTORATION
-    App.addListener('appStateChange', async (state: { isActive: boolean }) => {
-      if (state.isActive) {
-        const supabase = createClient()
-        const { data } = await supabase.auth.getSession()
-        if (data?.session) {
-          // Refresh session automatically if expired or expiring soon
-          await supabase.auth.refreshSession()
-        }
-      }
-    })
   }).catch(err => {
-    console.error('[Capacitor Init] Failed to load Capacitor plugins:', err)
+    console.error('❌ [Capacitor Init] Failed to load Capacitor plugins:', err)
   })
 }

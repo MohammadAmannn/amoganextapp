@@ -78,6 +78,72 @@ function QueryProviderWrapper({ children }: { children: React.ReactNode }) {
   )
 }
 
+import { SessionProvider, useSession } from 'next-auth/react'
+import { stringToUuid } from '@/lib/auth'
+
+function NextAuthSync() {
+  const { data: session, status } = useSession()
+  const { auth } = useAuthStore()
+
+  useEffect(() => {
+    if (status !== 'authenticated' || !session?.user) return
+
+    const user = session.user as any
+    const userEmail = (user.email || '').toLowerCase()
+    const fallbackId = stringToUuid(user.id || user.email)
+
+    // Skip if already synced with the same email
+    if (auth.user?.email === userEmail && auth.accessToken) return
+
+    // Resolve the actual profile UUID from Supabase by email
+    // This ensures accountNo matches owner_user_id / user_id stored in all DB rows
+    import('@/lib/supabase/client')
+      .then(({ createClient }) => {
+        const supabase = createClient()
+        return supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', userEmail)
+          .maybeSingle()
+      })
+      .then(({ data: profileRow }: any) => {
+        const resolvedId = profileRow?.id || fallbackId
+        const userObj = {
+          id: resolvedId,
+          accountNo: resolvedId,
+          email: userEmail,
+          name: user.name || userEmail.split('@')[0],
+          picture: user.picture || user.image || undefined,
+          role: ['user'] as string[],
+          exp: Date.now() + 30 * 24 * 60 * 60 * 1000,
+        }
+        auth.setUser(userObj)
+        auth.setAccessToken(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'next-auth-session')
+        ensureProfileExists(userObj).catch((err: any) => {
+          console.error('Failed to sync profile on NextAuth session:', err)
+        })
+      })
+      .catch((err: any) => {
+        console.error('[NextAuthSync] Profile resolution error, using fallback UUID:', err)
+        const userObj = {
+          id: fallbackId,
+          accountNo: fallbackId,
+          email: userEmail,
+          name: user.name || userEmail.split('@')[0],
+          picture: user.picture || user.image || undefined,
+          role: ['user'] as string[],
+          exp: Date.now() + 30 * 24 * 60 * 60 * 1000,
+        }
+        auth.setUser(userObj)
+        auth.setAccessToken(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'next-auth-session')
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, status])
+
+  return null
+}
+
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const { auth } = useAuthStore()
@@ -118,7 +184,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
         if (authAction === 'signin') {
           console.log('[DEBUG client] authAction is signin. Querying profiles for user id:', user.id)
-          // Query profiles table to check if user exists in our records
           const { data: profile } = await supabase
             .from('profiles')
             .select('id')
@@ -153,44 +218,29 @@ export function Providers({ children }: { children: React.ReactNode }) {
           auth.setUser(userObj)
           auth.setAccessToken(session.access_token)
           
-          // Sync profile to database
           ensureProfileExists(userObj).catch(err => {
             console.error('Failed to sync profile on auth state change:', err)
           })
         }
 
         if (authAction === 'signin') {
-          console.log('[DEBUG client] authAction is signin. oauthRedirectHandled.current:', oauthRedirectHandled.current)
-          // Prevent double-fire: onAuthStateChange can fire for both
-          // INITIAL_SESSION and SIGNED_IN events on the same page load
           if (oauthRedirectHandled.current) {
-            console.log('[DEBUG client] oauthRedirectHandled.current is true, ignoring extra fire.')
             return
           }
           oauthRedirectHandled.current = true
 
-          // Primary: URL redirect param (always set by middleware now).
-          // Fallback: sessionStorage saved before OAuth started.
           let destination = targetRedirect
           if (!destination || destination === '/') {
             const fallback = typeof window !== 'undefined' ? sessionStorage.getItem('post_login_redirect') : null
-            console.log('[DEBUG client] targetRedirect was empty or root. sessionStorage fallback:', fallback)
             destination = fallback || '/'
           }
           if (typeof window !== 'undefined') {
             sessionStorage.removeItem('post_login_redirect')
           }
-          console.log('[DEBUG client] Performing handleAuthRedirect to destination:', destination)
           handleAuthRedirect(router, destination)
           return
         } else {
-          // Reset flag for future logins
-          console.log('[DEBUG client] authAction is not signin, resetting oauthRedirectHandled flag.')
           oauthRedirectHandled.current = false
-        }
-      } else {
-        if (auth.user) {
-          auth.reset()
         }
       }
     })
@@ -215,12 +265,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         /Loading chunk [\d]+ failed/.test(errorMessage)
       ) {
         console.warn('ChunkLoadError detected, reloading page...', errorMessage)
-
-        // Safeguard to prevent infinite reload loop:
         const lastReload = sessionStorage.getItem('chunk_load_last_reload')
         const now = Date.now()
 
-        // If we reloaded less than 10 seconds ago, don't reload again to avoid loop
         if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
           sessionStorage.setItem('chunk_load_last_reload', now.toString())
           window.location.reload()
@@ -237,33 +284,36 @@ export function Providers({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Register Service Worker → custom offline page instead of browser error screen
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('/sw.js', { scope: '/' })
+        .then((registration) => {
+          registration.update()
+        })
         .catch((err) => console.error('[SW] registration failed:', err))
     }
   }, [])
 
   return (
-    <>
+    <SessionProvider>
+      <NextAuthSync />
       {isOffline && <OfflineScreen />}
-    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ''}>
-      <QueryProviderWrapper>
-        <ThemeProvider>
-          <ColorThemeProvider>
-            <FontProvider>
-              <DirectionProvider>
-                <NavigationProgress />
-                {children}
-                <Toaster duration={5000} />
-              </DirectionProvider>
-            </FontProvider>
-          </ColorThemeProvider>
-        </ThemeProvider>
-      </QueryProviderWrapper>
-    </GoogleOAuthProvider>
-    </>
+      <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ''}>
+        <QueryProviderWrapper>
+          <ThemeProvider>
+            <ColorThemeProvider>
+              <FontProvider>
+                <DirectionProvider>
+                  <NavigationProgress />
+                  {children}
+                  <Toaster duration={5000} />
+                </DirectionProvider>
+              </FontProvider>
+            </ColorThemeProvider>
+          </ThemeProvider>
+        </QueryProviderWrapper>
+      </GoogleOAuthProvider>
+    </SessionProvider>
   )
 }

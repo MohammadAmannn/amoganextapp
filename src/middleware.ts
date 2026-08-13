@@ -58,8 +58,8 @@ export async function middleware(request: NextRequest) {
 
   console.log(`[DEBUG server] Middleware checking path: ${pathname}. isPublicPath: ${isPublicPath}`)
 
-  const hasUserCookie = request.cookies.get('auth_user_data')?.value || request.cookies.get('thisisjustarandomstring')?.value
-  const isAuthUser = user || hasUserCookie
+  const hasNextAuthToken = request.cookies.get('next-auth.session-token')?.value || request.cookies.get('__Secure-next-auth.session-token')?.value
+  const isAuthUser = Boolean(user || hasNextAuthToken)
 
   // If user is authenticated and accessing /sign-in or /sign-up, redirect to dashboard
   if (isAuthUser && (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up'))) {
@@ -71,8 +71,8 @@ export async function middleware(request: NextRequest) {
       } catch {
         target = rawRedirect
       }
-      if (target.startsWith('/sign-in') || target.startsWith('/sign-up') || target === '/' || !target) {
-        target = '/dashboard'
+      if (target.startsWith('/sign-in') || target.startsWith('/sign-up') || !target) {
+        target = '/'
       }
     }
     const url = request.nextUrl.clone()
@@ -84,7 +84,7 @@ export async function middleware(request: NextRequest) {
     return redirectResponse
   }
 
-  if (!user && !isPublicPath) {
+  if (!isAuthUser && !isPublicPath) {
     const url = request.nextUrl.clone()
     url.pathname = '/sign-in'
     

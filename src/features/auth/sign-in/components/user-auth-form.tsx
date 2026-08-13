@@ -1,3 +1,4 @@
+import { signIn } from 'next-auth/react'
 import { useState, useEffect } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
@@ -61,59 +62,18 @@ export function UserAuthForm({
     console.log('[DEBUG client] handleGoogleLogin triggered. Prop redirectTo:', redirectTo)
     try {
       const redirectValue = redirectTo || '/'
-      console.log('[DEBUG client] handleGoogleLogin determined redirectValue:', redirectValue)
-
-      if (typeof window !== 'undefined' && redirectValue !== '/') {
-        sessionStorage.setItem('post_login_redirect', redirectValue)
-        console.log('[DEBUG client] sessionStorage item post_login_redirect set to:', redirectValue)
-      }
-
-      const supabase = createClient()
-
+      const targetUrl = redirectValue && redirectValue !== '/' ? redirectValue : '/'
+      
       if (isCapacitor()) {
-        // Native Capacitor Android / iOS OAuth Flow (Implicit flow to prevent PKCE verifier mismatch)
-        const { createClient: createSupabaseJSClient } = await import('@supabase/supabase-js')
-        const mobileSupabase = createSupabaseJSClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-          {
-            auth: {
-              flowType: 'implicit',
-              detectSessionInUrl: true,
-              persistSession: true,
-            },
-          }
-        )
-
-        const mobileRedirectUrl = `com.aman.amoganextapp://auth/callback`
-        const { data, error } = await mobileSupabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: mobileRedirectUrl,
-            skipBrowserRedirect: true,
-          },
-        })
-        if (error) throw error
-
-        if (data?.url) {
-          const { Browser } = await (import('@capacitor/browser' as any) as Promise<any>)
-          await Browser.open({ url: data.url, windowName: '_self' })
-        }
+        const { getMobileGoogleAuthUrl } = await import('@/lib/auth-mobile')
+        const { Browser } = await import('@capacitor/browser')
+        const googleAuthUrl = getMobileGoogleAuthUrl(targetUrl)
+        console.log('[DEBUG client] Capacitor opening Google OAuth URL in Chrome Custom Tab:', googleAuthUrl)
+        await Browser.open({ url: googleAuthUrl, windowName: '_self' })
       } else {
-        // Standard Web Browser OAuth Flow (100% Preserved)
-        const callbackUrl = new URL('/auth/callback', window.location.origin)
-        if (redirectValue !== '/') {
-          callbackUrl.searchParams.set('next', redirectValue)
-        }
-        console.log('[DEBUG client] signInWithOAuth callbackUrl (redirectTo option):', callbackUrl.toString())
-        
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: callbackUrl.toString(),
-          },
+        await signIn('google', {
+          callbackUrl: targetUrl,
         })
-        if (error) throw error
       }
     } catch (err: any) {
       console.error('[DEBUG client] handleGoogleLogin failed with error:', err)

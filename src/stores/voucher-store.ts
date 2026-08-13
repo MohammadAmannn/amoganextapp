@@ -39,14 +39,41 @@ export const useVoucherStore = create<VoucherStoreState>()(
       vouchers: [],
       selectedVoucher: null,
       dbLoaded: false,
-
       setSelectedVoucher: (voucher) => set({ selectedVoucher: voucher }),
-      setVouchers: (vouchers) => set({ vouchers }),
       setDbLoaded: (v) => set({ dbLoaded: v }),
 
+      setVouchers: (vouchers) =>
+        set((state) => {
+          const map = new Map<string, SavedVoucher>()
+          const getFileKey = (v: SavedVoucher) => {
+            const name = (v.fileName || '').toLowerCase().trim()
+            const url = (v.originalFileUrl || v.editedFileUrl || v.pdfUrl || '').trim()
+            if (name && url) return `${name}_${url}`
+            if (name) return name
+            return v.id
+          }
+
+          for (const v of vouchers) {
+            const key = getFileKey(v)
+            if (key) map.set(key, v)
+          }
+          for (const v of state.vouchers) {
+            const key = getFileKey(v)
+            if (key && !map.has(key)) map.set(key, v)
+          }
+          const merged = Array.from(map.values()).sort((a, b) => {
+            const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+            const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+            return timeB - timeA
+          })
+          return { vouchers: merged }
+        }),
+
       addVoucher: (data) => {
+        const fileUrlToUse = data.pdfUrl || data.editedFileUrl || data.originalFileUrl
         const newVoucher: SavedVoucher = {
           ...data,
+          pdfUrl: fileUrlToUse,
           id: `voucher-${Date.now()}`,
           createdAt: new Date().toISOString(),
         }

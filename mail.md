@@ -63,7 +63,10 @@ Below is the complete list of files created or modified for this feature:
   * Next.js API GET route. Connects via IMAP, opens `INBOX`, fetches the 20 most recent messages, parses MIME contents, and returns a JSON payload of emails.
 
 * [`app/api/mail/send/route.ts`](file:///e:/morrai/shadcn-admin-main/app/api/mail/send/route.ts)
-  * Next.js API POST route. Accepts recipient details, subject, and HTML body, and dispatches outgoing messages using Nodemailer.
+  * Next.js API POST route. Accepts recipient details, subject, and HTML body, dispatches outgoing messages via Nodemailer SMTP, and appends a copy to Hostinger IMAP `INBOX.Sent` folder.
+
+* [`app/api/mail/sent/route.ts`](file:///e:/morrai/shadcn-admin-main/app/api/mail/sent/route.ts)
+  * Next.js API GET route. Connects via IMAP to Hostinger's `INBOX.Sent` mailbox folder, fetches sent emails, and returns a JSON payload of sent emails.
 
 * [`app/api/mail/test/route.ts`](file:///e:/morrai/shadcn-admin-main/app/api/mail/test/route.ts)
   * Development utility route (`GET /api/mail/test`) to verify SMTP credential validity via `transporter.verify()`.

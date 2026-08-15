@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ArrowLeft, Mail, MessageSquare, Plus, MoreVertical, Bell } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { LinksTab } from '@/features/email-settings/components/accounts-tab'
+import { ComingSoon } from '@/components/coming-soon'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { useNotificationStore } from '@/stores/notification-store'
@@ -42,8 +43,8 @@ import { RealtimeChatView } from './components/chat/realtime-chat-view'
 import { EmailList } from './components/emails/email-list'
 import { EmailView } from './components/emails/email-view'
 import { NewEmail } from './components/emails/new-email'
-import { ContactManagerTab } from './components/tabs/contact-manager-tab'
-import { GroupManagerTab } from './components/tabs/group-manager-tab'
+import { ContactManagerTab, MsgContactTab } from './components/tabs/contact-manager-tab'
+import { GroupManagerTab, MsgGroupTab } from './components/tabs/group-manager-tab'
 import { AiChatPanel } from './components/panels/ai-chat-panel'
 import { MessageEmailSettings } from './components/panels/message-email-settings'
 import { NotificationDetailPanel, ChatMessageDetail } from './components/panels/notification-detail-panel'
@@ -80,6 +81,18 @@ export default function MessageFeature() {
   const [isComposing, setIsComposing] = useState(false)
   const [isEmailsLoading, setIsEmailsLoading] = useState(false)
   const [emailsError, setEmailsError] = useState<string | null>(null)
+  const [sentEmails, setSentEmails] = useState<Email[]>([])
+  const [isSentLoading, setIsSentLoading] = useState(false)
+  const [sentError, setSentError] = useState<string | null>(null)
+  const [inboxPage, setInboxPage] = useState(1)
+  const [hasMoreInbox, setHasMoreInbox] = useState(true)
+  const [isLoadingMoreInbox, setIsLoadingMoreInbox] = useState(false)
+  const [sentPage, setSentPage] = useState(1)
+  const [hasMoreSent, setHasMoreSent] = useState(true)
+  const [isLoadingMoreSent, setIsLoadingMoreSent] = useState(false)
+  const [totalInbox, setTotalInbox] = useState(0)
+  const [totalSent, setTotalSent] = useState(0)
+  const [sectionMode, setSectionMode] = useState<'mail' | 'chat'>('mail')
   const [contacts, setContacts] = useState<Contact[]>([])
   const [groups, setGroups] = useState<Group[]>([])
   const [selectedDirectoryChat, setSelectedDirectoryChat] =
@@ -190,11 +203,16 @@ export default function MessageFeature() {
     }
   }
 
-  const fetchInbox = async () => {
-    setIsEmailsLoading(true)
-    setEmailsError(null)
+  const fetchInbox = async (page = 1, append = false) => {
+    if (append) {
+      setIsLoadingMoreInbox(true)
+    } else {
+      setIsEmailsLoading(true)
+      setEmailsError(null)
+    }
+
     try {
-      const res = await fetch('/api/mail/inbox')
+      const res = await fetch(`/api/mail/inbox?page=${page}&limit=20`)
       const data = await res.json()
       if (data.success) {
         const mappedEmails: Email[] = data.emails.map((email: any) => ({
@@ -213,25 +231,128 @@ export default function MessageFeature() {
             .slice(0, 2)
             .toUpperCase(),
           from: undefined,
+          attachments: email.attachments || [],
         }))
-        setEmails((prev) => {
-          const chats = prev.filter((e) => e.isChat)
-          return [...mappedEmails, ...chats]
-        })
+
+        setHasMoreInbox(!!data.hasMore)
+        setInboxPage(page)
+        if (data.total !== undefined) setTotalInbox(data.total)
+
+        if (append) {
+          setEmails((prev) => {
+            const existingIds = new Set(prev.map((e) => e.id))
+            const newMails = mappedEmails.filter((e) => !existingIds.has(e.id))
+            return [...prev, ...newMails]
+          })
+        } else {
+          setEmails((prev) => {
+            const chats = prev.filter((e) => e.isChat)
+            return [...mappedEmails, ...chats]
+          })
+        }
       } else {
-        setEmailsError(data.message || 'Unable to load emails')
+        if (!append) setEmailsError(data.message || 'Unable to load emails')
       }
     } catch (err: any) {
       console.error('Failed to fetch inbox:', err)
-      setEmailsError('Unable to load emails')
+      if (!append) setEmailsError('Unable to load emails')
     } finally {
       setIsEmailsLoading(false)
+      setIsLoadingMoreInbox(false)
     }
+  }
+
+  const fetchSentMails = async (page = 1, append = false) => {
+    if (append) {
+      setIsLoadingMoreSent(true)
+    } else {
+      setIsSentLoading(true)
+      setSentError(null)
+    }
+
+    try {
+      const res = await fetch(`/api/mail/sent?page=${page}&limit=20`)
+      const data = await res.json()
+      if (data.success && Array.isArray(data.emails)) {
+        const mappedSent: Email[] = data.emails.map((email: any) => ({
+          id: `sent-${email.id}`,
+          name: email.to || email.fromName || 'Recipient',
+          email: email.to || email.from,
+          replyTo: email.from,
+          subject: email.subject,
+          preview: email.text ? email.text.substring(0, 100) : '',
+          body: email.html || email.text || '',
+          date: new Date(email.date),
+          read: true,
+          labels: ['sent'],
+          avatarInitials: (email.to || email.from || 'RE')
+            .split('@')[0]
+            .slice(0, 2)
+            .toUpperCase(),
+          done: true,
+          from: undefined,
+          attachments: email.attachments || [],
+        }))
+
+        setHasMoreSent(!!data.hasMore)
+        setSentPage(page)
+        if (data.total !== undefined) setTotalSent(data.total)
+
+        if (append) {
+          setSentEmails((prev) => {
+            const existingIds = new Set(prev.map((e) => e.id))
+            const newMails = mappedSent.filter((e) => !existingIds.has(e.id))
+            return [...prev, ...newMails]
+          })
+        } else {
+          setSentEmails(mappedSent)
+        }
+      } else {
+        if (!append) setSentError(data.message || 'Unable to load sent emails')
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch sent emails:', err)
+      if (!append) setSentError('Unable to load sent emails')
+    } finally {
+      setIsSentLoading(false)
+      setIsLoadingMoreSent(false)
+    }
+  }
+
+  const handleLoadMoreInbox = () => {
+    if (!hasMoreInbox || isLoadingMoreInbox || isEmailsLoading) return
+    void fetchInbox(inboxPage + 1, true)
+  }
+
+  const handleLoadMoreSent = () => {
+    if (!hasMoreSent || isLoadingMoreSent || isSentLoading) return
+    void fetchSentMails(sentPage + 1, true)
+  }
+
+  const handlePrevPageInbox = () => {
+    if (inboxPage <= 1 || isEmailsLoading) return
+    void fetchInbox(inboxPage - 1, false)
+  }
+
+  const handleNextPageInbox = () => {
+    if (!hasMoreInbox || isEmailsLoading) return
+    void fetchInbox(inboxPage + 1, false)
+  }
+
+  const handlePrevPageSent = () => {
+    if (sentPage <= 1 || isSentLoading) return
+    void fetchSentMails(sentPage - 1, false)
+  }
+
+  const handleNextPageSent = () => {
+    if (!hasMoreSent || isSentLoading) return
+    void fetchSentMails(sentPage + 1, false)
   }
 
   useEffect(() => {
     void fetchContactsAndGroups()
     void fetchInbox()
+    void fetchSentMails()
   }, [currentUser?.accountNo, currentUser?.email])
 
   // Set default state on initial page load
@@ -309,8 +430,7 @@ export default function MessageFeature() {
       name: contact.nickname || contact.fullName,
       avatar: contact.avatarUrl,
     })
-    // Switch to inbox tab so the split-panel chat view renders
-    setActiveTab('inbox')
+    setActiveTab('chats')
   }
 
   const handleSelectConversation = (conversation: Conversation) => {
@@ -378,7 +498,7 @@ export default function MessageFeature() {
       membersCount: group.users.length,
       onlineCount: 0,
     })
-    setActiveTab('inbox')
+    setActiveTab('chats')
   }
 
   const handleSelectEmail = (email: Email) => {
@@ -518,6 +638,50 @@ export default function MessageFeature() {
     )
   }
 
+  const handleSelectMailTab = () => {
+    setSelectedEmail(null)
+    setSelectedDirectoryChat(null)
+    setIsAiChatOpen(false)
+    setIsCalendarOpen(false)
+    setIsKanbanOpen(false)
+    setIsFileOpen(false)
+    setIsEmailSettingsOpen(false)
+    setIsNotificationOpen(false)
+    setSelectedNotification(null)
+    setIsComposing(false)
+    setSectionMode('mail')
+    setActiveTab('inbox')
+  }
+
+  const handleSelectChatTab = () => {
+    setSelectedEmail(null)
+    setSelectedDirectoryChat(null)
+    setIsAiChatOpen(false)
+    setIsCalendarOpen(false)
+    setIsKanbanOpen(false)
+    setIsFileOpen(false)
+    setIsEmailSettingsOpen(false)
+    setIsNotificationOpen(false)
+    setSelectedNotification(null)
+    setIsComposing(false)
+    setSectionMode('chat')
+    setActiveTab('chats')
+  }
+
+  const handleSelectAiAssistantTab = () => {
+    setSelectedEmail(null)
+    setSelectedDirectoryChat(null)
+    setIsAiChatOpen(false)
+    setIsCalendarOpen(false)
+    setIsKanbanOpen(false)
+    setIsFileOpen(false)
+    setIsEmailSettingsOpen(false)
+    setIsNotificationOpen(false)
+    setSelectedNotification(null)
+    setIsComposing(false)
+    setActiveTab('ai-chat')
+  }
+
   /* ── shared inbox panel ──────────────────────────────────── */
   const renderInboxPanel = (doneMode = false) => (
     <div className='flex h-full min-h-0 w-full flex-1 flex-row overflow-hidden'>
@@ -529,13 +693,25 @@ export default function MessageFeature() {
         )}
       >
         <EmailList
-          emails={emails}
+          emails={doneMode ? (sentEmails.length > 0 ? sentEmails : emails) : emails}
           selectedEmailId={selectedEmail?.id ?? null}
           onSelectEmail={handleSelectEmail}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           mode={doneMode ? 'done' : 'inbox'}
           setMode={setMode}
+          activeTab={activeTab}
+          onTabChange={(tab) => {
+            setActiveTab(tab)
+            if (tab === 'contact' || tab === 'groups' || tab === 'folder' ||
+                tab === 'chat-contact' || tab === 'chat-groups' || tab === 'chat-folder') {
+              setSelectedDirectoryChat(null)
+              setSelectedEmail(null)
+            }
+          }}
+          onSelectMailTab={handleSelectMailTab}
+          onSelectChatTab={handleSelectChatTab}
+          onSelectAiAssistantTab={handleSelectAiAssistantTab}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() =>
             setIsSidebarCollapsed((collapsed) => {
@@ -549,13 +725,24 @@ export default function MessageFeature() {
             if (composing) handleOpenNewMail()
             else setIsComposing(false)
           }}
-          isEmailsLoading={isEmailsLoading}
-          emailsError={emailsError}
+          isEmailsLoading={doneMode ? isSentLoading : isEmailsLoading}
+          emailsError={doneMode ? sentError : emailsError}
+          hasMore={doneMode ? hasMoreSent : hasMoreInbox}
+          isLoadingMore={doneMode ? isLoadingMoreSent : isLoadingMoreInbox}
+          onLoadMore={doneMode ? handleLoadMoreSent : handleLoadMoreInbox}
+          page={doneMode ? sentPage : inboxPage}
+          limit={20}
+          total={doneMode ? totalSent : totalInbox}
+          onPrevPage={doneMode ? handlePrevPageSent : handlePrevPageInbox}
+          onNextPage={doneMode ? handleNextPageSent : handleNextPageInbox}
           contacts={contacts}
           selectedContactId={
             selectedDirectoryChat ? selectedDirectoryChat.id : null
           }
           onSelectContact={handleSelectContact}
+          groups={groups}
+          onSelectGroup={handleSelectGroup}
+          onRefreshContactsAndGroups={fetchContactsAndGroups}
           conversations={conversations}
           onSelectConversation={handleSelectConversation}
           onSelectAiChat={!doneMode ? () => {
@@ -571,19 +758,6 @@ export default function MessageFeature() {
             setIsAiChatOpen(true)
           } : undefined}
           isAiChatSelected={isAiChatOpen}
-          onSelectCalendar={!doneMode ? () => {
-            setSelectedEmail(null)
-            setSelectedDirectoryChat(null)
-            setIsAiChatOpen(false)
-            setIsKanbanOpen(false)
-            setIsFileOpen(false)
-            setIsEmailSettingsOpen(false)
-            setIsNotificationOpen(false)
-            setSelectedNotification(null)
-            setIsComposing(false)
-            setIsCalendarOpen(true)
-          } : undefined}
-          isCalendarSelected={isCalendarOpen}
           onSelectTask={!doneMode ? () => {
             setSelectedEmail(null)
             setSelectedDirectoryChat(null)
@@ -638,8 +812,8 @@ export default function MessageFeature() {
           onSelectNotification={!doneMode ? handleSelectNotification : undefined}
           selectedNotificationId={selectedNotification?.id ?? null}
           isNotificationSelected={isNotificationOpen}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
+          sectionMode={sectionMode}
+          onSectionModeChange={setSectionMode}
         />
       </div>
 
@@ -647,7 +821,10 @@ export default function MessageFeature() {
       <div
         className={cn(
           'relative flex h-full min-h-0 flex-1 flex-col overflow-hidden',
-          !selectedEmail && !selectedDirectoryChat && !isAiChatOpen && !isCalendarOpen && !isKanbanOpen && !isFileOpen && !isEmailSettingsOpen && !isNotificationOpen && !previewAttachment && !isComposing && 'hidden md:flex'
+          !selectedEmail && !selectedDirectoryChat && !isAiChatOpen && !isCalendarOpen && !isKanbanOpen && !isFileOpen && !isEmailSettingsOpen && !isNotificationOpen && !previewAttachment && !isComposing &&
+          activeTab !== 'folder' && activeTab !== 'contact' && activeTab !== 'groups' &&
+          activeTab !== 'chat-contact' && activeTab !== 'chat-groups' && activeTab !== 'chat-folder' &&
+          'hidden md:flex'
         )}
       >
         {/* Mobile back button (only for email view — chat has its own) */}
@@ -672,12 +849,13 @@ export default function MessageFeature() {
             onCancel={() => setIsComposing(false)}
             onPreviewAttachment={(att) => setPreviewAttachment({ fileName: att.name, fileUrl: att.url || '' })}
             onSend={(emailData) => {
+              const recipientName = Array.isArray(emailData.to) ? emailData.to.join(', ') : emailData.to || 'Recipient'
               const newEmail: Email = {
-                id: String(Date.now()),
+                id: `sent-${Date.now()}`,
                 from: undefined,
-                name: 'Me',
-                email: 'user@example.com',
-                replyTo: 'user@example.com',
+                name: recipientName,
+                email: Array.isArray(emailData.to) ? emailData.to.join(', ') : emailData.to || '',
+                replyTo: 'ask@morrai.com',
                 subject: emailData.subject || '(No Subject)',
                 preview: emailData.body
                   ? emailData.body.replace(/<[^>]*>/g, '').substring(0, 100)
@@ -686,11 +864,11 @@ export default function MessageFeature() {
                 date: new Date(),
                 read: true,
                 labels: ['sent'],
-                avatarInitials: 'ME',
+                avatarInitials: recipientName.slice(0, 2).toUpperCase(),
                 done: true,
+                attachments: emailData.attachments || [],
               }
-              setEmails((prev) => [newEmail, ...prev])
-              fetchInbox()
+              setSentEmails((prev) => [newEmail, ...prev])
               setIsComposing(false)
             }}
             onSaveDraft={() => {
@@ -733,8 +911,49 @@ export default function MessageFeature() {
             onClose={() => setIsFileOpen(false)}
             hideToggle={true}
           />
+        ) : activeTab === 'contact' ? (
+          <div className='flex h-full flex-col overflow-y-auto p-4 md:p-6 bg-background'>
+            <MsgContactTab
+              contacts={contacts}
+              onRefresh={fetchContactsAndGroups}
+              onSelectContact={handleSelectContact}
+            />
+          </div>
+        ) : activeTab === 'groups' ? (
+          <div className='flex h-full flex-col overflow-y-auto p-4 md:p-6 bg-background'>
+            <MsgGroupTab
+              groups={groups}
+              contacts={contacts}
+              onRefresh={fetchContactsAndGroups}
+              onSelectGroup={handleSelectGroup}
+            />
+          </div>
+        ) : activeTab === 'folder' ? (
+          <div className='flex h-full flex-col items-center justify-center p-6 bg-background'>
+            <ComingSoon />
+          </div>
+        ) : activeTab === 'chat-contact' ? (
+          <div className='flex h-full flex-col overflow-y-auto p-4 md:p-6 bg-background'>
+            <MsgContactTab
+              contacts={contacts}
+              onRefresh={fetchContactsAndGroups}
+              onSelectContact={handleSelectContact}
+            />
+          </div>
+        ) : activeTab === 'chat-groups' ? (
+          <div className='flex h-full flex-col overflow-y-auto p-4 md:p-6 bg-background'>
+            <MsgGroupTab
+              groups={groups}
+              contacts={contacts}
+              onRefresh={fetchContactsAndGroups}
+              onSelectGroup={handleSelectGroup}
+            />
+          </div>
+        ) : activeTab === 'chat-folder' || activeTab === 'ai-recent' || activeTab === 'ai-prompts' || activeTab === 'file-recent' ? (
+          <div className='flex h-full flex-col items-center justify-center p-6 bg-background'>
+            <ComingSoon />
+          </div>
         ) : selectedDirectoryChat ? (
-
           selectedDirectoryChat.conversationId ? (
             <RealtimeChatView
               conversationId={selectedDirectoryChat.conversationId}
@@ -807,59 +1026,9 @@ export default function MessageFeature() {
         fixed
         className='flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background p-0 sm:px-4 sm:py-0'
       >
-
-
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className='flex h-full min-h-0 flex-1 flex-col overflow-hidden'
-        >
-          <TabsContent
-            value='inbox'
-            className='mt-0 flex h-full min-h-0 flex-1 flex-row overflow-hidden bg-background focus-visible:outline-none'
-          >
-            {renderInboxPanel()}
-          </TabsContent>
-
-          <TabsContent
-            value='send'
-            className='mt-0 flex h-full min-h-0 flex-1 flex-row overflow-hidden bg-background focus-visible:outline-none'
-          >
-            {renderInboxPanel(true)}
-          </TabsContent>
-
-          <TabsContent
-            value='folder'
-            className='mt-0 flex flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8'
-          >
-            <div className='w-full max-w-3xl mx-auto'>
-              <LinksTab />
-            </div>
-          </TabsContent>
-
-          <TabsContent
-            value='contact'
-            className='mt-0 flex min-h-0 flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8'
-          >
-            <ContactManagerTab
-              contacts={contacts}
-              onRefresh={fetchContactsAndGroups}
-              onSelectContact={handleSelectContact}
-            />
-          </TabsContent>
-
-          <TabsContent
-            value='groups'
-            className='mt-0 flex min-h-0 flex-1 flex-col items-center justify-start overflow-y-auto bg-transparent focus-visible:outline-none p-3 sm:p-6 lg:p-8'
-          >
-            <GroupManagerTab
-              groups={groups}
-              contacts={contacts}
-              onRefresh={fetchContactsAndGroups}
-              onSelectGroup={handleSelectGroup}
-            />
-          </TabsContent>
-        </Tabs>
+        <div className='flex h-full min-h-0 flex-1 flex-col overflow-hidden'>
+          {renderInboxPanel(activeTab === 'send')}
+        </div>
       </Main>
     </>
   )

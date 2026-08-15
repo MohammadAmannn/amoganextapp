@@ -153,7 +153,7 @@ export function DocumentViewer({
       )
     }
 
-    if (viewerSupportedExtensions.includes(extension)) {
+    if (viewerSupportedExtensions.includes(extension) || fileUrl.startsWith('data:') || fileUrl.startsWith('/uploads/') || fileUrl.startsWith('http')) {
       const documents = [{ uri: fileUrl, fileName: fileName, fileType: extension }]
       return (
         <div className="doc-viewer-wrapper flex-grow w-full h-full relative bg-background flex flex-col min-h-0">

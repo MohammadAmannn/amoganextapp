@@ -237,14 +237,6 @@ export function AiChatPanel({ onBack }: AiChatPanelProps) {
     <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-background overflow-hidden md:relative md:z-auto'>
       {/* Header */}
       <div className='flex shrink-0 items-center gap-3 border-b border-border bg-background px-4 py-3 select-none'>
-        <button
-          onClick={onBack}
-          className='-ml-1 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden'
-          title='Close'
-        >
-          <X className='h-5 w-5' />
-        </button>
-
         <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-200/40 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-600 dark:border-indigo-800/40 dark:text-indigo-400'>
           <Bot className='h-4.5 w-4.5' />
         </div>
@@ -259,7 +251,17 @@ export function AiChatPanel({ onBack }: AiChatPanelProps) {
           </p>
         </div>
 
-        <HeaderActions onDelete={onBack} />
+        <div className='flex items-center gap-1 shrink-0'>
+          <HeaderActions onDelete={onBack} />
+          <button
+            onClick={onBack}
+            className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+            title='Close'
+            aria-label='Close'
+          >
+            <X className='h-5 w-5' />
+          </button>
+        </div>
       </div>
 
       {/* Messages */}

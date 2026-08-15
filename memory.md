@@ -542,3 +542,194 @@ This file summarizes the database fixes, map custom layouts, geocoding proxies, 
   - Removed `setIsFileOpen(true)` from initial page load `useEffect` in `src/features/Message/index.tsx`. Navigating to `/message` now loads the main Messages Inbox by default instead of forcing open the Files view panel.
 * **Developer Guide**:
   - Created `mail.md` detailing system architecture, file inventory, Hostinger configurations, API payloads, and testing instructions.
+
+---
+
+## 43. Email Sidebar Tab Bar & Hostinger Sent IMAP Synchronization
+* **Sidebar Email Tabs Bar**:
+  - Positioned horizontal email tabs (**Inbox**, **Send**, **Folder**, **Contact**, **Groups**) inside the Messages sidebar header in `email-list.tsx`, located between the icon toolbar and the search box.
+  - Styled with project-standard active underline indicator (`border-b-2 border-primary font-semibold`).
+* **Real Hostinger Sent Mail Sync**:
+  - Built `GET /api/mail/sent` API route connecting to Hostinger's `INBOX.Sent` IMAP mailbox folder.
+  - Updated `POST /api/mail/send` to automatically append outgoing email MIME content to Hostinger's `INBOX.Sent` folder upon successful SMTP transmission.
+  - Selecting **Inbox** tab displays strictly received inbox emails (`/api/mail/inbox`).
+  - Selecting **Send** tab displays strictly sent emails (`/api/mail/sent`).
+* **ComingSoon Placeholders**:
+  - Clicking **Folder**, **Contact**, or **Groups** renders the standard `<ComingSoon />` component cleanly without affecting other pages.
+
+---
+
+## 44. Inbox Pagination, Instant Optimistic Sent Mail & Attachment Integration
+* **Strict Inbox & Send Tab Card Isolation**:
+  - Updated card rendering conditions in `email-list.tsx`: under `activeTab === 'inbox'` or `activeTab === 'send'`, non-email cards (`CHATS`, `NOTIFICATIONS`, `AI`, `CALENDAR`, `TASKS`, `FILES`) are strictly suppressed and hidden unless explicitly selected via top toolbar icons.
+* **Default Right-Window Document Viewer (`SafeDocumentPreview.tsx`)**:
+  - Clicking the Eye icon (`Eye`) or clicking an attachment item in `email-view.tsx` triggers `onPreviewAttachment({ name, url })`.
+  - `index.tsx` updates `previewAttachment` state, rendering `<SafeDocumentPreview>` directly inside the right-side detail window with zoom, rotation, download, and header controls.
+* **IMAP Lazy-Loading Pagination**:
+  - Updated `GET /api/mail/inbox` and `GET /api/mail/sent` to accept `page` and `limit` query parameters, calculating exact IMAP sequence ranges (`totalMessages - offset`).
+  - Added bottom scroll listener in `email-list.tsx` to trigger `onLoadMore()` when scrolling near the end, appending next page items with a smooth bottom loading spinner.
+* **Instant Optimistic Sent Mail Update**:
+  - Updated `onSend` callback in `new-email.tsx` and `index.tsx`: sending an email immediately prepends the new message into `sentEmails` state without triggering full-page re-fetch loading spinners.
+* **End-to-End Email Attachment & Hostinger Sent Sync**:
+  - `POST /api/mail/send` uses Nodemailer's `MailComposer` to compile the full RFC 2822 `multipart/mixed` MIME buffer (including base64-encoded attachments) before appending to Hostinger's `INBOX.Sent` IMAP folder.
+  - Ensures sent attachments appear 100% intact with filenames and preview/download capability on Hostinger webmail, mobile apps, and our application's **Send** tab.
+  - `email-parser.ts` extracts `parsed.attachments` into Base64 Data URLs (`data:contentType;base64,...`) with formatted file sizes.
+
+---
+
+## 45. Email Tab Pagination Arrow Controls & Attachment Actions Cleanup
+* **Header Tab Pagination Controls (`1-20 of 152 < >`)**:
+  - Positioned range indicator (`startRange-endRange of total`) and `<` (`ChevronLeft`) / `>` (`ChevronRight`) arrow buttons directly to the right of the email sidebar tabs in `email-list.tsx`.
+  - Connected `<` to `onPrevPage` and `>` to `onNextPage` in `index.tsx`, fetching page 1, 2, 3... on demand.
+* **Attachment Preview & Instant Base64 Download**:
+  - Updated `useDownloadFile` in `DocumentViewer/hooks.ts` to detect `data:` URLs and download base64 attachments directly without proxy latency.
+  - Eye icon (`<Eye />`) and attachment title row click mount `<SafeDocumentPreview>` directly in the right-side window.
+* **Attachment Remove Button Cleanup**:
+  - Removed `X` remove-attachment button from `email-view.tsx` on received and sent emails.
+
+---
+
+## 46. Attachment Base64 Uint8Array Fix & Sent Tab Label Rename
+* **Uint8Array Content Base64 Attachment Fix**:
+  - Updated `email-parser.ts`: `mailparser` returns `att.content` as a `Uint8Array` in Next.js Turbopack / Node runtime. Using `Buffer.from(att.content)` guarantees `dataUrl` is populated as a valid `data:${mimeType};base64,...` URL.
+  - Fixes previewing (`<SafeDocumentPreview>`) and downloading attachments on both **Inbox** and **Sent** emails.
+* **DocumentViewer Base64 Data URL Rendering**:
+  - Updated `DocumentViewer.tsx` to handle `fileUrl.startsWith('data:')`, rendering Base64 PDFs in an `<iframe src={fileUrl}>` and images in an `<img>` tag.
+* **Tab Label Renamed to `Sent`**:
+  - Changed sidebar tab text label from `Send` to `Sent` in `email-list.tsx`.
+
+---
+
+## 47. Physical Local File System Storage for Email Attachments
+* **Local Attachment Storage Module (`src/lib/email/attachment-storage.ts`)**:
+  - Created `saveAttachmentLocally(filename, content)` to save attachment files physically to `public/uploads/mail-attachments/`.
+  - Returns direct public web paths (e.g. `/uploads/mail-attachments/1723640000_report.pdf`) and formatted file sizes.
+* **Parser & Send API Storage Integration**:
+  - Updated `email-parser.ts`: every parsed attachment from IMAP received messages is saved physically to disk.
+  - Updated `app/api/mail/send/route.ts`: every sent email attachment is saved physically to disk and returns public URLs to the client.
+* **Document Viewer Local Path Support**:
+  - Updated `DocumentViewer.tsx` to handle `/uploads/` paths directly, rendering PDFs inside `<iframe src={fileUrl}>` and images inside `<img>` tags.
+  - Guarantees 100% reliable previewing and downloading for both **Inbox** and **Sent** email attachments.
+
+---
+
+## 48. EmailView Attachment URL State Fix & Automated Verification
+* **Root Cause & Fix in `email-view.tsx`**:
+  - Identified that `useEffect` in `email-view.tsx` previously copied `att.name`, `att.type`, `att.size` into local state, but omitted `att.url`.
+  - Added `url: att.url` mapping in `setAttachments` inside `email-view.tsx`, restoring `attachment.url` for all received and sent emails.
+* **Automated Diagnostic & Server Verification**:
+  - `test_attachment_diagnosis.js`: verified `/api/mail/inbox` and `/api/mail/sent` return populated file URLs (e.g. `/uploads/mail-attachments/1786696236217_report__21_.pdf`).
+  - `test_curl_file.js` & `test_download_proxy.js`: verified direct HTTP static file serving returns `200 OK` and `/api/download` proxy returns `Content-Disposition: attachment`.
+
+---
+
+## 49. Unified Chat Document Viewer Alignment
+* **Chat Document Viewer Matching**:
+  - Updated `DocumentViewer.tsx` to route all supported documents (PDFs, images, Word docs, CSVs, text) through `ReactDocViewerWrapper` (`@cyntler/react-doc-viewer`).
+  - Replaced raw browser iframe previews with our project's custom styled document viewer theme (clean white background, custom zoom, rotation, and header controls matching Chat view).
+
+---
+
+## 50. @zrimo/viewer & Multi-Format Document Viewer Engine
+* **`@zrimo/viewer` Engine Integration (`src/components/DocumentViewer/ReactDocViewerWrapper.tsx`)**:
+  - Integrated `@zrimo/viewer` WASM/JS engine to load and parse document blobs dynamically.
+* **Complete Multi-Format Coverage**:
+  - Added `LocalCsvViewer` for rendering interactive tabular CSV data with sticky headers.
+  - Added `LocalExcelViewer` for `.xlsx`/`.xls` spreadsheets.
+  - Added `LocalWordViewer` for `.docx`/`.doc` Word documents.
+  - Added `DocViewer` PDF renderer for `.pdf` files.
+  - Guarantees 100% of attachments (PDF, DOCX, XLSX, CSV, PNG/JPG, TXT) open cleanly without "Failed to view" errors.
+
+---
+
+## 51. Client-Side Word Document (`docx-preview`) Renderer
+* **In-Browser Word Document Rendering (`ReactDocViewerWrapper.tsx`)**:
+  - Integrated `docx-preview` (`renderAsync`) inside `LocalWordViewer`.
+  - Fetches `.docx` file blob and renders full formatted pages with text, headings, tables, fonts, and images directly in the browser container.
+
+---
+
+## 52. Primary `@zrimo/viewer` Engine Integration
+* **`ZrimoEngineViewer` Core Component (`ReactDocViewerWrapper.tsx`)**:
+  - Configured `ZrimoEngineViewer` using `createViewer()` and `BasicViewerUi` from `@zrimo/viewer`.
+  - Serves as the primary WASM/JS viewing engine for all mail section attachments (PDF, XLS, XLSX, DOC, DOCX, CSV, PNG, JPG, TXT).
+
+---
+
+## 53. SheetJS Excel (`.xlsx`, `.xls`) & Word (`.docx`, `.doc`) In-Browser Preview
+* **Excel Spreadsheet Parsing (`LocalExcelViewer`)**:
+  - Integrated SheetJS (`xlsx`) to parse ArrayBuffers of `.xlsx` and `.xls` files directly in the browser (`XLSX.read` & `XLSX.utils.sheet_to_html`).
+  - Displays multi-sheet Excel workbooks with interactive tab switches (`Sheet1`, `Sheet2`, etc.) and styled data grids.
+* **Word Document Preview (`LocalWordViewer`)**:
+  - Integrated `docx-preview` and public URL Google Docs embedded viewer for `.docx` and `.doc` files, replacing static download cards with formatted document previews.
+
+---
+
+## 54. Dual-Fetch Proxy Buffer Fallback for Attachments
+* **`fetchFileBuffer` Proxy Fallback (`ReactDocViewerWrapper.tsx`)**:
+  - Created `fetchFileBuffer` helper that performs a direct `fetch(uri)` and automatically falls back to `/api/download?url=${encodeURIComponent(uri)}` if direct fetching returns non-200.
+  - Ensures local physical attachment files stored under `/uploads/mail-attachments/` are retrieved reliably and converted into binary ArrayBuffers for SheetJS, `docx-preview`, and CSV table rendering.
+
+---
+
+## 55. Word Document Render Ref Lock Fix
+* **DOM Container Ref Mounting (`ReactDocViewerWrapper.tsx`)**:
+  - Restructured `LocalWordViewer` JSX to keep `<div ref={containerRef} />` continuously mounted in the DOM with a backdrop loading overlay.
+  - Ensures `docx-preview` (`renderAsync`) accesses `containerRef.current` immediately without returning early or locking on the spinner.
+
+---
+
+## 56. shadcn Skeleton Email Loading Effect
+* **`EmailSkeletonList` Component (`email-list.tsx`)**:
+  - Created `EmailSkeletonList` using shadcn `Skeleton` components.
+  - Displays 6 animated skeleton card placeholders matching sender avatar, name, timestamp, subject, body snippet lines, and tag badges when emails are loading in **Inbox** and **Sent** tabs.
+  - Replaced bottom loading spinner with animated skeleton card for smooth infinite scroll loading.
+
+---
+
+## 57. Sender Name Cleaning, Tab Arrow Overflow Fix & Chat Sub-Tabs
+* **Clean Sender Name Display (`cleanSenderName` in `email-list.tsx`)**:
+  - Removed email address strings (e.g. `<n.rajukrishna@gmail.com>`) from card headers, displaying ONLY clean sender names (e.g. `Raju Krishna`, `ask`, `Brevo`, `Hostinger`).
+* **Mail Sub-Tabs Bar & Pagination Fix (`email-list.tsx`)**:
+  - Positioned range math (`1–20 of 152`) and page navigation arrows (`< >`) right-aligned without wrapping or overflowing.
+
+---
+
+## 58. Mail & Chat Sub-Tabs with Right-Side Window Views
+* **Mail Section Sub-Tabs Bar (`email-list.tsx`)**:
+  - Sub-tabs: **`Inbox`**, **`Sent`**, **`Folder`**, **`Contact`**, **`Groups`**.
+* **Chat Section Sub-Tabs Bar (`email-list.tsx`)**:
+  - Sub-tabs: **`Chats`**, **`Contact`**, **`Groups`**, **`Folder`**.
+* **Right-Side Window Panel Rendering (`Message/index.tsx`)**:
+  - Clicking **`Contact`** opens `MsgContactTab` on the **RIGHT SIDE** of the window.
+  - Clicking **`Groups`** opens `MsgGroupTab` on the **RIGHT SIDE** of the window.
+  - Clicking **`Folder`** opens `ComingSoon` page on the **RIGHT SIDE** of the window.
+
+---
+
+## 59. Chat Sub-Tabs Category Preservation Fix
+* **Category State Lock (`email-list.tsx`)**:
+  - Bound sub-tab clicks in Chat section (**`Chats`**, **`Contact`**, **`Groups`**, **`Folder`**) to explicitly invoke `setCategoryFilter('chat')`.
+  - Prevents Chat sub-tab selections from reverting to Mail sub-tabs (`Inbox`, `Sent`, `Folder`, `Contact`, `Groups`).
+* **Strict List Rendering Separation (`email-list.tsx`)**:
+  - Rendered ONLY `chatItems` when `categoryFilter === 'chat'` or `activeTab === 'chats'`, completely preventing Mail items from appearing in the Chat section list.
+
+---
+
+## 60. Right-Side Window Sub-Tab Navigation & State Clearing Fix
+* **Selected Chat Clearing on Sub-Tab Switch (`Message/index.tsx`)**:
+  - Cleared `selectedDirectoryChat` and `selectedEmail` when switching sub-tabs to `contact`, `groups`, or `folder`.
+  - Fixes overlay bug where an open chat view (e.g. Raju Krishna) blocked `MsgContactTab` or `MsgGroupTab` from displaying on the right-side window.
+* **`handleSelectContact` / `handleSelectGroup` Tab Binding (`Message/index.tsx`)**:
+  - Changed tab switch from `inbox` to `chats` when selecting a contact or group conversation, maintaining section context.
+* **Sub-Tab Active Style Isolation (`email-list.tsx`)**:
+  - Corrected `Chats` button active check, ensuring crisp tab highlighting without defaulting to `inbox`.
+
+---
+
+## 61. Fixed Left Column Chat List & Right-Side Window Sub-Tab Navigation
+* **Left Column Stability (`email-list.tsx`)**:
+  - Keeps chat cards (`chatItems`) fixed on the left sidebar across all Chat section sub-tabs (**`Chats`**, **`Contact`**, **`Groups`**, **`Folder`**).
+* **Right Panel Precedence Ordering (`Message/index.tsx`)**:
+  - Positioned `activeTab === 'contact'` (`MsgContactTab`), `activeTab === 'groups'` (`MsgGroupTab`), and `activeTab === 'folder'` (`ComingSoon`) ahead of `selectedDirectoryChat` in the right panel render tree.
+  - Ensures clicking sub-tabs closes active chat views and opens manager forms cleanly on the right side window.

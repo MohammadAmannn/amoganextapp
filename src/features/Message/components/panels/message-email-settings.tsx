@@ -40,19 +40,8 @@ export function MessageEmailSettings({
     <div className='flex h-full flex-col w-full overflow-hidden bg-background text-foreground'>
       {/* ── Header matching screenshot layout ─────────────────────── */}
       <div className='shrink-0 flex items-center justify-between border-b border-border bg-background px-3 py-2.5 sm:px-4 sm:py-3'>
-        {/* Left side: X Close button + Avatar + Title + Subtitle */}
+        {/* Left side: Avatar + Title + Subtitle */}
         <div className='flex items-center gap-2 sm:gap-3 min-w-0'>
-          {handleBack && (
-            <button
-              type='button'
-              onClick={handleBack}
-              className='p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0 md:hidden'
-              title='Close'
-              aria-label='Close email settings'
-            >
-              <X className='h-5 w-5' />
-            </button>
-          )}
           <Avatar className='h-9 w-9 shrink-0 rounded-full'>
             <AvatarImage src='/avatars/01.png' alt='Email Settings' />
             <AvatarFallback className='rounded-full bg-primary/10 text-primary font-bold text-xs'>
@@ -63,12 +52,24 @@ export function MessageEmailSettings({
             <h2 className='truncate text-sm font-bold tracking-tight text-foreground sm:text-base leading-snug'>
               Email Settings
             </h2>
-          
           </div>
         </div>
 
-        {/* Right side: Header Action Icons via HeaderActions */}
-        <HeaderActions />
+        {/* Right side: Header Action Icons via HeaderActions + Close X */}
+        <div className='flex items-center gap-1.5 shrink-0'>
+          <HeaderActions />
+          {handleBack && (
+            <button
+              type='button'
+              onClick={handleBack}
+              className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+              title='Close'
+              aria-label='Close email settings'
+            >
+              <X className='h-5 w-5' />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Main Content Area ────────────────────────────────────────── */}

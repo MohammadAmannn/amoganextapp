@@ -14,7 +14,7 @@ export type Email = {
   labels: string[]
   avatarInitials: string
   done?: boolean
-  attachments?: { name: string; type: string; size: string }[]
+  attachments?: { id?: string; name: string; type: string; size: string; url?: string }[]
   cc?: { name: string; email: string }[]
   bcc?: { name: string; email: string }[]
   important?: boolean

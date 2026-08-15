@@ -90,6 +90,17 @@ export function useDownloadFile() {
     if (!url) return
     setIsDownloading(true)
     try {
+      // 0. Direct download for Base64 Data URLs (email attachments)
+      if (url.startsWith("data:")) {
+        const link = document.createElement("a")
+        link.href = url
+        link.setAttribute("download", name)
+        document.body.appendChild(link)
+        link.click()
+        link.parentNode?.removeChild(link)
+        return
+      }
+
       // 1. Try fetching via API proxy to guarantee Content-Disposition attachment download
       const proxyUrl = `/api/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`
       let response = await fetch(proxyUrl)

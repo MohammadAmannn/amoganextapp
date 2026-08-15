@@ -118,6 +118,12 @@ export function NewEmail({ onCancel, onSend, onSaveDraft, onPreviewAttachment }:
 
     setIsSending(true)
     try {
+      const formattedAttachments = attachments.map((att: any) => ({
+        filename: att.name,
+        contentType: att.type,
+        content: att.url || "",
+      }))
+
       const res = await fetch("/api/mail/send", {
         method: "POST",
         headers: {
@@ -127,6 +133,7 @@ export function NewEmail({ onCancel, onSend, onSaveDraft, onPreviewAttachment }:
           to: resolvedTo,
           subject: subject || "(No Subject)",
           html: body || "",
+          attachments: formattedAttachments,
         }),
       })
 
@@ -134,6 +141,16 @@ export function NewEmail({ onCancel, onSend, onSaveDraft, onPreviewAttachment }:
       if (data.success) {
         toast.success("Email sent successfully")
         
+        const finalAttachments = Array.isArray(data.attachments) && data.attachments.length > 0
+          ? data.attachments
+          : attachments.map(att => ({
+              id: att.id,
+              name: att.name,
+              type: att.type,
+              size: att.size,
+              url: att.url,
+            }))
+
         onSend({
           from,
           to: resolvedTo,
@@ -141,6 +158,7 @@ export function NewEmail({ onCancel, onSend, onSaveDraft, onPreviewAttachment }:
           bcc: resolvedBcc,
           subject: subject || "(No Subject)",
           body: body || "",
+          attachments: finalAttachments,
         })
       } else {
         toast.error(data.message || "Failed to send email")
@@ -179,32 +197,35 @@ export function NewEmail({ onCancel, onSend, onSaveDraft, onPreviewAttachment }:
         status: 'uploading',
       })
 
-      const fileObjectUrl = URL.createObjectURL(file)
+      const reader = new FileReader()
+      reader.onload = () => {
+        const fileDataUrl = reader.result as string
 
-      const newAttachment: Attachment = {
-        id: Date.now() + Math.random().toString(36).substring(2, 9),
-        name: file.name,
-        type: file.type,
-        size: formatFileSize(file.size),
-        url: fileObjectUrl,
+        const newAttachment: Attachment = {
+          id: Date.now() + Math.random().toString(36).substring(2, 9),
+          name: file.name,
+          type: file.type || 'application/octet-stream',
+          size: formatFileSize(file.size),
+          url: fileDataUrl,
+        }
+
+        const interval = setInterval(() => {
+          setUploadingFile((prev) => {
+            if (!prev) return null
+            if (prev.progress >= 90) {
+              clearInterval(interval)
+              setTimeout(() => {
+                setAttachments((a) => [...a, newAttachment])
+                setUploadingFile(null)
+                setIsUploading(false)
+              }, 350)
+              return { ...prev, progress: 100, status: 'completed' }
+            }
+            return { ...prev, progress: prev.progress + 25 }
+          })
+        }, 150)
       }
-
-      const interval = setInterval(() => {
-        setUploadingFile((prev) => {
-          if (!prev) return null
-          if (prev.progress >= 90) {
-            clearInterval(interval)
-            setTimeout(() => {
-              setAttachments((a) => [...a, newAttachment])
-              setUploadingFile(null)
-              setIsUploading(false)
-            }, 350)
-            return { ...prev, progress: 100, status: 'completed' }
-          }
-          return { ...prev, progress: prev.progress + 25 }
-        })
-      }, 200)
-
+      reader.readAsDataURL(file)
       e.target.value = ""
     }
   }

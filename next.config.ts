@@ -26,6 +26,15 @@ const nextConfig: NextConfig = {
     config.resolve.alias.canvas = false
     return config
   },
+  outputFileTracingExcludes: {
+    '*': [
+      'public/uploads/**',
+      'android/**',
+      'ios/**',
+      '**/*.pdf',
+      '**/*.csv',
+    ],
+  },
   experimental: {},
 }
 

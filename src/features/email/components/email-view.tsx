@@ -75,11 +75,12 @@ export function EmailView({ email, onBack, onDelete, onStartChat }: EmailViewPro
     setEmailBody(processedBody)
     
     setAttachments(
-      email.attachments?.map((att) => ({
-        id: Math.random().toString(36).substring(2, 9),
+      email.attachments?.map((att: any) => ({
+        id: att.id || Math.random().toString(36).substring(2, 9),
         name: att.name,
         type: att.type,
         size: att.size,
+        url: att.url,
       })) || []
     )
   }, [email])

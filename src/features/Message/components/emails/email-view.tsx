@@ -117,10 +117,11 @@ export function EmailView({ email, onBack, onDelete, onStartChat, onPreviewAttac
     
     setAttachments(
       email.attachments?.map((att) => ({
-        id: Math.random().toString(36).substring(2, 9),
+        id: att.id || Math.random().toString(36).substring(2, 9),
         name: att.name,
         type: att.type,
         size: att.size,
+        url: att.url,
       })) || []
     )
   }, [email])
@@ -196,14 +197,6 @@ export function EmailView({ email, onBack, onDelete, onStartChat, onPreviewAttac
         {/* Header Row: Back/Close + Avatar + From info on LEFT, HeaderActions on RIGHT */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <button
-              type="button"
-              onClick={onBack}
-              className="-ml-1 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden"
-              title="Close"
-            >
-              <X className="h-5 w-5" />
-            </button>
             <div
               className={cn(
                 "w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold border border-border shrink-0",
@@ -223,12 +216,21 @@ export function EmailView({ email, onBack, onDelete, onStartChat, onPreviewAttac
             </div>
           </div>
           
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <Button variant="ghost" size="sm" onClick={onBack} className="hidden md:flex text-xs hover:bg-muted cursor-pointer shrink-0 h-8">
               <ArrowLeft className="h-3.5 w-3.5 mr-1" />
               Back
             </Button>
             <HeaderActions onDelete={() => onDelete(email.id)} />
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              title="Close"
+              aria-label="Close email"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
         </div>
 
@@ -345,12 +347,20 @@ export function EmailView({ email, onBack, onDelete, onStartChat, onPreviewAttac
             <div className="border border-border rounded-lg overflow-hidden bg-background">
               {attachments.map((attachment) => (
                 <div key={attachment.id} className="flex items-center justify-between p-3 border-b border-border last:border-b-0">
-                  <div className="flex items-center space-x-3">
+                  <div
+                    className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => {
+                      if (onPreviewAttachment && attachment.url) {
+                        onPreviewAttachment({ name: attachment.name, url: attachment.url })
+                      }
+                    }}
+                    title="View file preview"
+                  >
                     <div className="bg-muted w-10 h-10 flex items-center justify-center rounded-lg border border-border">
                       <span className="text-[10px] text-muted-foreground font-bold">{getFileTypeIcon(attachment.type)}</span>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-foreground">{attachment.name}</p>
+                      <p className="text-xs font-semibold text-foreground hover:underline">{attachment.name}</p>
                       <p className="text-[10px] text-muted-foreground">{attachment.size}</p>
                     </div>
                   </div>
@@ -385,17 +395,6 @@ export function EmailView({ email, onBack, onDelete, onStartChat, onPreviewAttac
                     >
                       <Eye className="h-3.5 w-3.5" />
                       <span className="sr-only">View</span>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive cursor-pointer"
-                      onClick={() => removeAttachment(attachment.id)}
-                      title="Remove"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                      <span className="sr-only">Remove</span>
                     </Button>
                   </div>
                 </div>

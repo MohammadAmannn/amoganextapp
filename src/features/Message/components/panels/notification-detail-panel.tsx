@@ -113,9 +113,17 @@ export function NotificationDetailPanel({
           )}
         </div>
 
-        <div className='flex items-center gap-2 shrink-0'>
-         
+        <div className='flex items-center gap-1.5 shrink-0'>
           <HeaderActions onDelete={handleDelete} />
+          <button
+            type='button'
+            onClick={onClose}
+            className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+            title='Close notification'
+            aria-label='Close'
+          >
+            <X className='h-5 w-5' />
+          </button>
         </div>
       </div>
 

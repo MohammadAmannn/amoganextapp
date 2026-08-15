@@ -5,8 +5,8 @@ import { parseEmail } from "@/lib/email/email-parser";
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/mail/inbox
- * Connects to Hostinger IMAP server using ImapFlow to fetch the latest 20 emails.
+ * GET /api/mail/sent
+ * Connects to Hostinger IMAP server using ImapFlow to fetch the latest sent emails from INBOX.Sent folder.
  * Uses mailparser to parse individual email bodies and returns them in a unified format.
  */
 export async function GET(request: Request) {
@@ -19,20 +19,26 @@ export async function GET(request: Request) {
   let totalMessages = 0;
 
   try {
-    // 1. Establish connection to Hostinger IMAP server
     await client.connect();
 
-    // 2. Lock the inbox to safely read the messages list
-    const lock = await client.getMailboxLock("INBOX");
+    let mailboxName = "INBOX.Sent";
+    let lock;
+
+    try {
+      lock = await client.getMailboxLock(mailboxName);
+    } catch (_) {
+      // Fallback if folder is named "Sent"
+      mailboxName = "Sent";
+      lock = await client.getMailboxLock(mailboxName);
+    }
+
     const emailsList: any[] = [];
 
     try {
-      // 3. Query the status to find the total message count
-      const status = await client.status("INBOX", { messages: true });
+      const status = await client.status(mailboxName, { messages: true });
       totalMessages = status.messages || 0;
 
       if (totalMessages > 0) {
-        // Calculate sequence range for current page
         const offset = (page - 1) * limit;
         const endSeq = Math.max(0, totalMessages - offset);
         const startSeq = Math.max(1, endSeq - limit + 1);
@@ -41,28 +47,30 @@ export async function GET(request: Request) {
           const range = `${startSeq}:${endSeq}`;
           hasMore = startSeq > 1;
 
-          // Fetch message source (raw MIME contents) and system flags
           for await (const message of client.fetch(range, { source: true, flags: true })) {
             const isRead = message.flags && message.flags.has("\\Seen");
-            
+
             try {
-              const parsed = await parseEmail(message.source as Buffer, message.seq, !!isRead);
-              emailsList.push(parsed);
+              const parsed = await parseEmail(message.source as Buffer, message.seq, true);
+              // Ensure email recipient details are mapped for sent view
+              emailsList.push({
+                ...parsed,
+                isSent: true,
+              });
             } catch (parseErr) {
-              console.error(`Failed to parse email sequence ${message.seq}:`, parseErr);
+              console.error(`Failed to parse sent email sequence ${message.seq}:`, parseErr);
             }
           }
 
-          // Sort messages newest first
           emailsList.reverse();
         }
       }
     } finally {
-      // 4. Ensure lock is released even if fetch errors occur
-      lock.release();
+      if (lock) {
+        lock.release();
+      }
     }
 
-    // 5. Safely close connection
     await client.logout();
 
     return NextResponse.json({
@@ -74,9 +82,8 @@ export async function GET(request: Request) {
       limit,
     });
   } catch (error: any) {
-    console.error("Error reading mailbox via IMAP:", error);
-    
-    // Always attempt clean logout if client is connected or errored mid-session
+    console.error("Error reading sent mailbox via IMAP:", error);
+
     try {
       await client.logout();
     } catch (_) {}
@@ -84,7 +91,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: `Failed to load inbox emails: ${error.message || error}`,
+        message: `Failed to load sent emails: ${error.message || error}`,
       },
       { status: 500 }
     );

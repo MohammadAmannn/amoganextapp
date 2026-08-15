@@ -649,15 +649,7 @@ export function ChatView({
     <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-card overflow-hidden rounded-none border-0 border-border shadow-xs md:relative md:z-auto sm:rounded-xl sm:border'>
       {/* Header */}
       <div className='flex flex-none shrink-0 items-center justify-between border-b border-border bg-muted/10 p-4 select-none'>
-        <div className='flex min-w-0 items-center gap-2'>
-          <button
-            onClick={onBack}
-            className='-ml-1 shrink-0 rounded-full p-1.5 text-muted-foreground hover:bg-muted md:hidden'
-            aria-label='Close chat'
-          >
-            <X className='h-4 w-4' />
-          </button>
-
+        <div className='flex min-w-0 items-center gap-3'>
           <div
             onClick={() => setShowProfile(true)}
             className='flex cursor-pointer items-center gap-3 transition-opacity select-none hover:opacity-85'
@@ -685,7 +677,19 @@ export function ChatView({
           </div>
         </div>
 
-        <HeaderActions onDelete={onBack} />
+        <div className='flex items-center gap-1 shrink-0'>
+          <HeaderActions onDelete={onBack} />
+          {onBack && (
+            <button
+              onClick={onBack}
+              className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+              title='Close'
+              aria-label='Close chat'
+            >
+              <X className='h-5 w-5' />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Messages */}

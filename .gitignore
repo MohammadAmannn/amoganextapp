@@ -72,3 +72,7 @@ amogaapp-56698-firebase-adminsdk-*.json
 
 # Mailer configuration credentials
 config/mail.json
+
+# Dynamic uploads and attachments
+public/uploads/
+public/uploads/**

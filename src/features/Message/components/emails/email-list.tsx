@@ -17,6 +17,7 @@ import {
   Archive,
   Bell,
   Trash2,
+  ChevronLeft,
   ChevronRight,
   Users,
   Mail,
@@ -36,6 +37,7 @@ import { useNotificationStore, DbNotification } from '@/stores/notification-stor
 import { Search as HeaderSearch } from '@/components/search'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
@@ -49,6 +51,9 @@ import { Conversation } from '@/features/chattemplate/chat/types/chat.types'
 import { Contact } from '@/features/chattemplate/contacts/types/contact.types'
 import { Email } from '../../data/emails'
 import { useVoucherStore, SavedVoucher } from '@/stores/voucher-store'
+import { Group } from '@/features/chattemplate/groups/types/group.types'
+import { MsgContactTab } from '../tabs/contact-manager-tab'
+import { MsgGroupTab } from '../tabs/group-manager-tab'
 
 interface EmailListProps {
   emails: Email[]
@@ -63,12 +68,13 @@ interface EmailListProps {
   contacts?: Contact[]
   selectedContactId?: string | null
   onSelectContact?: (contact: Contact) => void
+  groups?: Group[]
+  onSelectGroup?: (group: Group) => void
+  onRefreshContactsAndGroups?: () => void
   conversations?: Conversation[]
   onSelectConversation?: (conversation: Conversation) => void
   onSelectAiChat?: () => void
   isAiChatSelected?: boolean
-  onSelectCalendar?: () => void
-  isCalendarSelected?: boolean
   onSelectTask?: () => void
   isTaskSelected?: boolean
   onSelectFile?: () => void
@@ -81,10 +87,34 @@ interface EmailListProps {
   isNotificationSelected?: boolean
   activeTab?: string
   onTabChange?: (tab: string) => void
+  onSelectMailTab?: () => void
+  onSelectChatTab?: () => void
+  onSelectAiAssistantTab?: () => void
+  sectionMode?: 'mail' | 'chat'
+  onSectionModeChange?: (mode: 'mail' | 'chat') => void
   isComposing?: boolean
   onComposeChange?: (composing: boolean) => void
   isEmailsLoading?: boolean
   emailsError?: string | null
+  hasMore?: boolean
+  isLoadingMore?: boolean
+  onLoadMore?: () => void
+  page?: number
+  limit?: number
+  total?: number
+  onPrevPage?: () => void
+  onNextPage?: () => void
+}
+
+function cleanSenderName(rawName?: string): string {
+  if (!rawName) return 'Unknown'
+  let cleaned = rawName.replace(/<[^>]+>/g, '').trim()
+  cleaned = cleaned.replace(/^["']|["']$/g, '').trim()
+  if (!cleaned) {
+    const emailMatch = rawName.match(/<([^>]+)>/) || [null, rawName]
+    return (emailMatch[1] || rawName).split('@')[0]
+  }
+  return cleaned
 }
 
 function getLabelVariant(
@@ -106,6 +136,46 @@ function getLabelVariant(
   }
 }
 
+function EmailSkeletonList() {
+  return (
+    <div className='flex flex-col space-y-2 p-2.5 animate-in fade-in duration-200'>
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div
+          key={index}
+          className='flex flex-col rounded-xl border border-border/50 bg-card p-3.5 space-y-2.5 shadow-2xs'
+        >
+          {/* Header Row: Checkbox/Avatar placeholder, Sender Name, Date */}
+          <div className='flex items-center justify-between gap-3'>
+            <div className='flex items-center gap-2.5 min-w-0 flex-1'>
+              <Skeleton className='h-7 w-7 rounded-full shrink-0 bg-muted/80' />
+              <Skeleton className='h-3.5 w-28 sm:w-36 rounded-sm bg-muted/80' />
+            </div>
+            <Skeleton className='h-3 w-12 rounded-xs shrink-0 bg-muted/60' />
+          </div>
+
+          {/* Subject Line */}
+          <Skeleton className='h-3.5 w-3/4 rounded-sm bg-muted/90' />
+
+          {/* Body Snippet Lines */}
+          <div className='space-y-1.5 pt-0.5'>
+            <Skeleton className='h-3 w-full rounded-sm bg-muted/60' />
+            <Skeleton className='h-3 w-4/5 rounded-sm bg-muted/40' />
+          </div>
+
+          {/* Badges Footer */}
+          <div className='flex items-center justify-between pt-1'>
+            <div className='flex items-center gap-1.5'>
+              <Skeleton className='h-4 w-12 rounded-full bg-muted/70' />
+              <Skeleton className='h-4 w-14 rounded-full bg-muted/50' />
+            </div>
+            <Skeleton className='h-3 w-3 rounded-full shrink-0 bg-muted/40' />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function EmailList({
   emails,
   selectedEmailId,
@@ -119,12 +189,13 @@ export function EmailList({
   contacts = [],
   selectedContactId,
   onSelectContact,
+  groups = [],
+  onSelectGroup,
+  onRefreshContactsAndGroups,
   conversations = [],
   onSelectConversation,
   onSelectAiChat,
   isAiChatSelected,
-  onSelectCalendar,
-  isCalendarSelected,
   onSelectTask,
   isTaskSelected,
   onSelectFile,
@@ -137,10 +208,23 @@ export function EmailList({
   isNotificationSelected,
   activeTab,
   onTabChange,
+  onSelectMailTab,
+  onSelectChatTab,
+  onSelectAiAssistantTab,
+  sectionMode = 'mail',
+  onSectionModeChange,
   isComposing,
   onComposeChange,
   isEmailsLoading,
   emailsError,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
+  page = 1,
+  limit = 20,
+  total = 0,
+  onPrevPage,
+  onNextPage,
 }: EmailListProps) {
   const router = useRouter()
   const { notifications, unreadCount } = useNotificationStore()
@@ -148,7 +232,39 @@ export function EmailList({
   const storeVouchers = useVoucherStore((state) => state.vouchers)
   const [dbVouchers, setDbVouchers] = useState<SavedVoucher[]>([])
   const [selectedAccount, setSelectedAccount] = useState<string>('all')
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'mail' | 'chat' | 'vouchers' | 'ai' | 'calendar' | 'tasks' | 'notification'>('all')
+  const [categoryFilter, setCategoryFilter] = useState<'mail' | 'chat' | 'vouchers' | 'ai' | 'ai-assistant' | 'tasks' | 'notification'>('mail')
+
+  // Keep categoryFilter in sync with parent flags
+  useEffect(() => {
+    if (isAiChatSelected) {
+      if (categoryFilter !== 'ai-assistant') {
+        setCategoryFilter('ai')
+      }
+    } else if (isTaskSelected) {
+      setCategoryFilter('tasks')
+    } else if (isFileSelected) {
+      setCategoryFilter('vouchers')
+    } else if (isNotificationSelected) {
+      setCategoryFilter('notification')
+    } else if (sectionMode === 'chat') {
+      setCategoryFilter('chat')
+    } else if (categoryFilter !== 'ai-assistant' && categoryFilter !== 'ai') {
+      setCategoryFilter('mail')
+    }
+  }, [isAiChatSelected, isTaskSelected, isFileSelected, isNotificationSelected, sectionMode])
+
+  // setSectionMode proxies to parent-controlled prop so all EmailList instances share one sectionMode
+  const setSectionMode = (mode: 'mail' | 'chat') => onSectionModeChange?.(mode)
+
+  const startRange = total > 0 ? (page - 1) * limit + 1 : 0
+  const endRange = Math.min(page * limit, total)
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+    if (scrollHeight - (scrollTop + clientHeight) < 80 && hasMore && !isLoadingMore && !isEmailsLoading) {
+      onLoadMore?.()
+    }
+  }
 
   const filteredNotifications = React.useMemo(() => {
     if (!searchQuery.trim()) return notifications
@@ -419,7 +535,7 @@ export function EmailList({
               aria-label='Notifications'
               title='Notifications'
               onClick={() => {
-                setCategoryFilter((prev) => (prev === 'notification' ? 'all' : 'notification'))
+                setCategoryFilter((prev) => (prev === 'notification' ? 'mail' : 'notification'))
                 onSelectNotificationMode?.()
               }}
             >
@@ -434,107 +550,109 @@ export function EmailList({
         </div>
 
         {/* 2. Toolbar (Horizontal Icon Navigation) placed on top of search bar */}
-        <div className='rounded-xl border border-border/80 bg-muted/10 p-1 flex items-center justify-between gap-1'>
-          {/* Mail Items Icon */}
+        <div className='rounded-xl bg-muted/20 p-1 flex items-center justify-between gap-1 border-0'>
+          {/* 1st Icon: Task / Kanban (visually Calendar icon) */}
           <button
             onClick={() => {
-              setCategoryFilter((prev) => (prev === 'mail' ? 'all' : 'mail'))
-              const firstMail = mailItems[0]
-              if (firstMail) {
-                onSelectEmail(firstMail)
+              setCategoryFilter('tasks')
+              setSectionMode('mail')
+              onSelectMailTab?.()
+            }}
+            className={cn(
+              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 border-0',
+              categoryFilter === 'tasks' && 'bg-purple-500/15 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400 font-semibold shadow-2xs'
+            )}
+            title='Tasks / Kanban Board'
+          >
+            <Calendar className='h-4 w-4' />
+          </button>
+
+          {/* 2nd Icon: Email */}
+          <button
+            onClick={() => {
+              setCategoryFilter('mail')
+              setSectionMode('mail')
+              onSelectMailTab?.()
+              if (activeTab === 'chats' || activeTab === 'contact' || activeTab === 'groups' || activeTab === 'folder' ||
+                  activeTab === 'chat-contact' || activeTab === 'chat-groups' || activeTab === 'chat-folder' ||
+                  activeTab === 'ai-chat' || activeTab === 'ai-recent' || activeTab === 'ai-prompts') {
+                onTabChange?.('inbox')
+                setMode('inbox')
               }
             }}
             className={cn(
-              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-              (categoryFilter === 'mail' || (selectedEmailId !== null && !isEmailSettingsSelected && !isNotificationSelected && mailItems.some((m) => m.id === selectedEmailId))) &&
-              'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
+              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 border-0',
+              categoryFilter === 'mail' &&
+              'bg-indigo-500/15 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 font-semibold shadow-2xs'
             )}
             title='Mail Items'
           >
             <Mail className='h-4 w-4' />
           </button>
 
-          {/* Chat Icon */}
+          {/* 3rd Icon: Chat */}
           <button
             onClick={() => {
-              setCategoryFilter((prev) => (prev === 'chat' ? 'all' : 'chat'))
-              const firstChat = chatItems[0]
-              if (firstChat) {
-                if (firstChat.id.startsWith('conversation-')) {
-                  const convoId = firstChat.id.replace('conversation-', '')
-                  const convo = conversations.find((c) => c.id === convoId)
-                  if (convo) onSelectConversation?.(convo)
-                } else if (firstChat.id.startsWith('contact-')) {
-                  const contactId = firstChat.id.replace('contact-', '')
-                  const contact = contacts.find((c) => c.id === contactId)
-                  if (contact) onSelectContact?.(contact)
-                }
-              }
+              setCategoryFilter('chat')
+              setSectionMode('chat')
+              onSelectChatTab?.()
+              onTabChange?.('chats')
             }}
             className={cn(
-              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-              (categoryFilter === 'chat' || selectedContactId !== null || (selectedEmailId !== null && chatItems.some((c) => c.id === selectedEmailId))) &&
-              'bg-background text-emerald-600 dark:text-emerald-400 shadow-sm border border-border/60 font-semibold'
+              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 border-0',
+              categoryFilter === 'chat' &&
+              'bg-emerald-500/15 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 font-semibold shadow-2xs'
             )}
             title='Chats & Direct Messages'
           >
             <MessageSquare className='h-4 w-4' />
           </button>
 
-          {/* AI Assistant Icon */}
+          {/* 4th Icon: AI Chat */}
           <button
             onClick={() => {
-              setCategoryFilter((prev) => (prev === 'ai' ? 'all' : 'ai'))
-              onSelectAiChat?.()
+              setCategoryFilter('ai')
+              setSectionMode('mail')
+              onSelectMailTab?.()
+              onTabChange?.('ai-chat')
             }}
             className={cn(
-              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-              (categoryFilter === 'ai' || isAiChatSelected) && 'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
+              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 border-0',
+              categoryFilter === 'ai' && 'bg-indigo-500/15 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 font-semibold shadow-2xs'
+            )}
+            title='AI Chat'
+          >
+            <Sparkles className='h-4 w-4' />
+          </button>
+
+          {/* 5th Icon: AI Assistant */}
+          <button
+            onClick={() => {
+              setCategoryFilter('ai-assistant')
+              setSectionMode('mail')
+              onSelectMailTab?.()
+              onTabChange?.('ai-chat')
+            }}
+            className={cn(
+              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 border-0',
+              categoryFilter === 'ai-assistant' && 'bg-indigo-500/15 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 font-semibold shadow-2xs'
             )}
             title='AI Assistant'
           >
             <Bot className='h-4 w-4' />
           </button>
 
-          {/* Calendar Icon */}
+          {/* 6th Icon: Vouchers / Files */}
           <button
             onClick={() => {
-              setCategoryFilter((prev) => (prev === 'calendar' ? 'all' : 'calendar'))
-              onSelectCalendar?.()
+              setCategoryFilter('vouchers')
+              setSectionMode('mail')
+              onSelectMailTab?.()
+              onTabChange?.('vouchers')
             }}
             className={cn(
-              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-              (categoryFilter === 'calendar' || isCalendarSelected) && 'bg-background text-amber-600 dark:text-amber-400 shadow-sm border border-border/60 font-semibold'
-            )}
-            title='Calendar Schedule'
-          >
-            <Calendar className='h-4 w-4' />
-          </button>
-
-          {/* Tasks / Kanban Icon */}
-          <button
-            onClick={() => {
-              setCategoryFilter((prev) => (prev === 'tasks' ? 'all' : 'tasks'))
-              onSelectTask?.()
-            }}
-            className={cn(
-              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-              (categoryFilter === 'tasks' || isTaskSelected) && 'bg-background text-purple-600 dark:text-purple-400 shadow-sm border border-border/60 font-semibold'
-            )}
-            title='Tasks & Kanban Board'
-          >
-            <ClipboardList className='h-4 w-4' />
-          </button>
-
-          {/* Voucher Icon (FileText icon for Vouchers list) */}
-          <button
-            onClick={() => {
-              setCategoryFilter((prev) => (prev === 'vouchers' ? 'all' : 'vouchers'))
-              onSelectFile?.()
-            }}
-            className={cn(
-              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95',
-              (categoryFilter === 'vouchers' || isFileSelected) && 'bg-background text-indigo-600 dark:text-indigo-400 shadow-sm border border-border/60 font-semibold'
+              'flex flex-1 items-center justify-center rounded-lg py-1.5 transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 border-0',
+              categoryFilter === 'vouchers' && 'bg-indigo-500/15 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 font-semibold shadow-2xs'
             )}
             title='Vouchers'
           >
@@ -542,7 +660,255 @@ export function EmailList({
           </button>
         </div>
 
-        {/* 3. Search input (placed below toolbar icons) + New Button */}
+        {/* Sub-Tabs Bar: Shown for Mail, Chat, AI Chat, AI Assistant, and Vouchers */}
+        {!isCollapsed && (categoryFilter === 'mail' || categoryFilter === 'chat' || categoryFilter === 'ai' || categoryFilter === 'ai-assistant' || categoryFilter === 'vouchers') && (
+          <div className="w-full py-1 border-b border-border/60 flex items-center justify-between gap-2 overflow-x-auto scrollbar-none">
+            {categoryFilter === 'chat' ? (
+              <div className="flex items-center gap-3.5 sm:gap-4 text-xs font-medium px-0.5 whitespace-nowrap min-w-max">
+                <button
+                  onClick={() => {
+                    setCategoryFilter('chat')
+                    setSectionMode('chat')
+                    onTabChange?.('chats')
+                  }}
+                  className={cn(
+                    'pb-1 border-b-2 transition-all cursor-pointer select-none',
+                    (activeTab === 'chats' || !activeTab)
+                      ? 'border-primary text-foreground font-semibold'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Chats
+                </button>
+                <button
+                  onClick={() => {
+                    setCategoryFilter('chat')
+                    setSectionMode('chat')
+                    onTabChange?.('chat-contact')
+                  }}
+                  className={cn(
+                    'pb-1 border-b-2 transition-all cursor-pointer select-none',
+                    activeTab === 'chat-contact'
+                      ? 'border-primary text-foreground font-semibold'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Contact
+                </button>
+                <button
+                  onClick={() => {
+                    setCategoryFilter('chat')
+                    setSectionMode('chat')
+                    onTabChange?.('chat-groups')
+                  }}
+                  className={cn(
+                    'pb-1 border-b-2 transition-all cursor-pointer select-none',
+                    activeTab === 'chat-groups'
+                      ? 'border-primary text-foreground font-semibold'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Groups
+                </button>
+                <button
+                  onClick={() => {
+                    setCategoryFilter('chat')
+                    setSectionMode('chat')
+                    onTabChange?.('chat-folder')
+                  }}
+                  className={cn(
+                    'pb-1 border-b-2 transition-all cursor-pointer select-none',
+                    activeTab === 'chat-folder'
+                      ? 'border-primary text-foreground font-semibold'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Folder
+                </button>
+              </div>
+            ) : (categoryFilter === 'ai' || categoryFilter === 'ai-assistant') ? (
+              <div className="flex items-center gap-3.5 sm:gap-4 text-xs font-medium px-0.5 whitespace-nowrap min-w-max">
+                <button
+                  onClick={() => {
+                    onTabChange?.('ai-chat')
+                  }}
+                  className={cn(
+                    'pb-1 border-b-2 transition-all cursor-pointer select-none',
+                    (activeTab === 'ai-chat' || !activeTab || activeTab === 'inbox' || activeTab === 'chats')
+                      ? 'border-primary text-foreground font-semibold'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  AI Chat
+                </button>
+                <button
+                  onClick={() => {
+                    onTabChange?.('ai-recent')
+                  }}
+                  className={cn(
+                    'pb-1 border-b-2 transition-all cursor-pointer select-none',
+                    activeTab === 'ai-recent'
+                      ? 'border-primary text-foreground font-semibold'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Recent
+                </button>
+                <button
+                  onClick={() => {
+                    onTabChange?.('ai-prompts')
+                  }}
+                  className={cn(
+                    'pb-1 border-b-2 transition-all cursor-pointer select-none',
+                    activeTab === 'ai-prompts'
+                      ? 'border-primary text-foreground font-semibold'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  My Prompts
+                </button>
+              </div>
+            ) : categoryFilter === 'vouchers' ? (
+              <div className="flex items-center gap-3.5 sm:gap-4 text-xs font-medium px-0.5 whitespace-nowrap min-w-max">
+                <button
+                  onClick={() => {
+                    onTabChange?.('vouchers')
+                    onSelectFile?.()
+                  }}
+                  className={cn(
+                    'pb-1 border-b-2 transition-all cursor-pointer select-none',
+                    (activeTab === 'vouchers' || activeTab === 'file-list' || !activeTab || activeTab === 'inbox' || activeTab === 'chats')
+                      ? 'border-primary text-foreground font-semibold'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  File
+                </button>
+                <button
+                  onClick={() => {
+                    onTabChange?.('file-recent')
+                  }}
+                  className={cn(
+                    'pb-1 border-b-2 transition-all cursor-pointer select-none',
+                    activeTab === 'file-recent'
+                      ? 'border-primary text-foreground font-semibold'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Recent
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-2 w-full">
+                <div className="flex items-center gap-3 sm:gap-3.5 text-xs font-medium px-0.5 whitespace-nowrap shrink-0 overflow-x-auto scrollbar-none">
+                  <button
+                    onClick={() => {
+                      setCategoryFilter('mail')
+                      setSectionMode('mail')
+                      onTabChange?.('inbox')
+                      setMode('inbox')
+                    }}
+                    className={cn(
+                      'pb-1 border-b-2 transition-all cursor-pointer select-none',
+                      (activeTab === 'inbox' || !activeTab)
+                        ? 'border-primary text-foreground font-semibold'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Inbox
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCategoryFilter('mail')
+                      setSectionMode('mail')
+                      onTabChange?.('send')
+                      setMode('done')
+                    }}
+                    className={cn(
+                      'pb-1 border-b-2 transition-all cursor-pointer select-none',
+                      activeTab === 'send'
+                        ? 'border-primary text-foreground font-semibold'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Sent
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCategoryFilter('mail')
+                      onTabChange?.('folder')
+                    }}
+                    className={cn(
+                      'pb-1 border-b-2 transition-all cursor-pointer select-none',
+                      activeTab === 'folder'
+                        ? 'border-primary text-foreground font-semibold'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Folder
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCategoryFilter('mail')
+                      onTabChange?.('contact')
+                    }}
+                    className={cn(
+                      'pb-1 border-b-2 transition-all cursor-pointer select-none',
+                      activeTab === 'contact'
+                        ? 'border-primary text-foreground font-semibold'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Contact
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCategoryFilter('mail')
+                      onTabChange?.('groups')
+                    }}
+                    className={cn(
+                      'pb-1 border-b-2 transition-all cursor-pointer select-none',
+                      activeTab === 'groups'
+                        ? 'border-primary text-foreground font-semibold'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Groups
+                  </button>
+                </div>
+
+                {/* Pagination Range & Arrow Controls (1-20 of 152 < >) strictly right-aligned */}
+                {(activeTab === 'inbox' || activeTab === 'send' || !activeTab) && total > 0 && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 select-none pr-0.5 ml-auto">
+                    <span className="text-[11px] font-medium text-muted-foreground/80 whitespace-nowrap">
+                      {startRange}–{endRange} of {total}
+                    </span>
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        onClick={onPrevPage}
+                        disabled={page <= 1 || isEmailsLoading}
+                        className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                        title="Previous Page"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={onNextPage}
+                        disabled={!hasMore || endRange >= total || isEmailsLoading}
+                        className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                        title="Next Page"
+                      >
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 3. Search input (placed below toolbar icons & tabs) + New Button */}
         {!isCollapsed ? (
           <div className='flex items-center gap-1.5 w-full'>
             <div className='relative min-w-0 flex-1'>
@@ -586,13 +952,10 @@ export function EmailList({
         )}
       </div>
 
-      <div className='min-h-0 flex-1 scrollbar-thin overflow-y-auto bg-background'>
+      <div onScroll={handleScroll} className='min-h-0 flex-1 scrollbar-thin overflow-y-auto bg-background'>
         <div className='flex flex-col gap-0 py-0.5'>
           {isEmailsLoading ? (
-            <div className='flex flex-col items-center justify-center p-8 text-center text-muted-foreground gap-2'>
-              <Loader2 className='h-5 w-5 animate-spin text-indigo-500' />
-              <p className='text-xs'>Loading emails...</p>
-            </div>
+            <EmailSkeletonList />
           ) : emailsError ? (
             <div className='flex flex-col items-center justify-center p-8 text-center text-muted-foreground gap-1.5'>
               <span className='text-sm font-semibold text-destructive'>Unable to load emails</span>
@@ -746,7 +1109,7 @@ export function EmailList({
                                 : 'border-indigo-200/30 bg-indigo-500/10 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400'
                           )}
                         >
-                          {email.avatarInitials || email.name.charAt(0)}
+                          {email.avatarInitials || cleanSenderName(email.name).charAt(0).toUpperCase()}
                         </div>
                         {!email.read && (
                           <span className='absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full border-2 border-background bg-indigo-600' />
@@ -769,7 +1132,7 @@ export function EmailList({
                                 !email.read && 'font-semibold'
                               )}
                             >
-                              {email.name}
+                              {cleanSenderName(email.name)}
                             </span>
                             {!email.read && (
                               <span className='inline-flex h-1.5 w-1.5 flex-shrink-0 rounded-full bg-indigo-600' />
@@ -958,13 +1321,14 @@ export function EmailList({
 
               return (
                 <>
-                  {(categoryFilter === 'all' || categoryFilter === 'mail') && mailItems.length > 0 && (
+                  {/* Mail section */}
+                  {categoryFilter === 'mail' && (
                     <>
-                      {!isCollapsed && (
+                      {!isCollapsed && mailItems.length > 0 && (
                         <div className='flex items-center gap-2 px-3 pt-1.5 pb-0.5'>
                           <Mail className='h-3 w-3 shrink-0 text-indigo-500' />
                           <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
-                            Mail
+                            {activeTab === 'send' || mode === 'done' ? 'Sent Mails' : 'Inbox Mails'}
                           </span>
                           <div className='h-px flex-1 bg-border' />
                           <span className='text-[10px] text-muted-foreground/50'>
@@ -972,13 +1336,23 @@ export function EmailList({
                           </span>
                         </div>
                       )}
-                      {mailItems.map(renderCard)}
+                      {mailItems.length === 0 ? (
+                        <div className='flex flex-col items-center justify-center p-8 text-center text-muted-foreground'>
+                          <p className='text-sm font-medium'>No emails found</p>
+                          <p className='mt-1 text-xs text-muted-foreground/60'>
+                            Try adjusting your search or filters
+                          </p>
+                        </div>
+                      ) : (
+                        mailItems.map(renderCard)
+                      )}
                     </>
                   )}
 
-                  {(categoryFilter === 'all' || categoryFilter === 'chat') && chatItems.length > 0 && (
+                  {/* Chat section */}
+                  {categoryFilter === 'chat' && (
                     <>
-                      {!isCollapsed && (
+                      {!isCollapsed && chatItems.length > 0 && (
                         <div className='flex items-center gap-2 px-3 pt-2 pb-0.5'>
                           <MessageSquare className='h-3 w-3 shrink-0 text-emerald-500' />
                           <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
@@ -990,14 +1364,23 @@ export function EmailList({
                           </span>
                         </div>
                       )}
-                      {chatItems.map(renderCard)}
+                      {chatItems.length === 0 ? (
+                        <div className='flex flex-col items-center justify-center p-8 text-center text-muted-foreground'>
+                          <p className='text-sm font-medium'>No chats found</p>
+                          <p className='mt-1 text-xs text-muted-foreground/60'>
+                            Try adjusting your search or start a new conversation
+                          </p>
+                        </div>
+                      ) : (
+                        chatItems.map(renderCard)
+                      )}
                     </>
                   )}
 
                   {/* Notification cards */}
-                  {!isCollapsed && onSelectNotification && (categoryFilter === 'all' || categoryFilter === 'notification' || isNotificationSelected) && (
+                  {categoryFilter === 'notification' && onSelectNotification && (
                     <>
-                      {(categoryFilter === 'all' || categoryFilter === 'notification') && (
+                      {!isCollapsed && (
                         <div className='flex items-center gap-2 px-3 pt-2 pb-0.5'>
                           <Bell className='h-3 w-3 shrink-0 text-indigo-500' />
                           <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
@@ -1010,15 +1393,13 @@ export function EmailList({
                         </div>
                       )}
                       {filteredNotifications.length === 0 ? (
-                        categoryFilter === 'notification' && (
-                          <div className='mx-3 my-2 rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-xs text-muted-foreground'>
-                            <Bell className='mx-auto h-7 w-7 opacity-30 mb-2 text-indigo-500' />
-                            <p className='font-semibold text-foreground/80'>No notifications</p>
-                            <p className='text-[11px] opacity-70 mt-0.5'>
-                              {searchQuery ? `No notifications matching "${searchQuery}"` : 'You have no notifications at this time.'}
-                            </p>
-                          </div>
-                        )
+                        <div className='mx-3 my-2 rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-xs text-muted-foreground'>
+                          <Bell className='mx-auto h-7 w-7 opacity-30 mb-2 text-indigo-500' />
+                          <p className='font-semibold text-foreground/80'>No notifications</p>
+                          <p className='text-[11px] opacity-70 mt-0.5'>
+                            {searchQuery ? `No notifications matching "${searchQuery}"` : 'You have no notifications at this time.'}
+                          </p>
+                        </div>
                       ) : (
                         filteredNotifications.map((notif) => {
                           const isSelected = isNotificationSelected && selectedNotificationId === notif.id
@@ -1069,100 +1450,73 @@ export function EmailList({
                     </>
                   )}
 
-                  {/* AI Chat card */}
-                  {!isCollapsed && onSelectAiChat && (categoryFilter === 'all' || categoryFilter === 'ai' || isAiChatSelected) && (
+                  {/* AI Chat & AI Assistant section (4th & 5th Icons with sub-tabs) */}
+                  {(categoryFilter === 'ai' || categoryFilter === 'ai-assistant') && onSelectAiChat && (
                     <>
                       {!isCollapsed && (
                         <div className='flex items-center gap-2 px-3 pt-2 pb-0.5'>
-                          <Bot className='h-3 w-3 shrink-0 text-indigo-500' />
+                          {categoryFilter === 'ai' ? (
+                            <Sparkles className='h-3 w-3 shrink-0 text-indigo-500' />
+                          ) : (
+                            <Bot className='h-3 w-3 shrink-0 text-indigo-500' />
+                          )}
                           <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
-                            AI
+                            {categoryFilter === 'ai' ? 'AI Chat' : 'AI Assistant'}
                           </span>
                           <div className='h-px flex-1 bg-border' />
                         </div>
                       )}
-                      <div
-                        id='ai-chat-card'
-                        onClick={onSelectAiChat}
-                        className={[
-                          'group relative mx-3 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
-                          isAiChatSelected
-                            ? 'border-indigo-200/50 bg-indigo-500/10 dark:border-indigo-900/30 dark:bg-indigo-950/20'
-                            : 'border-transparent bg-background hover:bg-indigo-500/5 hover:border-indigo-200/30',
-                        ].join(' ')}
-                      >
-                        {isAiChatSelected && (
-                          <div className='absolute top-1 bottom-1 left-0 w-0.5 rounded-l-full bg-indigo-600' />
-                        )}
-                        <div className='flex items-center justify-between'>
-                          <div className='flex min-w-0 items-center gap-2'>
-                            <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-200/40 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-600 dark:border-indigo-800/40 dark:text-indigo-400'>
-                              <Bot className='h-3.5 w-3.5' />
+
+                      {activeTab === 'ai-recent' ? (
+                        <div className='mx-3 my-2 rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-xs text-muted-foreground'>
+                          <Bot className='mx-auto h-7 w-7 opacity-30 mb-2 text-indigo-500' />
+                          <p className='font-semibold text-foreground/80'>Recent AI Chats</p>
+                          <p className='text-[11px] opacity-70 mt-0.5'>Coming Soon</p>
+                        </div>
+                      ) : activeTab === 'ai-prompts' ? (
+                        <div className='mx-3 my-2 rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-xs text-muted-foreground'>
+                          <Sparkles className='mx-auto h-7 w-7 opacity-30 mb-2 text-indigo-500' />
+                          <p className='font-semibold text-foreground/80'>My Prompts</p>
+                          <p className='text-[11px] opacity-70 mt-0.5'>Coming Soon</p>
+                        </div>
+                      ) : (
+                        <div
+                          id='ai-assistant-chat-card'
+                          onClick={onSelectAiChat}
+                          className={[
+                            'group relative mx-3 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
+                            isAiChatSelected
+                              ? 'border-indigo-200/50 bg-indigo-500/10 dark:border-indigo-900/30 dark:bg-indigo-950/20'
+                              : 'border-transparent bg-background hover:bg-indigo-500/5 hover:border-indigo-200/30',
+                          ].join(' ')}
+                        >
+                          {isAiChatSelected && (
+                            <div className='absolute top-1 bottom-1 left-0 w-0.5 rounded-l-full bg-indigo-600' />
+                          )}
+                          <div className='flex items-center justify-between'>
+                            <div className='flex min-w-0 items-center gap-2'>
+                              <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-200/40 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-600 dark:border-indigo-800/40 dark:text-indigo-400'>
+                                <Bot className='h-3.5 w-3.5' />
+                              </div>
+                              <span className='flex items-center gap-1 truncate text-sm font-semibold text-foreground'>
+                                AI Assistant
+                                <Sparkles className='h-3 w-3 text-indigo-400' />
+                              </span>
                             </div>
-                            <span className='flex items-center gap-1 truncate text-sm font-semibold text-foreground'>
-                              AI Assistant
-                              <Sparkles className='h-3 w-3 text-indigo-400' />
+                            <span className='ml-2 shrink-0 rounded-full bg-indigo-500/10 px-1.5 py-0.5 text-[9px] font-bold text-indigo-600 dark:text-indigo-400'>
+                              AI
                             </span>
                           </div>
-                          <span className='ml-2 shrink-0 rounded-full bg-indigo-500/10 px-1.5 py-0.5 text-[9px] font-bold text-indigo-600 dark:text-indigo-400'>
-                            AI
-                          </span>
-                        </div>
-                        <p className='line-clamp-2 text-xs text-muted-foreground/70 leading-relaxed pl-10'>
-                          Explain the new features of React 19 with examples of Server Actions and the use() hook.
-                        </p>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Calendar card */}
-                  {!isCollapsed && onSelectCalendar && (categoryFilter === 'all' || categoryFilter === 'calendar' || isCalendarSelected) && (
-                    <>
-                      {!isCollapsed && (
-                        <div className='flex items-center gap-2 px-3 pt-2 pb-0.5'>
-                          <Calendar className='h-3 w-3 shrink-0 text-amber-500' />
-                          <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
-                            Calendar
-                          </span>
-                          <div className='h-px flex-1 bg-border' />
+                          <p className='line-clamp-2 text-xs text-muted-foreground/70 leading-relaxed pl-10'>
+                            Explain the new features of React 19 with examples of Server Actions and the use() hook.
+                          </p>
                         </div>
                       )}
-                      <div
-                        id='calendar-card'
-                        onClick={onSelectCalendar}
-                        className={[
-                          'group relative mx-3 my-0.5 flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2.5 transition-all duration-200 select-none border',
-                          isCalendarSelected
-                            ? 'border-amber-200/50 bg-amber-500/10 dark:border-amber-900/30 dark:bg-amber-950/20'
-                            : 'border-transparent bg-background hover:bg-amber-500/5 hover:border-amber-200/30',
-                        ].join(' ')}
-                      >
-                        {isCalendarSelected && (
-                          <div className='absolute top-1 bottom-1 left-0 w-0.5 rounded-l-full bg-amber-600' />
-                        )}
-                        <div className='flex items-center justify-between'>
-                          <div className='flex min-w-0 items-center gap-2'>
-                            <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-200/40 bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-600 dark:border-amber-800/40 dark:text-amber-400'>
-                              <Calendar className='h-3.5 w-3.5' />
-                            </div>
-                            <span className='flex items-center gap-1.5 truncate text-sm font-semibold text-foreground'>
-                              Weekly Planning & Sync
-                            </span>
-                          </div>
-                          <span className='ml-2 shrink-0 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-bold text-amber-600 dark:text-amber-400'>
-                            Event
-                          </span>
-                        </div>
-
-                        <span className='pl-10 text-[10px] text-muted-foreground/80 font-medium block'>
-                          July 30, 2026 - Aug 05, 2026
-                        </span>
-                      </div>
                     </>
                   )}
 
                   {/* Task / Kanban card */}
-                  {!isCollapsed && onSelectTask && (categoryFilter === 'all' || categoryFilter === 'tasks' || isTaskSelected) && (
+                  {categoryFilter === 'tasks' && onSelectTask && (
                     <>
                       {!isCollapsed && (
                         <div className='flex items-center gap-2 px-3 pt-2 pb-0.5'>
@@ -1192,7 +1546,7 @@ export function EmailList({
                               <ClipboardList className='h-3.5 w-3.5' />
                             </div>
                             <span className='flex items-center gap-1.5 truncate text-sm font-semibold text-foreground'>
-                              Sprint 5 Kanban Board
+                              Project Roadmap & Tasks
                             </span>
                           </div>
                           <span className='ml-2 shrink-0 rounded-full bg-purple-500/10 px-1.5 py-0.5 text-[9px] font-bold text-purple-600 dark:text-purple-400'>
@@ -1208,28 +1562,36 @@ export function EmailList({
                   )}
 
                   {/* Real Saved Vouchers cards */}
-                  {!isCollapsed && onSelectFile && (categoryFilter === 'all' || categoryFilter === 'vouchers' || isFileSelected) && (
+                  {categoryFilter === 'vouchers' && onSelectFile && (
                     <>
-                      {categoryFilter === 'all' && (
+                      {!isCollapsed && (
                         <div className='flex items-center gap-2 px-3 pt-2 pb-0.5'>
                           <FileText className='h-3 w-3 shrink-0 text-indigo-500' />
                           <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
                             Files
                           </span>
                           <div className='h-px flex-1 bg-border' />
-                          <span className='text-[10px] text-muted-foreground/50'>
-                            {filteredSavedVouchers.length}
-                          </span>
+                          {activeTab !== 'file-recent' && (
+                            <span className='text-[10px] text-muted-foreground/50'>
+                              {filteredSavedVouchers.length}
+                            </span>
+                          )}
                         </div>
                       )}
 
-                      {filteredSavedVouchers.length === 0 ? (
+                      {activeTab === 'file-recent' ? (
+                        <div className='mx-3 my-2 rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-xs text-muted-foreground'>
+                          <FileText className='mx-auto h-7 w-7 opacity-30 mb-2 text-indigo-500' />
+                          <p className='font-semibold text-foreground/80'>Recent Files</p>
+                          <p className='text-[11px] opacity-70 mt-0.5'>Coming Soon</p>
+                        </div>
+                      ) : filteredSavedVouchers.length === 0 ? (
                         <div className='mx-3 my-2 rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-xs text-muted-foreground'>
                           <FileText className='mx-auto h-7 w-7 opacity-30 mb-2 text-indigo-500' />
                           <p className='font-semibold text-foreground/80'>
                             {searchQuery ? 'No matching files found' : 'No Files yet'}
                           </p>
-                          <p className='text-[11px] opacity-7 0 mt-0.5'>
+                          <p className='text-[11px] opacity-70 mt-0.5'>
                             {searchQuery ? `No files matching "${searchQuery}"` : 'Upload and save a file on the Chat page to see it here.'}
                           </p>
                         </div>
@@ -1404,6 +1766,20 @@ export function EmailList({
                 </>
               )
             })()
+          )}
+          {isLoadingMore && (
+            <div className='p-2.5 space-y-2 animate-pulse'>
+              <div className='flex flex-col rounded-xl border border-border/40 bg-card/60 p-3.5 space-y-2 shadow-2xs'>
+                <div className='flex items-center justify-between gap-3'>
+                  <div className='flex items-center gap-2.5 min-w-0 flex-1'>
+                    <Skeleton className='h-6 w-6 rounded-full shrink-0 bg-muted/70' />
+                    <Skeleton className='h-3 w-28 rounded-sm bg-muted/70' />
+                  </div>
+                  <Skeleton className='h-2.5 w-10 rounded-xs shrink-0 bg-muted/50' />
+                </div>
+                <Skeleton className='h-3 w-2/3 rounded-sm bg-muted/80' />
+              </div>
+            </div>
           )}
         </div>
       </div>

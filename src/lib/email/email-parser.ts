@@ -27,6 +27,39 @@ export async function parseEmail(source: Buffer, seq: number, isRead: boolean) {
     toAddress = toVal.address || toVal.name || "";
   }
 
+  // Format file size
+  const formatSize = (bytes: number) => {
+    if (!bytes || bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  };
+
+  // Map attachments to frontend format and save to public/uploads/mail-attachments/
+  const attachments = (parsed.attachments || []).map((att: any, idx: number) => {
+    const mimeType = att.contentType || "application/octet-stream";
+    let fileUrl = "";
+    let formattedSize = formatSize(att.size || (att.content ? att.content.length : 0));
+
+    if (att.content) {
+      try {
+        const buf = Buffer.isBuffer(att.content) ? att.content : Buffer.from(att.content);
+        fileUrl = `data:${mimeType};base64,${buf.toString("base64")}`;
+      } catch (err) {
+        console.error("Error processing attachment:", err);
+      }
+    }
+
+    return {
+      id: `att-${seq}-${idx}`,
+      name: att.filename || `attachment-${idx + 1}`,
+      type: mimeType,
+      size: formattedSize,
+      url: fileUrl,
+    };
+  });
+
   return {
     id: String(seq),
     from: fromAddress,
@@ -37,5 +70,6 @@ export async function parseEmail(source: Buffer, seq: number, isRead: boolean) {
     text: parsed.text || "",
     html: parsed.html || parsed.textAsHtml || "",
     isRead: isRead,
+    attachments: attachments,
   };
 }

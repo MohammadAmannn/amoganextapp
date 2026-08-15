@@ -359,17 +359,21 @@ export function RealtimeChatView({
       return
     }
 
-    const folder =
-      attachment.type === 'image'
-        ? 'images'
-        : attachment.type === 'video'
-          ? 'videos'
-          : attachment.type === 'audio'
-            ? 'audio'
-            : 'documents'
+    const senderEmail = currentUser?.email || ''
+    const targetContactMember = conversation?.members?.find(
+      (member: any) =>
+        member.id !== currentUser?.accountNo &&
+        member.id !== currentUser?.id &&
+        member.user_id !== currentUser?.accountNo
+    )
+    const receiverEmail =
+      (targetContactMember as any)?.email ||
+      (targetContactMember as any)?.profile?.email ||
+      (chatName?.includes('@') ? chatName : '')
+
     startUpload(
       attachment.file,
-      folder,
+      { senderEmail, receiverEmail },
       (fileUrl, details) => {
         void sendMessage(
           conversationId,

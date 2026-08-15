@@ -13,9 +13,10 @@ export async function getUserContacts(userId: string): Promise<Contact[]> {
 export async function createContact(
   ownerId: string,
   contactEmail: string,
-  nickname?: string
+  nickname?: string,
+  ownerEmail?: string
 ): Promise<{ success: boolean; error?: string }> {
-  return apiCreateContact(ownerId, contactEmail, nickname)
+  return apiCreateContact(ownerId, contactEmail, nickname, ownerEmail)
 }
 
 export async function updateContactNickname(

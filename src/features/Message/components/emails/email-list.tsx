@@ -931,7 +931,7 @@ export function EmailList({
 
             <button
               onClick={() => onComposeChange?.(true)}
-              className='inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-100 font-semibold text-xs transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-sm border border-transparent'
+              className='inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-md shadow-primary/20 border border-transparent'
               title='Compose New Email'
             >
               <Mail className='h-3.5 w-3.5' />
@@ -943,7 +943,7 @@ export function EmailList({
           <div className='flex justify-center w-full'>
             <button
               onClick={() => onComposeChange?.(true)}
-              className='flex items-center justify-center p-2 rounded-lg bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-sm border border-transparent'
+              className='flex items-center justify-center p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-md shadow-primary/20 border border-transparent'
               title='Compose New Email'
             >
               <Mail className='h-3.5 w-3.5' />

@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useDownloadFile } from './hooks'
-import { toast } from 'sonner'
+import { HeaderActions } from '@/features/Message/components/chat/header-actions'
 
 export interface DocumentViewerHeaderProps {
   fileName: string
@@ -119,104 +119,13 @@ export function DocumentViewerHeader({
         </div>
       </div>
 
-      {/* Right: Three Dots Menu & Close button */}
+      {/* Right: HeaderActions & Close button */}
       <div className="flex items-center gap-1.5 shrink-0">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
-              title="More options"
-              aria-label="More options"
-            >
-              <MoreHorizontal className="h-4.5 w-4.5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-44 bg-popover text-popover-foreground border border-border shadow-md rounded-xl p-1.5"
-          >
-            <DropdownMenuItem
-              onClick={() => toast.info('Reply option selected')}
-              className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold cursor-pointer rounded-lg hover:bg-accent hover:text-accent-foreground"
-            >
-              <Reply className="h-4 w-4 text-muted-foreground" />
-              <span>Reply</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              onClick={() => toast.info('Forward option selected')}
-              className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold cursor-pointer rounded-lg hover:bg-accent hover:text-accent-foreground"
-            >
-              <Forward className="h-4 w-4 text-muted-foreground" />
-              <span>Forward</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              onClick={() => toast.success('Added to favorites')}
-              className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold cursor-pointer rounded-lg hover:bg-accent hover:text-accent-foreground"
-            >
-              <Star className="h-4 w-4 text-muted-foreground" />
-              <span>Favorite</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              onClick={() => toast.success('Document pinned')}
-              className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold cursor-pointer rounded-lg hover:bg-accent hover:text-accent-foreground"
-            >
-              <Pin className="h-4 w-4 text-muted-foreground" />
-              <span>Pin</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              onClick={() => toast.info('Flagged for review')}
-              className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold cursor-pointer rounded-lg hover:bg-accent hover:text-accent-foreground"
-            >
-              <Flag className="h-4 w-4 text-muted-foreground" />
-              <span>Flag</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              onClick={handleArchive}
-              className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold cursor-pointer rounded-lg hover:bg-accent hover:text-accent-foreground"
-            >
-              <Archive className="h-4 w-4 text-muted-foreground" />
-              <span>Archive</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              onClick={handleShare}
-              className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold cursor-pointer rounded-lg hover:bg-accent hover:text-accent-foreground"
-            >
-              <Share2 className="h-4 w-4 text-muted-foreground" />
-              <span>Share</span>
-            </DropdownMenuItem>
-
-            {allowDownload && (
-              <DropdownMenuItem
-                onClick={handleDownload}
-                disabled={isDownloading}
-                className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold cursor-pointer rounded-lg hover:bg-accent hover:text-accent-foreground"
-              >
-                {isDownloading ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                ) : (
-                  <Download className="h-4 w-4 text-muted-foreground" />
-                )}
-                <span>Download</span>
-              </DropdownMenuItem>
-            )}
-
-            <DropdownMenuItem
-              onClick={handleDelete}
-              className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-destructive hover:text-destructive cursor-pointer rounded-lg hover:bg-destructive/10"
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-              <span className="text-destructive">Delete</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <HeaderActions
+          onDelete={handleDelete}
+          onDownload={handleDownload}
+          onShare={handleShare}
+        />
 
         {onClose && (
           <Button

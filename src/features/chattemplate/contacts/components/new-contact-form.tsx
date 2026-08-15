@@ -47,7 +47,8 @@ export function NewContactForm({ onSuccess }: NewContactFormProps) {
       const result = await createContact(
         userId,  // ✅ Pass the auth user ID directly
         email.trim(), 
-        fullName.trim() || undefined
+        fullName.trim() || undefined,
+        currentUser.email
       )
       
       if (!result.success) {

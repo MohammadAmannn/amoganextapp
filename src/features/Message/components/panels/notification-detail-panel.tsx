@@ -194,7 +194,7 @@ export function NotificationDetailPanel({
                   Notification
                 </Badge>
                 <span className='text-xs text-muted-foreground'>
-                  {formatTime(notification.created_at)}
+                  {notification.created_at ? new Date(notification.created_at).toLocaleString() : ''}
                 </span>
               </div>
 

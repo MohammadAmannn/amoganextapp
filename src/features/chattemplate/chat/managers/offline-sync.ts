@@ -24,16 +24,12 @@ export async function syncOfflineQueue(
       // If there is an offline file attachment
       if (msg.attachment_file && msg.attachment_metadata) {
         try {
-          const folder = 
-            msg.message_type === 'image' ? 'images' : 
-            msg.message_type === 'video' ? 'videos' : 
-            msg.message_type === 'audio' ? 'audio' : 'documents'
-
+          const userEmail = (msg as any).sender_user_email || 'user@example.com'
           const fileToUpload = msg.attachment_file instanceof File 
             ? msg.attachment_file 
             : new File([msg.attachment_file], msg.attachment_metadata.fileName, { type: msg.attachment_metadata.mimeType })
 
-          const { promise } = uploadAttachment(fileToUpload, folder)
+          const { promise } = uploadAttachment(fileToUpload, userEmail)
           const uploadedUrl = await promise
           
           fileUrl = uploadedUrl

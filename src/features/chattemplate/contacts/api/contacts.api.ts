@@ -41,13 +41,16 @@ export async function getContacts(userId: string): Promise<Contact[]> {
   }
 }
 
+import { initializeContactStorage } from '../../chat/services/chat-storage.service'
+
 /**
  * Creates a new contact for the specified owner.
  */
 export async function createContact(
   ownerId: string,
   contactEmail: string,
-  nickname?: string
+  nickname?: string,
+  ownerEmail?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const validOwnerId = stringToUuid(ownerId)
@@ -148,6 +151,18 @@ export async function createContact(
     triggerContactAlert('create', ownerId, contactUserId).catch((err) =>
       console.error('[DB Alerts] Error sending contact created alert:', err)
     )
+
+    // Initialize dedicated Contact File Space for the created contact (and owner)
+    if (emailLower) {
+      void initializeContactStorage(emailLower).catch((err) =>
+        console.error('[Contact Storage] Error initializing contact file space:', err)
+      )
+    }
+    if (ownerEmail) {
+      void initializeContactStorage(ownerEmail).catch((err) =>
+        console.error('[Contact Storage] Error initializing owner file space:', err)
+      )
+    }
 
     return { success: true }
   } catch (error) {

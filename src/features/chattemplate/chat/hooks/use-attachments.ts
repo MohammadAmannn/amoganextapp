@@ -15,28 +15,58 @@ export function useAttachments() {
 
   const startUpload = useCallback((
     file: File,
-    folder: 'images' | 'videos' | 'documents' | 'audio',
-    onSuccess: (url: string, fileDetails: { name: string; size: number; type: string; duration?: number }) => void,
-    onError?: (err: Error) => void,
-    duration?: number
+    senderEmailOrOptions: string | { senderEmail?: string; receiverEmail?: string },
+    receiverEmailOrOnSuccess?: string | ((url: string, fileDetails: { name: string; size: number; type: string; duration?: number }) => void),
+    onSuccessOrOnError?: ((url: string, fileDetails: { name: string; size: number; type: string; duration?: number }) => void) | ((err: Error) => void),
+    onErrorOrDuration?: ((err: Error) => void) | number,
+    durationParam?: number
   ) => {
+    let senderEmail = ''
+    let receiverEmail = ''
+    let onSuccess: (url: string, fileDetails: { name: string; size: number; type: string; duration?: number }) => void
+    let onError: ((err: Error) => void) | undefined
+    let duration: number | undefined
+
+    if (typeof senderEmailOrOptions === 'object' && senderEmailOrOptions !== null) {
+      senderEmail = senderEmailOrOptions.senderEmail || ''
+      receiverEmail = senderEmailOrOptions.receiverEmail || ''
+      onSuccess = receiverEmailOrOnSuccess as any
+      onError = onSuccessOrOnError as any
+      duration = onErrorOrDuration as number
+    } else if (typeof receiverEmailOrOnSuccess === 'string') {
+      senderEmail = senderEmailOrOptions as string
+      receiverEmail = receiverEmailOrOnSuccess
+      onSuccess = onSuccessOrOnError as any
+      onError = onErrorOrDuration as any
+      duration = durationParam
+    } else {
+      senderEmail = senderEmailOrOptions as string
+      onSuccess = receiverEmailOrOnSuccess as any
+      onError = onSuccessOrOnError as any
+      duration = onErrorOrDuration as number
+    }
+
     const uploadId = crypto.randomUUID()
     const newUpload: UploadState = {
       id: uploadId,
       file,
       progress: 0,
       status: 'uploading',
-      folder,
+      folder: 'documents',
     }
 
     setUploads((prev) => [...prev, newUpload])
 
     try {
-      const { xhr, promise } = uploadAttachment(file, folder, (percent) => {
-        setUploads((prev) =>
-          prev.map((u) => (u.id === uploadId ? { ...u, progress: percent } : u))
-        )
-      })
+      const { xhr, promise } = uploadAttachment(
+        file,
+        { senderEmail, receiverEmail },
+        (percent) => {
+          setUploads((prev) =>
+            prev.map((u) => (u.id === uploadId ? { ...u, progress: percent } : u))
+          )
+        }
+      )
 
       setUploads((prev) =>
         prev.map((u) => (u.id === uploadId ? { ...u, xhr } : u))
@@ -47,7 +77,7 @@ export function useAttachments() {
           setUploads((prev) =>
             prev.map((u) => (u.id === uploadId ? { ...u, progress: 100, status: 'success' } : u))
           )
-          onSuccess(url, { name: file.name, size: file.size, type: file.type, duration })
+          if (onSuccess) onSuccess(url, { name: file.name, size: file.size, type: file.type, duration })
           
           setTimeout(() => {
             setUploads((prev) => prev.filter((u) => u.id !== uploadId))

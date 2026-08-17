@@ -92,8 +92,9 @@ function NextAuthSync() {
     const userEmail = (user.email || '').toLowerCase()
     const fallbackId = stringToUuid(user.id || user.email)
 
-    // Skip if already synced with the same email
-    if (auth.user?.email === userEmail && auth.accessToken) return
+    // Always re-sync — never skip because the account may have switched.
+    // The old guard `if (auth.user?.email === userEmail && auth.accessToken) return`
+    // caused the previous account to bleed through after an account switch.
 
     // Resolve the actual profile UUID from Supabase by email
     // This ensures accountNo matches owner_user_id / user_id stored in all DB rows

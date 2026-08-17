@@ -32,7 +32,19 @@ export default function CalendarTemplate({
     return (
       <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-background text-foreground overflow-hidden animate-fade-in md:relative md:z-auto'>
         {/* Header */}
-        <div className='flex shrink-0 items-center gap-3 border-b border-border bg-background px-3 py-2.5 sm:px-4 sm:py-2.5 select-none'>
+        <div className='flex shrink-0 items-center gap-2.5 sm:gap-3 border-b border-border bg-background px-3 sm:px-4 py-2.5 select-none'>
+          {onBack && (
+            <button
+              type='button'
+              onClick={onBack}
+              className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden'
+              title='Close'
+              aria-label='Close'
+            >
+              <X className='h-4.5 w-4.5' />
+            </button>
+          )}
+
           <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-200/45 bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-600 dark:border-amber-800/40 dark:text-amber-400'>
             <CalendarIcon className='h-4 w-4' />
           </div>
@@ -41,16 +53,6 @@ export default function CalendarTemplate({
           </div>
           <div className='flex items-center gap-1 shrink-0'>
             <HeaderActions onDelete={onBack} />
-            {onBack && (
-              <button
-                onClick={onBack}
-                className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-                title='Close'
-                aria-label='Close'
-              >
-                <X className='h-5 w-5' />
-              </button>
-            )}
           </div>
         </div>
 

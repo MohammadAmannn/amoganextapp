@@ -26,6 +26,8 @@ import {
   Pencil,
   Share2,
   SlidersHorizontal,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { StorageFileItem, UserFolder } from '../../services/user-storage-files.service'
@@ -228,6 +230,23 @@ export function UserFileCardsView({
     return result
   }, [files, folder, search, filterCategory, sortBy])
 
+  const [page, setPage] = useState(1)
+  const pageSize = 20
+
+  React.useEffect(() => {
+    setPage(1)
+  }, [search, filterCategory, sortBy, folder?.id])
+
+  const total = filteredFiles.length
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const safePage = Math.min(page, totalPages)
+  const startRange = total === 0 ? 0 : (safePage - 1) * pageSize + 1
+  const endRange = Math.min(safePage * pageSize, total)
+
+  const paginatedFiles = useMemo(() => {
+    return filteredFiles.slice((safePage - 1) * pageSize, safePage * pageSize)
+  }, [filteredFiles, safePage, pageSize])
+
   if (!folder || !folder.category) {
     return (
       <div className="flex h-full min-h-0 w-full flex-1 flex-col items-center justify-center p-6 text-center bg-background">
@@ -271,22 +290,22 @@ export function UserFileCardsView({
   return (
     <div className={cn("flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background", !isLtr && "dir-rtl")}>
       {/* 1. Top Header Bar */}
-      <div className="flex shrink-0 items-center justify-between border-b border-border bg-card px-4 py-3 shadow-2xs gap-3">
+      <div className="flex shrink-0 items-center justify-between border-b border-border/60 bg-card px-4 py-2.5 gap-3">
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           {onBack && (
             <Button
               size="icon"
               variant="ghost"
               onClick={onBack}
-              className="h-8 w-8 rounded-full md:hidden hover:bg-muted shrink-0"
-              title="Go back"
+              className="h-8 w-8 rounded-full md:hidden hover:bg-muted text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
+              title="Close view"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <X className="h-4 w-4" />
             </Button>
           )}
 
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-200/50 bg-indigo-500/10 text-indigo-600 dark:border-indigo-900/40 dark:text-indigo-400">
-            <FolderOpen className="h-4.5 w-4.5" />
+          <div className="flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-xl border border-indigo-200/50 bg-indigo-500/10 text-indigo-600 dark:border-indigo-900/40 dark:text-indigo-400">
+            <FolderOpen className="h-4 w-4" />
           </div>
 
           <div className="min-w-0 flex-1">
@@ -294,7 +313,7 @@ export function UserFileCardsView({
               <h2 className="text-sm sm:text-base font-bold text-foreground truncate">
                 {folderTitle}
               </h2>
-              <Badge variant="outline" className="h-5 px-1.5 py-0 text-[10px] font-semibold text-muted-foreground">
+              <Badge variant="outline" className="h-4.5 px-1.5 py-0 text-[10px] font-semibold text-muted-foreground">
                 {filteredFiles.length} {filteredFiles.length === 1 ? 'file' : 'files'}
               </Badge>
             </div>
@@ -304,7 +323,7 @@ export function UserFileCardsView({
           </div>
         </div>
 
-        {/* Action Header & Close Cross Icon (X) - Close button visible ONLY on mobile */}
+        {/* Action Header Tools on Right */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <HeaderActions
             onDownload={() => {
@@ -316,31 +335,18 @@ export function UserFileCardsView({
             }}
             onShare={() => toast.success('Folder link copied to clipboard!')}
           />
-          {onBack && (
-            <>
-              <div className="h-4 w-px bg-border/80 mx-0.5 md:hidden" />
-              <button
-                type="button"
-                onClick={onBack}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer md:hidden"
-                title="Close view"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </>
-          )}
         </div>
       </div>
 
-      {/* 2. Action Toolbar Navbar: LTR, FILTER, SORT, SHORT, VIEW Dropdown Menu */}
-      <div className="flex shrink-0 items-center justify-between border-b border-border bg-card/40 px-4 sm:px-6 py-2 gap-2 flex-wrap text-xs select-none">
+      {/* 2. Action Toolbar Navbar: LTR, FILTER, SORT, SHORT, VIEW Dropdown Menu (No bottom border, reduced space) */}
+      <div className="flex shrink-0 items-center justify-between px-4 sm:px-6 pt-2.5 pb-1 gap-2 flex-wrap text-xs select-none">
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           {/* LTR Toggle */}
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsLtr(!isLtr)}
-            className="h-8 px-2.5 text-xs font-semibold gap-1.5 border-border/80 bg-background hover:bg-muted"
+            className="h-7.5 px-2.5 text-xs font-semibold gap-1.5 border-border/70 bg-background hover:bg-muted"
             title="Toggle Text Direction (LTR / RTL)"
           >
             <ArrowLeftRight className="h-3.5 w-3.5 text-indigo-500" />
@@ -353,7 +359,7 @@ export function UserFileCardsView({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 px-2.5 text-xs font-semibold gap-1.5 border-border/80 bg-background hover:bg-muted"
+                className="h-7.5 px-2.5 text-xs font-semibold gap-1.5 border-border/70 bg-background hover:bg-muted"
               >
                 <Filter className="h-3.5 w-3.5 text-indigo-500" />
                 <span>FILTER</span>
@@ -400,7 +406,7 @@ export function UserFileCardsView({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 px-2.5 text-xs font-semibold gap-1.5 border-border/80 bg-background hover:bg-muted"
+                className="h-7.5 px-2.5 text-xs font-semibold gap-1.5 border-border/70 bg-background hover:bg-muted"
               >
                 <ArrowUpDown className="h-3.5 w-3.5 text-indigo-500" />
                 <span>SORT</span>
@@ -442,7 +448,7 @@ export function UserFileCardsView({
               setSortBy('newest')
               toast.info('Filters reset to default')
             }}
-            className="h-8 px-2.5 text-xs font-semibold gap-1.5 border-border/80 bg-background hover:bg-muted"
+            className="h-7.5 px-2.5 text-xs font-semibold gap-1.5 border-border/70 bg-background hover:bg-muted"
             title="Reset Search and Filters"
           >
             <SlidersHorizontal className="h-3.5 w-3.5 text-indigo-500" />
@@ -457,7 +463,7 @@ export function UserFileCardsView({
               <Button
                 variant="default"
                 size="sm"
-                className="h-8 px-3 text-xs font-bold gap-1.5 bg-indigo-600 text-white hover:bg-indigo-700 shadow-2xs"
+                className="h-7.5 px-3 text-xs font-bold gap-1.5 bg-indigo-600 text-white hover:bg-indigo-700 shadow-2xs"
               >
                 {viewMode === 'card' ? (
                   <>
@@ -494,15 +500,15 @@ export function UserFileCardsView({
         </div>
       </div>
 
-      {/* 3. Full-Size Search Bar (Positioned BELOW Action Toolbar Navbar) */}
-      <div className="shrink-0 border-b border-border bg-card/60 px-4 sm:px-6 py-2.5">
+      {/* 3. Search Bar (Clean styling, no harsh lines or unnecessary padding) */}
+      <div className="shrink-0 px-4 sm:px-6 py-1">
         <div className="relative w-full">
           <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
           <Input
             placeholder="Search files by name, format, or sender..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-9 w-full rounded-xl border-border/80 bg-background pr-9 pl-9 text-xs sm:text-sm shadow-2xs focus-visible:ring-1 focus-visible:ring-ring"
+            className="h-8.5 w-full rounded-xl border-border/70 bg-background/80 pr-9 pl-9 text-xs sm:text-sm shadow-2xs focus-visible:ring-1 focus-visible:ring-ring"
           />
           {search && (
             <button
@@ -515,8 +521,42 @@ export function UserFileCardsView({
         </div>
       </div>
 
-      {/* 4. Main Files Container (Card View vs Table View) */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 bg-background">
+      {/* 4. Pagination & Total Files Sub-bar (Directly below search bar) */}
+      {total > 0 && (
+        <div className="flex shrink-0 items-center justify-between px-4 sm:px-6 py-1 text-xs text-muted-foreground select-none">
+          <span className="text-[11px] font-medium text-muted-foreground/70">
+            {total} {total === 1 ? 'file' : 'files'}
+          </span>
+          <div className="flex items-center gap-1.5 ml-auto">
+            <span className="text-[11px] font-medium text-muted-foreground/80 whitespace-nowrap">
+              {startRange}–{endRange} of {total}
+            </span>
+            <div className="flex items-center gap-0.5">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                title="Previous Page"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                title="Next Page"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Main Files Container (Card View vs Table View) */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 bg-background">
         {filteredFiles.length === 0 ? (
           <div className="flex h-full min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed border-border/80 bg-muted/10 p-8 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-500/10 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 mb-3">
@@ -530,16 +570,16 @@ export function UserFileCardsView({
             </p>
           </div>
         ) : viewMode === 'card' ? (
-          /* CARD VIEW: Horizontal Alignment Container */
-          <div className="flex flex-row flex-wrap items-start justify-start gap-4 sm:gap-5 w-full">
-            {filteredFiles.map((file) => {
+          /* CARD VIEW: Responsive Grid Container */
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-3.5 w-full">
+            {paginatedFiles.map((file) => {
               const categoryColor = getFileCategoryColor(file.category)
 
               return (
                 <div
                   key={file.id}
                   onClick={() => onSelectFileForPreview(file)}
-                  className="group relative flex w-[230px] sm:w-[260px] flex-col justify-between rounded-xl border border-border/80 bg-card p-3.5 shadow-2xs hover:shadow-md hover:border-indigo-400/50 dark:hover:border-indigo-600/50 transition-all duration-200 cursor-pointer select-none"
+                  className="group relative flex w-full flex-col justify-between rounded-xl border border-border/80 bg-card p-3 shadow-2xs hover:shadow-md hover:border-indigo-400/50 dark:hover:border-indigo-600/50 transition-all duration-200 cursor-pointer select-none"
                 >
                   {/* File Visual Header / Icon Thumbnail */}
                   <div className="mb-3 w-full">
@@ -568,7 +608,7 @@ export function UserFileCardsView({
                   </div>
 
                   {/* Divider */}
-                  <div className="my-2.5 h-px w-full bg-border/60" />
+                  <div className="my-2 h-px w-full bg-border/60" />
 
                   {/* Card Action Footer: Eye Icon (Preview) & Download Icon (Download next to Preview), Right 3-Dot Menu (Edit, View, Share) */}
                   <div className="flex items-center justify-between gap-2 pt-0.5" onClick={(e) => e.stopPropagation()}>
@@ -578,7 +618,7 @@ export function UserFileCardsView({
                       <button
                         type="button"
                         onClick={() => onSelectFileForPreview(file)}
-                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20 dark:bg-indigo-950/40 dark:text-indigo-300 text-xs font-semibold transition-colors cursor-pointer border border-indigo-200/30 dark:border-indigo-900/30"
+                        className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20 dark:bg-indigo-950/40 dark:text-indigo-300 text-xs font-semibold transition-colors cursor-pointer border border-indigo-200/30 dark:border-indigo-900/30"
                         title="Preview file"
                       >
                         <Eye className="h-3.5 w-3.5" />
@@ -589,7 +629,7 @@ export function UserFileCardsView({
                       <button
                         type="button"
                         onClick={() => downloadFile(file.fileUrl, file.fileName)}
-                        className="flex items-center justify-center h-7 w-7 rounded-md bg-muted/60 text-muted-foreground hover:bg-emerald-500/15 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all cursor-pointer border border-border/50"
+                        className="flex items-center justify-center h-6.5 w-6.5 rounded-md bg-muted/60 text-muted-foreground hover:bg-emerald-500/15 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all cursor-pointer border border-border/50"
                         title="Download file"
                       >
                         <Download className="h-3.5 w-3.5" />
@@ -601,7 +641,7 @@ export function UserFileCardsView({
                       <DropdownMenuTrigger asChild>
                         <button
                           type="button"
-                          className="flex items-center justify-center h-7 w-7 rounded-md bg-muted/60 text-muted-foreground hover:bg-indigo-500/15 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all cursor-pointer border border-border/50"
+                          className="flex items-center justify-center h-6.5 w-6.5 rounded-md bg-muted/60 text-muted-foreground hover:bg-indigo-500/15 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all cursor-pointer border border-border/50"
                           title="More options"
                         >
                           <MoreHorizontal className="h-3.5 w-3.5" />
@@ -641,9 +681,9 @@ export function UserFileCardsView({
           </div>
         ) : (
           /* TABLE VIEW: Tablecn Data Grid Table */
-          <div className="w-full overflow-hidden rounded-xl border border-border/80 bg-card shadow-2xs">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left text-xs">
+          <div className="w-full max-w-full overflow-hidden rounded-xl border border-border/80 bg-card shadow-2xs">
+            <div className="w-full overflow-x-auto scrollbar-thin">
+              <table className="w-full min-w-[700px] border-collapse text-left text-xs">
                 <thead>
                   <tr className="border-b border-border bg-muted/40 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
                     <th className="px-4 py-3 font-semibold">File Id (UUID)</th>
@@ -657,7 +697,7 @@ export function UserFileCardsView({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
-                  {filteredFiles.map((file) => {
+                  {paginatedFiles.map((file) => {
                     const fileUuid = file.id
                     const displayUuid = fileUuid.length > 16 ? `${fileUuid.slice(0, 8)}...${fileUuid.slice(-4)}` : fileUuid
                     const mainFolder = file.section || 'Chat'

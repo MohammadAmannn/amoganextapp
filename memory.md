@@ -113,7 +113,22 @@ All object paths in Supabase Storage follow the universal routing format:
 - **Section-Restricted Buttons**:
   - `New +` compose email button is displayed strictly on the **Mail tab** (`categoryFilter === 'mail'`).
   - `Upload +` file button is displayed strictly on the **File tab** (`categoryFilter === 'vouchers'`).
-- **Left-Sidebar Folder Search**: Typing in the left-side search input (`Search...`) filters `userFolders` in real-time by folder name, path, or section.
+### E. Google OAuth Account Switching & Session Purging
+- **Force Account Selection**: Configured `authorization: { params: { prompt: 'select_account' } }` in NextAuth `GoogleProvider` to guarantee that Google displays the account selection prompt on login instead of reusing the previously active session.
+- **Deep Session Purge**: Enhanced `/api/auth/mobile-logout` and `SignOutDialog` to invalidate all NextAuth session tokens, Zustand auth store state, NextAuth client session cache, and all Supabase auth cookies (`sb-*`, `supabase-auth-token`).
+
+### G. File Section 20-Card Pagination & Clean UI Architecture
+- **Pagination Sub-bar (`1–20 of 25 < >`)**: Positioned directly below the full-size search bar in `UserFileCardsView`, displaying current range and total count with `<` and `>` arrow buttons to navigate pages of 20 cards/rows. Automatically resets to page 1 upon search/filtering/sorting.
+- **Clean UI & Border Removal**:
+  - Removed line next to "File Explorer" header in left panel (`email-list.tsx`).
+  - Removed harsh top and bottom borders around the search bar in `UserFileCardsView` and reduced unnecessary padding across action toolbar, search bar, and card grid.
+- **Universal Top-Left Close (`X`) Icon on Mobile**:
+  - **Chat View**: Replaced right-side button with top-left `<X />` close button in `ChatView`.
+  - **Task / Kanban View**: Added top-left `<X />` close button in `KanbanTemplate` header.
+  - **AI Chat & AI Assistant**: Added top-left `<X />` close button in `AiChatPanel` header.
+  - **Calendar View**: Added top-left `<X />` close button in `CalendarTemplate` header.
+  - **Notifications**: Standardized top-left `<X />` close button in `NotificationDetailPanel`.
+  - **Email View**: Standardized top-left `<X />` close button in `Message/index.tsx`.
 
 ---
 
@@ -121,16 +136,18 @@ All object paths in Supabase Storage follow the universal routing format:
 
 | File Path | Action | Description |
 | :--- | :---: | :--- |
-| `src/features/Message/services/user-storage-files.service.ts` | **CREATED** | Queries real Supabase Storage `chat-files` bucket & DB vouchers for user files, real object UUIDs, version numbers (`v1.0`), and builds nested tree folders. |
-| `src/features/Message/components/files/user-file-cards-view.tsx` | **CREATED** | Renders horizontally aligned file cards, Data Grid Table view (`tablecn.com/data-grid`), full-size search bar, Action Navbar (LTR, FILTER, SORT, SHORT, VIEW), card 3-dot menu, and mobile close button. |
-| `src/features/Message/components/files/file-upload-form.tsx` | **CREATED** | Upload form matching `NewEmail` layout with Folder, Sub folder, and Remarks fields above attachments; saves directly to Supabase storage. |
-| `src/features/chattemplate/chat/services/chat-storage.service.ts` | **CREATED** | Storage helper (`getStoragePath`, `getChatFileCategory`, `normalizeContactEmail`, `generateUniqueFileName`). |
-| `src/features/chattemplate/files/managers/attachment-uploader.ts` | **MODIFIED** | Manages dual XHR & fetch uploads to Sender & Receiver folders with `x-upsert: true` and session email fallback. |
-| `src/features/chattemplate/chat/hooks/use-attachments.ts` | **MODIFIED** | Hook passing `senderEmail` and `receiverEmail` down to `uploadAttachment`. |
-| `src/features/Message/components/chat/realtime-chat-view.tsx` | **MODIFIED** | Dynamically resolves `senderEmail` and `receiverEmail` from session and conversation members. |
-| `src/features/chattemplate/contacts/api/contacts.api.ts` | **MODIFIED** | Normalizes contact email on contact creation without `.keep` files. |
-| `src/features/chattemplate/chat/services/chat-storage.service.test.ts` | **CREATED** | Vitest test suite (`17/17 passed`) for storage rules. |
-| `src/components/DocumentViewer/DocumentViewerHeader.tsx` | **MODIFIED** | Integrated `HeaderActions` on the top-right header next to close (`X`). |
-| `src/features/Message/components/emails/email-list.tsx` | **MODIFIED** | Render user storage folders on left sidebar under File tab (`categoryFilter === 'vouchers'`), real-time folder search, section-restricted `New`/`Upload` buttons with primary theme styling. |
-| `src/features/Message/index.tsx` | **MODIFIED** | Wired user storage folders, `UserFileCardsView`, `FileUploadForm`, and deferred SMTP email loading to Email tab. |
+| `src/features/Message/components/files/user-file-cards-view.tsx` | **MODIFIED** | Added 20-card pagination (`1-20 of N < >`) below search bar, removed unnecessary borders, reduced vertical padding, and wired paginated data. |
+| `src/features/Message/components/emails/email-list.tsx` | **MODIFIED** | Removed separator line next to "File Explorer" in left sidebar. |
+| `src/features/Message/components/chat/chat-view.tsx` | **MODIFIED** | Positioned close (`X`) button on top-left of mobile chat header. |
+| `src/features/kanbantemplate/index.tsx` | **MODIFIED** | Positioned close (`X`) button on top-left of mobile Kanban header. |
+| `src/features/Message/components/panels/ai-chat-panel.tsx` | **MODIFIED** | Positioned close (`X`) button on top-left of mobile AI Assistant header. |
+| `src/features/calendartemplate/index.tsx` | **MODIFIED** | Positioned close (`X`) button on top-left of mobile Calendar header. |
+| `src/features/Message/components/panels/notification-detail-panel.tsx` | **MODIFIED** | Standardized close (`X`) button on left side of header. |
+| `src/features/Message/index.tsx` | **MODIFIED** | Standardized top-left close (`X`) button on mobile email view. |
+| `src/lib/auth.ts` | **MODIFIED** | Added `prompt: 'select_account'` to GoogleProvider for account switching. |
+| `src/components/sign-out-dialog.tsx` | **MODIFIED** | Purged NextAuth client session, Supabase auth session, and Zustand auth store on logout. |
+| `app/api/auth/mobile-logout/route.ts` | **MODIFIED** | Purged all incoming cookies including `auth_user_data`, `thisisjustarandomstring`, and `sb-*`. |
+| `app/api/auth/mobile-login/route.ts` | **MODIFIED** | Purged stale cookies before Google OAuth redirect. |
+| `app/api/auth/mobile-set-cookie/route.ts` | **MODIFIED** | Purged old session cookies before setting new token. |
+| `src/components/providers.tsx` | **MODIFIED** | Removed early-return guard in NextAuthSync for clean account sync. |
 | `memory.md` | **MODIFIED** | Persistent memory documentation of all project updates. |

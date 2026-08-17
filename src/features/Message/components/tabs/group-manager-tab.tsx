@@ -50,9 +50,10 @@ interface MsgGroupTabProps {
   contacts: Contact[]
   onRefresh: () => void
   onSelectGroup?: (group: Group) => void
+  onClose?: () => void
 }
 
-export function MsgGroupTab({ groups, contacts, onRefresh, onSelectGroup }: MsgGroupTabProps) {
+export function MsgGroupTab({ groups, contacts, onRefresh, onSelectGroup, onClose }: MsgGroupTabProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [editingGroup, setEditingGroup] = useState<Group | null>(null)
@@ -249,14 +250,27 @@ export function MsgGroupTab({ groups, contacts, onRefresh, onSelectGroup }: MsgG
   return (
     <Card className='w-full max-w-3xl mx-auto border-border/80 bg-card/60 backdrop-blur-md shadow-md rounded-2xl'>
       <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-4'>
-        <div className='space-y-1'>
-          <CardTitle className='text-xl flex items-center gap-2'>
-            <Users2 className='h-5 w-5 text-indigo-500' />
-            Groups Manager
-          </CardTitle>
-          <CardDescription>
-            Manage your group channels and start team conversations.
-          </CardDescription>
+        <div className='flex items-center gap-3 min-w-0'>
+          {onClose && (
+            <Button
+              size='icon'
+              variant='ghost'
+              onClick={onClose}
+              className='h-8 w-8 rounded-full md:hidden hover:bg-muted text-muted-foreground hover:text-foreground shrink-0 cursor-pointer'
+              title='Close view'
+            >
+              <X className='h-4 w-4' />
+            </Button>
+          )}
+          <div className='space-y-1 min-w-0'>
+            <CardTitle className='text-xl flex items-center gap-2'>
+              <Users2 className='h-5 w-5 text-indigo-500 shrink-0' />
+              <span className='truncate'>Groups Manager</span>
+            </CardTitle>
+            <CardDescription className='truncate'>
+              Manage your group channels and start team conversations.
+            </CardDescription>
+          </div>
         </div>
       </CardHeader>
 

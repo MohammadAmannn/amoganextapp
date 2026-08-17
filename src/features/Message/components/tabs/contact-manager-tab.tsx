@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Users, Plus, Trash2, Edit2, MessageSquare, Search, Loader2, UserPlus } from 'lucide-react'
+import { Users, Plus, Trash2, Edit2, MessageSquare, Search, Loader2, UserPlus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { getDisplayNameInitials } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
@@ -28,9 +28,10 @@ interface MsgContactTabProps {
   contacts: Contact[]
   onRefresh: () => void
   onSelectContact?: (contact: Contact) => void
+  onClose?: () => void
 }
 
-export function MsgContactTab({ contacts, onRefresh, onSelectContact }: MsgContactTabProps) {
+export function MsgContactTab({ contacts, onRefresh, onSelectContact, onClose }: MsgContactTabProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [editingContact, setEditingContact] = useState<Contact | null>(null)
@@ -145,14 +146,27 @@ export function MsgContactTab({ contacts, onRefresh, onSelectContact }: MsgConta
   return (
     <Card className='w-full max-w-3xl mx-auto border-border/80 bg-card/60 backdrop-blur-md shadow-md rounded-2xl'>
       <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-4'>
-        <div className='space-y-1'>
-          <CardTitle className='text-xl flex items-center gap-2'>
-            <Users className='h-5 w-5 text-indigo-500' />
-            Contact Manager
-          </CardTitle>
-          <CardDescription>
-            Manage your saved contacts and start direct chat conversations.
-          </CardDescription>
+        <div className='flex items-center gap-3 min-w-0'>
+          {onClose && (
+            <Button
+              size='icon'
+              variant='ghost'
+              onClick={onClose}
+              className='h-8 w-8 rounded-full md:hidden hover:bg-muted text-muted-foreground hover:text-foreground shrink-0 cursor-pointer'
+              title='Close view'
+            >
+              <X className='h-4 w-4' />
+            </Button>
+          )}
+          <div className='space-y-1 min-w-0'>
+            <CardTitle className='text-xl flex items-center gap-2'>
+              <Users className='h-5 w-5 text-indigo-500 shrink-0' />
+              <span className='truncate'>Contact Manager</span>
+            </CardTitle>
+            <CardDescription className='truncate'>
+              Manage your saved contacts and start direct chat conversations.
+            </CardDescription>
+          </div>
         </div>
       </CardHeader>
 

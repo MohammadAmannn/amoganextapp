@@ -2,6 +2,8 @@
 
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { createClient } from '@/lib/client'
+import { useAuthStore } from '@/stores/auth-store'
+import { signOut as nextAuthSignOut } from 'next-auth/react'
 
 interface SignOutDialogProps {
   open: boolean
@@ -9,10 +11,22 @@ interface SignOutDialogProps {
 }
 
 export function SignOutDialog({ open, onOpenChange }: SignOutDialogProps) {
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    try {
+      useAuthStore.getState().auth.reset()
+    } catch (err) {
+      // ignore
+    }
+
+    try {
+      await nextAuthSignOut({ redirect: false })
+    } catch (err) {
+      // ignore
+    }
+
     try {
       const supabase = createClient()
-      supabase.auth.signOut().catch(() => {})
+      await supabase.auth.signOut({ scope: 'global' }).catch(() => {})
     } catch (err) {
       // ignore
     }

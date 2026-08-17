@@ -70,8 +70,7 @@ export function NotificationDetailPanel({
             className='h-8 w-8 text-muted-foreground hover:bg-muted hover:text-foreground shrink-0'
             title='Close notification'
           >
-            <ArrowLeft className='h-4 w-4 md:hidden' />
-            <X className='hidden h-4 w-4 md:block' />
+            <X className='h-4 w-4' />
           </Button>
 
           <div className='h-4 w-px bg-border' />

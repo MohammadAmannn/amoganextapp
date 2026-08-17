@@ -648,15 +648,27 @@ export function ChatView({
   return (
     <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-card overflow-hidden rounded-none border-0 border-border shadow-xs md:relative md:z-auto sm:rounded-xl sm:border'>
       {/* Header */}
-      <div className='flex flex-none shrink-0 items-center justify-between border-b border-border bg-muted/10 p-4 select-none'>
-        <div className='flex min-w-0 items-center gap-3'>
+      <div className='flex flex-none shrink-0 items-center justify-between border-b border-border bg-muted/10 p-3 sm:p-4 select-none'>
+        <div className='flex min-w-0 items-center gap-2 sm:gap-3'>
+          {onBack && (
+            <button
+              type='button'
+              onClick={onBack}
+              className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden'
+              title='Close'
+              aria-label='Close chat'
+            >
+              <X className='h-4.5 w-4.5' />
+            </button>
+          )}
+
           <div
             onClick={() => setShowProfile(true)}
-            className='flex cursor-pointer items-center gap-3 transition-opacity select-none hover:opacity-85'
+            className='flex cursor-pointer items-center gap-2.5 sm:gap-3 transition-opacity select-none hover:opacity-85 min-w-0'
             title='Click to view info'
           >
             <div className='relative shrink-0'>
-              <Avatar className='h-10 w-10 rounded-xl border border-border/60'>
+              <Avatar className='h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-border/60'>
                 {chatAvatar ? (
                   <AvatarImage src={chatAvatar} alt={chatName} />
                 ) : null}
@@ -679,16 +691,6 @@ export function ChatView({
 
         <div className='flex items-center gap-1 shrink-0'>
           <HeaderActions onDelete={onBack} />
-          {onBack && (
-            <button
-              onClick={onBack}
-              className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-              title='Close'
-              aria-label='Close chat'
-            >
-              <X className='h-5 w-5' />
-            </button>
-          )}
         </div>
       </div>
 

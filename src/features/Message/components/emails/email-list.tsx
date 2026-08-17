@@ -1630,12 +1630,13 @@ export function EmailList({
                   {categoryFilter === 'vouchers' && onSelectFile && (
                     <>
                       {!isCollapsed && (
-                        <div className='flex items-center gap-2 px-3 pt-2 pb-0.5'>
-                          <FolderOpen className='h-3 w-3 shrink-0 text-indigo-500' />
-                          <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
-                            File Explorer
-                          </span>
-                          <div className='h-px flex-1 bg-border' />
+                        <div className='flex items-center justify-between px-3 pt-2 pb-0.5'>
+                          <div className='flex items-center gap-1.5'>
+                            <FolderOpen className='h-3 w-3 shrink-0 text-indigo-500' />
+                            <span className='text-[10px] font-semibold  text-muted-foreground/60 uppercase'>
+                              File Explorer
+                            </span>
+                          </div>
                           <span className='text-[10px] text-muted-foreground/50'>
                             {userFolders.length}
                           </span>
@@ -1678,11 +1679,12 @@ export function EmailList({
                                 key={folder.id}
                                 id={`folder-card-${folder.id}`}
                                 onClick={() => {
-                                  if (hasChildren && !expandedFolderIds.has(folder.id)) {
+                                  if (hasChildren) {
                                     toggleFolderExpand(folder.id)
+                                  } else {
+                                    onSelectFolder?.(folder)
+                                    onSelectFile?.()
                                   }
-                                  onSelectFolder?.(folder)
-                                  onSelectFile?.()
                                 }}
                                 className={cn(
                                   'group relative flex cursor-pointer items-center justify-between gap-2 rounded-xl py-1.5 px-2 transition-all duration-200 select-none border',

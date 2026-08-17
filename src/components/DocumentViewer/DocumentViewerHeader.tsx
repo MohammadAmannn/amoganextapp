@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useDownloadFile } from './hooks'
 import { HeaderActions } from '@/features/Message/components/chat/header-actions'
+import { toast } from 'sonner'
 
 export interface DocumentViewerHeaderProps {
   fileName: string
@@ -91,18 +92,18 @@ export function DocumentViewerHeader({
 
   return (
     <div className="flex flex-none items-center justify-between bg-card px-4 py-2.5 border-b border-border/80 shrink-0 select-none w-full gap-3 shadow-2xs">
-      {/* Left: Avatar Circle + Title Info */}
-      <div className="flex items-center min-w-0 flex-1 gap-3">
-        {onBack && (
+      {/* Left: Close Cross (X) or Back + Avatar Circle + Title Info */}
+      <div className="flex items-center min-w-0 flex-1 gap-2.5 sm:gap-3">
+        {(onClose || onBack) && (
           <Button
             size="icon"
             variant="ghost"
-            onClick={onBack}
+            onClick={onClose || onBack}
             className="h-8 w-8 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
-            title="Go back"
-            aria-label="Go back"
+            title="Close viewer"
+            aria-label="Close document viewer"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <X className="h-4.5 w-4.5" />
           </Button>
         )}
 
@@ -111,7 +112,7 @@ export function DocumentViewerHeader({
           {avatarInitials}
         </div>
 
-        {/* File title matching screenshot */}
+        {/* File title */}
         <div className="flex items-center min-w-0 flex-1">
           <h2 className="text-xs sm:text-sm text-foreground truncate block font-bold" title={fileName}>
             {fileName}
@@ -119,26 +120,13 @@ export function DocumentViewerHeader({
         </div>
       </div>
 
-      {/* Right: HeaderActions & Close button */}
+      {/* Right: HeaderActions */}
       <div className="flex items-center gap-1.5 shrink-0">
         <HeaderActions
           onDelete={handleDelete}
           onDownload={handleDownload}
           onShare={handleShare}
         />
-
-        {onClose && (
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={onClose}
-            className="h-8 w-8 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
-            title="Close viewer"
-            aria-label="Close document viewer"
-          >
-            <X className="h-4.5 w-4.5" />
-          </Button>
-        )}
       </div>
     </div>
   )

@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowLeft, Mail, MessageSquare, Plus, MoreVertical, Bell } from 'lucide-react'
+import { ArrowLeft, Mail, MessageSquare, Plus, MoreVertical, Bell, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { LinksTab } from '@/features/email-settings/components/accounts-tab'
 import { ComingSoon } from '@/components/coming-soon'
@@ -734,13 +734,24 @@ export default function MessageFeature() {
     setActiveTab('ai-chat')
   }
 
+  const isSpecialTabActive =
+    activeTab === 'folder' ||
+    activeTab === 'contact' ||
+    activeTab === 'groups' ||
+    activeTab === 'chat-contact' ||
+    activeTab === 'chat-groups' ||
+    activeTab === 'chat-folder' ||
+    activeTab === 'ai-recent' ||
+    activeTab === 'ai-prompts' ||
+    activeTab === 'file-recent'
+
   /* ── shared inbox panel ──────────────────────────────────── */
   const renderInboxPanel = (doneMode = false) => (
     <div className='flex h-full min-h-0 w-full flex-1 flex-row overflow-hidden'>
       <div
         className={cn(
           'flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-r border-border transition-all duration-300 ease-in-out',
-          (selectedEmail || selectedDirectoryChat || isAiChatOpen || isCalendarOpen || isKanbanOpen || isFileOpen || isEmailSettingsOpen || isComposing) && 'hidden md:flex',
+          (selectedEmail || selectedDirectoryChat || isAiChatOpen || isCalendarOpen || isKanbanOpen || isFileOpen || isEmailSettingsOpen || isComposing || isSpecialTabActive) && 'hidden md:flex',
           isSidebarCollapsed ? 'w-20' : 'w-full md:w-[340px] lg:w-[380px]'
         )}
       >
@@ -883,19 +894,18 @@ export default function MessageFeature() {
       <div
         className={cn(
           'relative flex h-full min-h-0 flex-1 flex-col overflow-hidden',
-          !selectedEmail && !selectedDirectoryChat && !isAiChatOpen && !isCalendarOpen && !isKanbanOpen && !isFileOpen && !isEmailSettingsOpen && !isNotificationOpen && !previewAttachment && !isComposing &&
-          activeTab !== 'folder' && activeTab !== 'contact' && activeTab !== 'groups' &&
-          activeTab !== 'chat-contact' && activeTab !== 'chat-groups' && activeTab !== 'chat-folder' &&
+          !selectedEmail && !selectedDirectoryChat && !isAiChatOpen && !isCalendarOpen && !isKanbanOpen && !isFileOpen && !isEmailSettingsOpen && !isNotificationOpen && !previewAttachment && !isComposing && !isSpecialTabActive &&
           'hidden md:flex'
         )}
       >
-        {/* Mobile back button (only for email view — chat has its own) */}
+        {/* Mobile close button (only for email view — chat has its own) */}
         {selectedEmail && !selectedEmail.isChat && (
           <button
             onClick={() => setSelectedEmail(null)}
             className='absolute top-3 left-4 z-50 shrink-0 rounded-full border bg-background p-1.5 text-muted-foreground transition-colors hover:bg-muted md:hidden'
+            title='Close email'
           >
-            <ArrowLeft className='h-4 w-4' />
+            <X className='h-4 w-4' />
           </button>
         )}
 
@@ -1004,6 +1014,7 @@ export default function MessageFeature() {
               contacts={contacts}
               onRefresh={fetchContactsAndGroups}
               onSelectContact={handleSelectContact}
+              onClose={() => setActiveTab('inbox')}
             />
           </div>
         ) : activeTab === 'groups' ? (
@@ -1013,10 +1024,19 @@ export default function MessageFeature() {
               contacts={contacts}
               onRefresh={fetchContactsAndGroups}
               onSelectGroup={handleSelectGroup}
+              onClose={() => setActiveTab('inbox')}
             />
           </div>
         ) : activeTab === 'folder' ? (
-          <div className='flex h-full flex-col items-center justify-center p-6 bg-background'>
+          <div className='relative flex h-full flex-col items-center justify-center p-6 bg-background'>
+            <button
+              type='button'
+              onClick={() => setActiveTab('inbox')}
+              className='absolute top-3 left-4 z-50 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition-colors md:hidden cursor-pointer'
+              title='Close view'
+            >
+              <X className='h-4 w-4' />
+            </button>
             <ComingSoon />
           </div>
         ) : activeTab === 'chat-contact' ? (
@@ -1025,6 +1045,7 @@ export default function MessageFeature() {
               contacts={contacts}
               onRefresh={fetchContactsAndGroups}
               onSelectContact={handleSelectContact}
+              onClose={() => setActiveTab('chats')}
             />
           </div>
         ) : activeTab === 'chat-groups' ? (
@@ -1034,10 +1055,23 @@ export default function MessageFeature() {
               contacts={contacts}
               onRefresh={fetchContactsAndGroups}
               onSelectGroup={handleSelectGroup}
+              onClose={() => setActiveTab('chats')}
             />
           </div>
         ) : activeTab === 'chat-folder' || activeTab === 'ai-recent' || activeTab === 'ai-prompts' || activeTab === 'file-recent' ? (
-          <div className='flex h-full flex-col items-center justify-center p-6 bg-background'>
+          <div className='relative flex h-full flex-col items-center justify-center p-6 bg-background'>
+            <button
+              type='button'
+              onClick={() => {
+                if (activeTab === 'chat-folder') setActiveTab('chats')
+                else if (activeTab === 'file-recent') setActiveTab('vouchers')
+                else setActiveTab('ai-chat')
+              }}
+              className='absolute top-3 left-4 z-50 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition-colors md:hidden cursor-pointer'
+              title='Close view'
+            >
+              <X className='h-4 w-4' />
+            </button>
             <ComingSoon />
           </div>
         ) : selectedDirectoryChat ? (
@@ -1102,6 +1136,7 @@ export default function MessageFeature() {
             isKanbanOpen ||
             isFileOpen ||
             isEmailSettingsOpen ||
+            isSpecialTabActive ||
             previewAttachment) &&
             'hidden'
         )}

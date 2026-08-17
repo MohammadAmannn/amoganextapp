@@ -344,26 +344,28 @@ export default function KanbanTemplate({
     return (
       <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-background text-foreground overflow-hidden animate-fade-in md:relative md:z-auto'>
         {/* Header */}
-        <div className='flex shrink-0 items-center gap-3 border-b border-border bg-background px-4 py-3 select-none'>
-          <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-purple-200/45 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 text-purple-600 dark:border-purple-800/40 dark:text-purple-400'>
-            <ClipboardList className='h-4.5 w-4.5' />
+        <div className='flex shrink-0 items-center gap-2.5 sm:gap-3 border-b border-border bg-background px-3 sm:px-4 py-2.5 select-none'>
+          {onBack && (
+            <button
+              type='button'
+              onClick={onBack}
+              className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden'
+              title='Close'
+              aria-label='Close'
+            >
+              <X className='h-4.5 w-4.5' />
+            </button>
+          )}
+
+          <div className='flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-xl border border-purple-200/45 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 text-purple-600 dark:border-purple-800/40 dark:text-purple-400'>
+            <ClipboardList className='h-4 w-4' />
           </div>
           <div className='min-w-0 flex-1'>
-            <p className='truncate text-sm font-semibold text-foreground'>Sprint Board</p>
-            <p className='truncate text-xs text-muted-foreground'>Kanban Tasks</p>
+            <p className='truncate text-sm font-semibold text-foreground leading-tight'>Sprint Board</p>
+            <p className='truncate text-xs text-muted-foreground leading-tight'>Kanban Tasks</p>
           </div>
           <div className='flex items-center gap-1 shrink-0'>
             <HeaderActions onDelete={onBack} />
-            {onBack && (
-              <button
-                onClick={onBack}
-                className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-                title='Close'
-                aria-label='Close'
-              >
-                <X className='h-5 w-5' />
-              </button>
-            )}
           </div>
         </div>
 

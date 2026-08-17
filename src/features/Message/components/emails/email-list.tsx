@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import {
   Search,
@@ -32,6 +32,7 @@ import {
   Plus,
   Settings,
   Loader2,
+  Upload,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useNotificationStore, DbNotification } from '@/stores/notification-store'
@@ -84,6 +85,7 @@ interface EmailListProps {
   userFolders?: UserFolder[]
   selectedFolderId?: string | null
   onSelectFolder?: (folder: UserFolder) => void
+  onUploadFileClick?: () => void
   onSelectEmailSettings?: () => void
   isEmailSettingsSelected?: boolean
   onSelectNotificationMode?: () => void
@@ -208,6 +210,7 @@ export function EmailList({
   userFolders = DEFAULT_USER_FOLDERS,
   selectedFolderId,
   onSelectFolder,
+  onUploadFileClick,
   onSelectEmailSettings,
   isEmailSettingsSelected,
   onSelectNotificationMode,
@@ -299,6 +302,19 @@ export function EmailList({
       )
     })
   }, [notifications, searchQuery])
+
+  const isSearchingFolders = categoryFilter === 'vouchers' && Boolean(searchQuery && searchQuery.trim())
+  const folderSearchTerm = searchQuery.trim().toLowerCase()
+
+  const filteredUserFolders = useMemo(() => {
+    if (!isSearchingFolders) return userFolders
+    return userFolders.filter(
+      (folder) =>
+        folder.name.toLowerCase().includes(folderSearchTerm) ||
+        folder.path.toLowerCase().includes(folderSearchTerm) ||
+        folder.section.toLowerCase().includes(folderSearchTerm)
+    )
+  }, [userFolders, isSearchingFolders, folderSearchTerm])
 
   // Fetch real vouchers from DB API with background polling for instant live updates without page refresh
   useEffect(() => {
@@ -951,25 +967,52 @@ export function EmailList({
               )}
             </div>
 
-            <button
-              onClick={() => onComposeChange?.(true)}
-              className='inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-md shadow-primary/20 border border-transparent'
-              title='Compose New Email'
-            >
-              <Mail className='h-3.5 w-3.5' />
-              <span>New</span>
-              <Plus className='h-3 w-3' />
-            </button>
+            {/* Mail Section: New Compose Email Button */}
+            {(categoryFilter === 'mail' || (!categoryFilter && sectionMode === 'mail')) && (
+              <button
+                onClick={() => onComposeChange?.(true)}
+                className='inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-md shadow-primary/20 border border-transparent'
+                title='Compose New Email'
+              >
+                <Mail className='h-3.5 w-3.5' />
+                <span>New</span>
+                <Plus className='h-3 w-3' />
+              </button>
+            )}
+
+            {/* File Section: Upload File Button */}
+            {categoryFilter === 'vouchers' && (
+              <button
+                onClick={() => onUploadFileClick?.()}
+                className='inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-md shadow-primary/20 border border-transparent'
+                title='Upload New File'
+              >
+                <Upload className='h-3.5 w-3.5' />
+                <span>Upload</span>
+                <Plus className='h-3 w-3' />
+              </button>
+            )}
           </div>
         ) : (
           <div className='flex justify-center w-full'>
-            <button
-              onClick={() => onComposeChange?.(true)}
-              className='flex items-center justify-center p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-md shadow-primary/20 border border-transparent'
-              title='Compose New Email'
-            >
-              <Mail className='h-3.5 w-3.5' />
-            </button>
+            {(categoryFilter === 'mail' || (!categoryFilter && sectionMode === 'mail')) && (
+              <button
+                onClick={() => onComposeChange?.(true)}
+                className='flex items-center justify-center p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-md shadow-primary/20 border border-transparent'
+                title='Compose New Email'
+              >
+                <Mail className='h-3.5 w-3.5' />
+              </button>
+            )}
+            {categoryFilter === 'vouchers' && (
+              <button
+                onClick={() => onUploadFileClick?.()}
+                className='flex items-center justify-center p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all select-none cursor-pointer active:scale-95 shrink-0 shadow-md shadow-primary/20 border border-transparent'
+                title='Upload New File'
+              >
+                <Upload className='h-3.5 w-3.5' />
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -1607,20 +1650,26 @@ export function EmailList({
                         </div>
                       ) : (
                         <div className="flex flex-col gap-0.5 px-2 py-1">
-                          {userFolders.map((folder) => {
-                            const isFolderActive = selectedFolderId === folder.id
-                            const isLevel0 = folder.level === 0
-                            const isLevel1 = folder.level === 1
-                            const isLevel2 = folder.level === 2
+                          {filteredUserFolders.length === 0 && isSearchingFolders ? (
+                            <div className="py-4 px-3 text-center text-xs text-muted-foreground">
+                              No folders matching "{searchQuery}"
+                            </div>
+                          ) : (
+                            filteredUserFolders.map((folder) => {
+                              const isFolderActive = selectedFolderId === folder.id
+                              const isLevel0 = folder.level === 0
+                              const isLevel1 = folder.level === 1
+                              const isLevel2 = folder.level === 2
 
-                            // Expand/Collapse visibility check
-                            const isExpanded = expandedFolderIds.has(folder.id)
-                            const isVisible =
-                              isLevel0 ||
-                              (isLevel1 && expandedFolderIds.has('Chat')) ||
-                              (isLevel2 && expandedFolderIds.has('Chat') && expandedFolderIds.has(folder.parentId || ''))
+                              // Expand/Collapse visibility check (bypassed if user is searching)
+                              const isExpanded = expandedFolderIds.has(folder.id)
+                              const isVisible =
+                                isSearchingFolders ||
+                                isLevel0 ||
+                                (isLevel1 && expandedFolderIds.has('Chat')) ||
+                                (isLevel2 && expandedFolderIds.has('Chat') && expandedFolderIds.has(folder.parentId || ''))
 
-                            if (!isVisible) return null
+                              if (!isVisible) return null
 
                             const hasChildren = isLevel0 || isLevel1
 
@@ -1691,7 +1740,7 @@ export function EmailList({
                                 </Badge>
                               </div>
                             )
-                          })}
+                          }))}
                         </div>
                       )}
                     </>

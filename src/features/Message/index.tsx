@@ -66,6 +66,7 @@ import {
   DEFAULT_USER_FOLDERS,
 } from './services/user-storage-files.service'
 import { UserFileCardsView } from './components/files/user-file-cards-view'
+import { FileUploadForm } from './components/files/file-upload-form'
 
 
 interface DirectoryChat {
@@ -117,6 +118,7 @@ export default function MessageFeature() {
   const [userFolders, setUserFolders] = useState<UserFolder[]>(DEFAULT_USER_FOLDERS)
   const [selectedUserFolder, setSelectedUserFolder] = useState<UserFolder | null>(null)
   const [activePreviewFile, setActivePreviewFile] = useState<StorageFileItem | null>(null)
+  const [isUploadingFile, setIsUploadingFile] = useState(false)
   const selectedVoucher = useVoucherStore((state) => state.selectedVoucher)
 
   useEffect(() => {
@@ -839,6 +841,21 @@ export default function MessageFeature() {
           onSelectFolder={(folder) => {
             setSelectedUserFolder(folder)
             setActivePreviewFile(null)
+            setIsUploadingFile(false)
+          }}
+          onUploadFileClick={() => {
+            setSelectedEmail(null)
+            setSelectedDirectoryChat(null)
+            setIsAiChatOpen(false)
+            setIsCalendarOpen(false)
+            setIsKanbanOpen(false)
+            setIsEmailSettingsOpen(false)
+            setIsNotificationOpen(false)
+            setSelectedNotification(null)
+            setIsComposing(false)
+            setIsFileOpen(true)
+            setActivePreviewFile(null)
+            setIsUploadingFile(true)
           }}
           onSelectEmailSettings={!doneMode ? () => {
             setSelectedEmail(null)
@@ -956,6 +973,22 @@ export default function MessageFeature() {
               editedJson={activePreviewFile.editedJson}
               onClose={() => setActivePreviewFile(null)}
               hideToggle={true}
+            />
+          ) : isUploadingFile ? (
+            <FileUploadForm
+              userEmail={currentUser?.email}
+              folders={userFolders}
+              onClose={() => setIsUploadingFile(false)}
+              onPreviewAttachment={(att) => setPreviewAttachment({ fileName: att.name, fileUrl: att.url || '' })}
+              onUploadSuccess={() => {
+                setIsUploadingFile(false)
+                if (currentUser?.email) {
+                  getUserStorageFilesAndFolders(currentUser.email).then(({ files, folders }) => {
+                    setUserStorageFiles(files)
+                    setUserFolders(folders)
+                  })
+                }
+              }}
             />
           ) : (
             <UserFileCardsView

@@ -6,7 +6,7 @@ import {
 } from '@/features/chattemplate/chat/services/chat-storage.service'
 
 export interface StorageFileItem {
-  id: string
+  id: string // Real Supabase Storage object UUID or Database Voucher UUID
   fileName: string
   fileUrl: string
   fileSize?: number
@@ -16,6 +16,7 @@ export interface StorageFileItem {
   folderPath: string // e.g. 'Chat/john@company.com/Images'
   senderName?: string
   senderAvatar?: string
+  version?: string // File version e.g. 'v1.0'
   editedJson?: any
 }
 
@@ -55,7 +56,7 @@ export async function getUserStorageFilesAndFolders(userEmail?: string | null): 
     return `${supabaseUrl}/storage/v1/object/public/chat-files/${path}`
   }
 
-  // 1. Fetch files from Supabase Storage `chat-files` bucket under {userEmail}/Chat
+  // 1. Fetch real files from Supabase Storage `chat-files` bucket under {userEmail}/Chat
   if (normalizedEmail) {
     try {
       const sections = ['Chat', 'Files', 'Email', 'AI Chat', 'Order']
@@ -75,13 +76,15 @@ export async function getUserStorageFilesAndFolders(userEmail?: string | null): 
 
               if (catFiles && catFiles.length > 0) {
                 for (const f of catFiles) {
-                  if (f.id && f.name) {
+                  if (f.name && f.name !== '.keep') {
                     const fullPath = `${normalizedEmail}/${sec}/${item.name}/${f.name}`
                     const publicUrl = getPublicStorageUrl(fullPath)
                     const category = getChatFileCategory({ name: f.name })
+                    const realUuid = f.id || `stg-${fullPath}`
+                    const version = f.metadata?.version ? `v${f.metadata.version}` : 'v1.0'
 
                     filesMap.set(fullPath, {
-                      id: f.id || fullPath,
+                      id: realUuid,
                       fileName: f.name,
                       fileUrl: publicUrl,
                       fileSize: f.metadata?.size,
@@ -89,17 +92,20 @@ export async function getUserStorageFilesAndFolders(userEmail?: string | null): 
                       category: category || subCategory,
                       section: 'Chat',
                       folderPath: `Chat/${displayEmail}/${item.name}`,
+                      version,
                     })
                   }
                 }
               }
-            } else if (item.id && item.name) {
+            } else if (item.name && item.name !== '.keep') {
               const fullPath = `${normalizedEmail}/${sec}/${item.name}`
               const publicUrl = getPublicStorageUrl(fullPath)
               const category = getChatFileCategory({ name: item.name })
+              const realUuid = item.id || `stg-${fullPath}`
+              const version = item.metadata?.version ? `v${item.metadata.version}` : 'v1.0'
 
               filesMap.set(fullPath, {
-                id: item.id || fullPath,
+                id: realUuid,
                 fileName: item.name,
                 fileUrl: publicUrl,
                 fileSize: item.metadata?.size,
@@ -107,6 +113,7 @@ export async function getUserStorageFilesAndFolders(userEmail?: string | null): 
                 category,
                 section: 'Chat',
                 folderPath: `Chat/${displayEmail}/${category}`,
+                version,
               })
             }
           }
@@ -129,18 +136,20 @@ export async function getUserStorageFilesAndFolders(userEmail?: string | null): 
           if (!url) continue
 
           const category = getChatFileCategory({ name })
+          const realUuid = v.id || `vch-${Date.now()}`
           const key = `voucher-${v.id}-${name}`
 
           if (!filesMap.has(key)) {
             filesMap.set(key, {
-              id: v.id,
+              id: realUuid,
               fileName: name,
               fileUrl: url,
               updatedAt: v.created_at,
               category,
               section: 'Chat',
               folderPath: `Chat/${displayEmail}/${category}`,
-              senderName: v.vendor_name || v.user_name || 'Vendor',
+              senderName: v.vendor_name || v.user_name || 'System User',
+              version: v.version ? `v${v.version}` : 'v1.0',
               editedJson: v.edited_json || null,
             })
           }
@@ -176,9 +185,6 @@ export async function getUserStorageFilesAndFolders(userEmail?: string | null): 
   }
 
   // 4. Build File Explorer Nested Tree:
-  // Root Level (0): Chat
-  // User Level (1): {displayEmail}
-  // Subfolder Level (2): Images, Pdf, Doc, Xls, Videos, Ppt, Txt, Csv, Zip, Other (ONLY non-empty folders with fileCount > 0, or default non-empty)
   const userFolderId = `user-${displayEmail}`
 
   const folders: UserFolder[] = [
@@ -231,7 +237,7 @@ export async function getUserStorageFilesAndFolders(userEmail?: string | null): 
     }
   }
 
-  // If no files exist at all, include standard fallback category subfolders so user can see empty state
+  // If no files exist at all, include standard fallback category subfolders
   if (folders.length === 2) {
     const fallbackCats: ChatFileCategory[] = ['Images', 'Pdf', 'Doc', 'Xls', 'Videos']
     for (const cat of fallbackCats) {

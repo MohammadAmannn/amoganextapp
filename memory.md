@@ -24,8 +24,8 @@ This document acts as the persistent memory log of all implemented features, des
 - **Header Actions Component**: Integrated [`HeaderActions`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/chat/header-actions.tsx) into the top-right header of [`DocumentViewerHeader.tsx`](file:///e:/morrai/shadcn-admin-main/src/components/DocumentViewer/DocumentViewerHeader.tsx) next to the close button (`X`).
 - **Quick Action Tools**: Flag, Alert, Document options, and 3-dot dropdown menu (Reply, Forward, Archive, Share, Print, Download, Delete).
 
-### D. Mail Section Theme Color Button
-- **New Compose Button**: Updated the `New +` compose email button in [`email-list.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/emails/email-list.tsx) to use the primary theme color (`bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20`).
+### D. Primary Theme Color Buttons
+- **New & Upload Buttons**: Updated the `New +` compose email button and `Upload +` file button in [`email-list.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/emails/email-list.tsx) and [`FileUploadForm`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/files/file-upload-form.tsx) to match the project's primary theme color (`bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20`).
 
 ---
 
@@ -70,38 +70,60 @@ All object paths in Supabase Storage follow the universal routing format:
 6. **Supabase Headers**:
    - Upload requests include `x-upsert: true` to prevent 409 conflict errors upon uploading/overwriting.
 
-### E. User Storage Folders & File Cards Preview in File Tab
-- **On-Demand Expand/Collapse Tree View**:
-  - Initial State: Only 📁 `Chat` (Root folder) is displayed.
-  - Clicking 📁 `Chat` expands to reveal 📁 `{userEmail}` folder.
-  - Clicking 📁 `{userEmail}` expands to reveal non-empty category subfolders (`Images`, `Pdf`, `Doc`, `Xls`, `Videos`, `Ppt`, `Txt`, `Csv`, `Zip`, `Other`).
-- **Strict Category Filtering**:
-  - Selecting 📂 `Pdf` displays **ONLY PDF files** (`.pdf`). No images, no doc files!
-  - Selecting 📂 `Images` displays **ONLY Image files** (`.jpg`, `.png`, `.webp`, `.svg`, `.gif`).
-  - Selecting 📂 `Doc` displays **ONLY Word Document files** (`.doc`, `.docx`).
-  - Selecting 📂 `Xls` displays **ONLY Excel spreadsheets** (`.xls`, `.xlsx`).
-  - Selecting 📂 `Videos` displays **ONLY Video files** (`.mp4`, `.mov`, `.avi`).
-- **Default Empty State for Parent Folders**:
-  - Clicking root 📁 `Chat` or 📁 `{userEmail}` expands/collapses the sidebar tree without showing all files on the right window.
-  - The right-side window shows the placeholder: **"Select a category folder to view files"**.
-  - File cards are rendered **ONLY** when a specific format category subfolder (`Images`, `Pdf`, `Doc`, `Xls`, `Videos`, `Ppt`, `Txt`, `Csv`, `Zip`, `Other`) is selected.
-- **Deferred SMTP Email Fetching**:
-  - Removed global automatic SMTP email loading on initial mount.
-  - SMTP inbox and sent emails (`/api/mail/inbox` and `/api/mail/sent`) are fetched **ONLY WHEN** the **Email tab** is active (`sectionMode === 'mail'`).
-  - Uses `hasFetchedMail` state flag to trigger real SMTP email loading as soon as the user opens/activates the Email tab, replacing mock demo emails with real inbox messages.
-  - Switching to `File` tab, `Chat` tab, `Tasks` tab, `AI Chat` tab, etc., renders instantly without waiting for SMTP network connections.
-- **Right Side Window Horizontal File Cards**: Selecting any folder presents files in that folder as horizontally aligned cards (`flex flex-row flex-wrap gap-4`) displaying file thumbnails/icons, category format badges, file names, size, and formatted dates.
-- **Eye & Download Card Actions**: Each card features Eye (preview) and Download action buttons. Clicking Download triggers direct file download; clicking Eye or the card opens document preview in the same right window.
-- **Document Preview Integration**: Previews files using `SafeDocumentPreview` and `DocumentViewer` with `DocumentViewerHeader` (featuring `HeaderActions`, file title, user profile icon, and close `X` button).
+---
+
+## 4. Storage Files Explorer, Action Navbar, & File Upload Architecture
+
+### A. Progressive Click-to-Expand Folder Tree
+- **Sidebar Tree Hierarchy**: Initial state renders root 📁 `Chat` (collapsed). Clicking `Chat` expands to 📁 `{userEmail}`. Clicking `{userEmail}` expands to format subfolders (`Images`, `Pdf`, `Doc`, `Xls`, `Videos`, `Ppt`, `Txt`, `Csv`, `Zip`, `Other`).
+- **Strict Category Filtering**: Selecting 📂 `Pdf` displays **ONLY PDF files** (`.pdf`). Selecting 📂 `Images` displays **ONLY Image files**. Selecting 📂 `Doc` displays **ONLY Word Document files**.
+- **Parent Folder Placeholder**: Clicking root 📁 `Chat` or 📁 `{userEmail}` displays placeholder: *"Select a category folder to view files"*.
+
+### B. Action Navbar & Data Grid Table View (`tablecn.com/data-grid`)
+- **Action Toolbar**: Positioned below top header featuring:
+  - **LTR**: Direction toggle
+  - **FILTER**: Format filter dropdown (Images, PDF, Word, Excel, Videos)
+  - **SORT**: Sort dropdown (Date Newest/Oldest, Name A-Z/Z-A, Size)
+  - **SHORT**: Reset filters button
+  - **VIEW**: Dropdown menu switching between **Card View** and **Table View**.
+- **Full-Size Search Bar**: Positioned directly **BELOW** the Action Toolbar Navbar. Real-time search filters files instantly on the first character typed (matching File Name, File UUID, Folder Path, Category, Version, or Sender Name).
+- **Data Grid Table View (`tablecn.com/data-grid`)**: Columns rendered with real Supabase Storage & DB metadata:
+  1. **File ID (UUID)**: Real object UUID badge (click to copy full UUID).
+  2. **File Name**: Format icon + File title.
+  3. **Main Folder Name**: Section folder (`📁 Chat`, `📁 Files`, `📁 Email`).
+  4. **Sub Folder Name**: Category subfolder (`📂 Images`, `📂 Pdf`, `📂 Doc`, `📂 Xls`, `📂 Videos`).
+  5. **Version No**: Dedicated version number column (`v1.0`, `v1.1`).
+  6. **Date & Time Stamp**: Real formatted timestamp (`Aug 17, 2026 10:45 AM`).
+  7. **User Name**: Sender/uploader avatar & name (`Aman`).
+  8. **3-Dot Action Menu (`...`)**: Dropdown menu containing Preview, Download, Share, and Delete.
+- **Card View Footer Actions**: Left side: `Preview` + `Download` buttons. Right side: 3-Dot Options Menu (`Edit`, `View`, `Share`).
+- **Header Actions & Mobile-Only Close Cross (`X`)**: Integrated `HeaderActions` (Flag, Alert, Document, 3-Dot menu) and close cross (`X`) button (hidden on desktop `md:hidden`, visible on mobile).
+
+### C. File Upload Form (`FileUploadForm`)
+- **UI Parity with NewEmail Form**: Exact layout and design match with `NewEmail` compose form (rich text editor formatting toolbar, template selector, document title/subject, attachment cards with progress bars).
+- **Primary Save Button**: Replaced `Send` button with primary **`Save`** button (`<Save />`) styled with `bg-primary text-primary-foreground hover:bg-primary/90`.
+- **Folder, Sub folder & Remarks Fields**: Positioned directly **ABOVE** the file attachments section matching user UI screenshot:
+  - **Folder**: Select dropdown (`Finance`, `Chat`, `Files`, `Email`, `AI Chat`, `Order`).
+  - **Sub folder**: Select dropdown (`Banking`, `Images`, `Pdf`, `Doc`, `Xls`, `Videos`, `Zip`, `Other`).
+  - **Remarks**: Textarea field (`Add a note about these attachments...`).
+- **Supabase Storage Upload**: Saves attached files directly to Supabase storage bucket `chat-files` under `{userEmail}/{Folder}/{SubFolder}/{fileName}` and refreshes tree folders in real-time.
+- **Zero Side Effects**: Zero impact on `NewEmail` mail compose form.
+
+### D. Section-Restricted Toolbar Action Buttons & Left-Sidebar Search
+- **Section-Restricted Buttons**:
+  - `New +` compose email button is displayed strictly on the **Mail tab** (`categoryFilter === 'mail'`).
+  - `Upload +` file button is displayed strictly on the **File tab** (`categoryFilter === 'vouchers'`).
+- **Left-Sidebar Folder Search**: Typing in the left-side search input (`Search...`) filters `userFolders` in real-time by folder name, path, or section.
 
 ---
 
-## 4. Codebase File Inventory
+## 5. Codebase File Inventory
 
 | File Path | Action | Description |
 | :--- | :---: | :--- |
-| `src/features/Message/services/user-storage-files.service.ts` | **CREATED** | Fetches user storage files and folders from Supabase Storage `chat-files` bucket & database vouchers. |
-| `src/features/Message/components/files/user-file-cards-view.tsx` | **CREATED** | Renders horizontally aligned file cards with Eye and Download action buttons and search filtering. |
+| `src/features/Message/services/user-storage-files.service.ts` | **CREATED** | Queries real Supabase Storage `chat-files` bucket & DB vouchers for user files, real object UUIDs, version numbers (`v1.0`), and builds nested tree folders. |
+| `src/features/Message/components/files/user-file-cards-view.tsx` | **CREATED** | Renders horizontally aligned file cards, Data Grid Table view (`tablecn.com/data-grid`), full-size search bar, Action Navbar (LTR, FILTER, SORT, SHORT, VIEW), card 3-dot menu, and mobile close button. |
+| `src/features/Message/components/files/file-upload-form.tsx` | **CREATED** | Upload form matching `NewEmail` layout with Folder, Sub folder, and Remarks fields above attachments; saves directly to Supabase storage. |
 | `src/features/chattemplate/chat/services/chat-storage.service.ts` | **CREATED** | Storage helper (`getStoragePath`, `getChatFileCategory`, `normalizeContactEmail`, `generateUniqueFileName`). |
 | `src/features/chattemplate/files/managers/attachment-uploader.ts` | **MODIFIED** | Manages dual XHR & fetch uploads to Sender & Receiver folders with `x-upsert: true` and session email fallback. |
 | `src/features/chattemplate/chat/hooks/use-attachments.ts` | **MODIFIED** | Hook passing `senderEmail` and `receiverEmail` down to `uploadAttachment`. |
@@ -109,6 +131,6 @@ All object paths in Supabase Storage follow the universal routing format:
 | `src/features/chattemplate/contacts/api/contacts.api.ts` | **MODIFIED** | Normalizes contact email on contact creation without `.keep` files. |
 | `src/features/chattemplate/chat/services/chat-storage.service.test.ts` | **CREATED** | Vitest test suite (`17/17 passed`) for storage rules. |
 | `src/components/DocumentViewer/DocumentViewerHeader.tsx` | **MODIFIED** | Integrated `HeaderActions` on the top-right header next to close (`X`). |
-| `src/features/Message/components/emails/email-list.tsx` | **MODIFIED** | Render user storage folders on left sidebar under File tab (`categoryFilter === 'vouchers'`). |
-| `src/features/Message/index.tsx` | **MODIFIED** | Wired user storage folders, horizontally aligned `UserFileCardsView`, and `SafeDocumentPreview` in right window. |
+| `src/features/Message/components/emails/email-list.tsx` | **MODIFIED** | Render user storage folders on left sidebar under File tab (`categoryFilter === 'vouchers'`), real-time folder search, section-restricted `New`/`Upload` buttons with primary theme styling. |
+| `src/features/Message/index.tsx` | **MODIFIED** | Wired user storage folders, `UserFileCardsView`, `FileUploadForm`, and deferred SMTP email loading to Email tab. |
 | `memory.md` | **MODIFIED** | Persistent memory documentation of all project updates. |

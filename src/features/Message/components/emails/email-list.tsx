@@ -19,6 +19,7 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Users,
   Mail,
   MessageSquare,
@@ -54,6 +55,7 @@ import { useVoucherStore, SavedVoucher } from '@/stores/voucher-store'
 import { Group } from '@/features/chattemplate/groups/types/group.types'
 import { MsgContactTab } from '../tabs/contact-manager-tab'
 import { MsgGroupTab } from '../tabs/group-manager-tab'
+import { UserFolder, DEFAULT_USER_FOLDERS } from '@/features/Message/services/user-storage-files.service'
 
 interface EmailListProps {
   emails: Email[]
@@ -79,6 +81,9 @@ interface EmailListProps {
   isTaskSelected?: boolean
   onSelectFile?: () => void
   isFileSelected?: boolean
+  userFolders?: UserFolder[]
+  selectedFolderId?: string | null
+  onSelectFolder?: (folder: UserFolder) => void
   onSelectEmailSettings?: () => void
   isEmailSettingsSelected?: boolean
   onSelectNotificationMode?: () => void
@@ -200,6 +205,9 @@ export function EmailList({
   isTaskSelected,
   onSelectFile,
   isFileSelected,
+  userFolders = DEFAULT_USER_FOLDERS,
+  selectedFolderId,
+  onSelectFolder,
   onSelectEmailSettings,
   isEmailSettingsSelected,
   onSelectNotificationMode,
@@ -233,6 +241,20 @@ export function EmailList({
   const [dbVouchers, setDbVouchers] = useState<SavedVoucher[]>([])
   const [selectedAccount, setSelectedAccount] = useState<string>('all')
   const [categoryFilter, setCategoryFilter] = useState<'mail' | 'chat' | 'vouchers' | 'ai' | 'ai-assistant' | 'tasks' | 'notification'>('mail')
+  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set())
+
+  const toggleFolderExpand = (folderId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    setExpandedFolderIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(folderId)) {
+        next.delete(folderId)
+      } else {
+        next.add(folderId)
+      }
+      return next
+    })
+  }
 
   // Keep categoryFilter in sync with parent flags
   useEffect(() => {
@@ -1561,21 +1583,19 @@ export function EmailList({
                     </>
                   )}
 
-                  {/* Real Saved Vouchers cards */}
+                  {/* Storage Folders List for File Tab (File Explorer Nested Tree) */}
                   {categoryFilter === 'vouchers' && onSelectFile && (
                     <>
                       {!isCollapsed && (
                         <div className='flex items-center gap-2 px-3 pt-2 pb-0.5'>
-                          <FileText className='h-3 w-3 shrink-0 text-indigo-500' />
+                          <FolderOpen className='h-3 w-3 shrink-0 text-indigo-500' />
                           <span className='text-[10px] font-semibold tracking-wider text-muted-foreground/60 uppercase'>
-                            Files
+                            File Explorer
                           </span>
                           <div className='h-px flex-1 bg-border' />
-                          {activeTab !== 'file-recent' && (
-                            <span className='text-[10px] text-muted-foreground/50'>
-                              {filteredSavedVouchers.length}
-                            </span>
-                          )}
+                          <span className='text-[10px] text-muted-foreground/50'>
+                            {userFolders.length}
+                          </span>
                         </div>
                       )}
 
@@ -1585,180 +1605,94 @@ export function EmailList({
                           <p className='font-semibold text-foreground/80'>Recent Files</p>
                           <p className='text-[11px] opacity-70 mt-0.5'>Coming Soon</p>
                         </div>
-                      ) : filteredSavedVouchers.length === 0 ? (
-                        <div className='mx-3 my-2 rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-xs text-muted-foreground'>
-                          <FileText className='mx-auto h-7 w-7 opacity-30 mb-2 text-indigo-500' />
-                          <p className='font-semibold text-foreground/80'>
-                            {searchQuery ? 'No matching files found' : 'No Files yet'}
-                          </p>
-                          <p className='text-[11px] opacity-70 mt-0.5'>
-                            {searchQuery ? `No files matching "${searchQuery}"` : 'Upload and save a file on the Chat page to see it here.'}
-                          </p>
-                        </div>
                       ) : (
-                        filteredSavedVouchers.map((voucher) => {
-                          const isVoucherActive = isFileSelected && selectedVoucher?.id === voucher.id
+                        <div className="flex flex-col gap-0.5 px-2 py-1">
+                          {userFolders.map((folder) => {
+                            const isFolderActive = selectedFolderId === folder.id
+                            const isLevel0 = folder.level === 0
+                            const isLevel1 = folder.level === 1
+                            const isLevel2 = folder.level === 2
 
-                          // Helper to extract JSON values safely
-                          const getVal = (...keys: string[]) => {
-                            const json = voucher.editedJson
-                            if (!json || typeof json !== 'object') return null
-                            for (const k of keys) {
-                              const kl = k.toLowerCase().replace(/[_\-\s]/g, '')
-                              for (const dk of Object.keys(json)) {
-                                if (dk.toLowerCase().replace(/[_\-\s]/g, '') === kl && json[dk] != null && json[dk] !== '') {
-                                  return String(json[dk])
-                                }
-                              }
-                            }
-                            return null
-                          }
+                            // Expand/Collapse visibility check
+                            const isExpanded = expandedFolderIds.has(folder.id)
+                            const isVisible =
+                              isLevel0 ||
+                              (isLevel1 && expandedFolderIds.has('Chat')) ||
+                              (isLevel2 && expandedFolderIds.has('Chat') && expandedFolderIds.has(folder.parentId || ''))
 
-                          const vendor = getVal('vendor', 'businessName', 'company', 'from') || voucher.from || 'Vendor'
-                          const username = voucher.userName || getVal('userName', 'user', 'owner') || voucher.from || 'System User'
+                            if (!isVisible) return null
 
-                          return (
-                            <div
-                              key={voucher.id}
-                              id={`voucher-card-${voucher.id}`}
-                              onClick={() => {
-                                useVoucherStore.getState().setSelectedVoucher({
-                                  ...voucher,
-                                  _selectedAt: Date.now(),
-                                })
-                                onSelectFile?.()
-                              }}
-                              className={[
-                                'group relative mx-3 my-1 flex cursor-pointer flex-col gap-2 rounded-xl p-3 transition-all duration-200 select-none border shadow-2xs',
-                                isVoucherActive
-                                  ? 'border-indigo-300 bg-indigo-500/10 dark:border-indigo-800 dark:bg-indigo-950/30'
-                                  : 'border-border/60 bg-card hover:bg-indigo-500/5 hover:border-indigo-200/50',
-                              ].join(' ')}
-                            >
-                              {isVoucherActive && (
-                                <div className='absolute top-1.5 bottom-1.5 left-0 w-1 rounded-l-full bg-indigo-600' />
-                              )}
-                              <div className='flex items-start justify-between gap-2 min-w-0'>
-                                <div className='flex items-center gap-2 min-w-0 flex-1'>
-                                  <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-200/40 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-600 dark:border-indigo-800/40 dark:text-indigo-400'>
-                                    <FileText className='h-4 w-4' />
-                                  </div>
-                                  <div className='flex flex-col min-w-0 flex-1'>
-                                    <span className='truncate text-xs font-bold text-foreground'>
-                                      📄 {voucher.fileName}
-                                    </span>
-                                    <span className='truncate text-[11px] text-muted-foreground font-medium mt-0.5'>
-                                      Vendor: <span className='text-foreground/80 font-semibold'>{vendor}</span>
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
+                            const hasChildren = isLevel0 || isLevel1
 
-                              <div className='flex items-center justify-between border-t border-border/40 pt-2 text-[11px] text-muted-foreground'>
-                                <div className='flex items-center gap-2 truncate min-w-0 flex-1'>
-                                  <span className='truncate'>User: <strong className='text-foreground/80 font-semibold'>{username}</strong></span>
-                                  <span>·</span>
-                                  <span className='shrink-0'>{voucher.date}</span>
-                                </div>
-
-                                {/* 3-dot dropdown menu in place of price */}
-                                <div className='shrink-0 ml-2' onClick={(e) => e.stopPropagation()}>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <button
-                                        type='button'
-                                        className='flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer'
-                                        title='Message actions'
-                                      >
-                                        <MoreHorizontal className='h-4 w-4' />
-                                      </button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent
-                                      align='end'
-                                      className='w-40 border border-border bg-popover text-popover-foreground shadow-md rounded-xl p-1'
+                            return (
+                              <div
+                                key={folder.id}
+                                id={`folder-card-${folder.id}`}
+                                onClick={() => {
+                                  if (hasChildren && !expandedFolderIds.has(folder.id)) {
+                                    toggleFolderExpand(folder.id)
+                                  }
+                                  onSelectFolder?.(folder)
+                                  onSelectFile?.()
+                                }}
+                                className={cn(
+                                  'group relative flex cursor-pointer items-center justify-between gap-2 rounded-xl py-1.5 px-2 transition-all duration-200 select-none border',
+                                  isLevel0 && 'font-bold bg-muted/20 border-border/50 my-1',
+                                  isLevel1 && 'ml-3 border-border/40 my-0.5',
+                                  isLevel2 && 'ml-6 border-transparent hover:bg-muted/40 my-0.5',
+                                  isFolderActive
+                                    ? 'border-indigo-300 bg-indigo-500/15 text-indigo-600 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-400 font-bold shadow-2xs'
+                                    : 'bg-card hover:bg-indigo-500/5 hover:border-indigo-200/40'
+                                )}
+                              >
+                                {isFolderActive && (
+                                  <div className='absolute top-1 bottom-1 left-0 w-1 rounded-l-full bg-indigo-600' />
+                                )}
+                                <div className='flex items-center gap-1.5 min-w-0 flex-1'>
+                                  {hasChildren && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => toggleFolderExpand(folder.id, e)}
+                                      className="flex h-4 w-4 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
                                     >
-                                      <DropdownMenuItem
-                                        onClick={() => {
-                                          useVoucherStore.getState().setSelectedVoucher(voucher)
-                                          onSelectFile?.()
-                                        }}
-                                        className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
-                                      >
-                                        <Reply className='h-3.5 w-3.5 text-muted-foreground' />
-                                        <span>Reply</span>
-                                      </DropdownMenuItem>
-
-                                      <DropdownMenuItem
-                                        onClick={() => {
-                                          useVoucherStore.getState().setSelectedVoucher(voucher)
-                                          onSelectFile?.()
-                                        }}
-                                        className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
-                                      >
-                                        <Forward className='h-3.5 w-3.5 text-muted-foreground' />
-                                        <span>Forward</span>
-                                      </DropdownMenuItem>
-
-                                      <DropdownMenuItem
-                                        onClick={() => { }}
-                                        className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
-                                      >
-                                        <Star className='h-3.5 w-3.5 text-muted-foreground' />
-                                        <span>Favorite</span>
-                                      </DropdownMenuItem>
-
-                                      <DropdownMenuItem
-                                        onClick={() => { }}
-                                        className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
-                                      >
-                                        <Pin className='h-3.5 w-3.5 text-muted-foreground' />
-                                        <span>Pin</span>
-                                      </DropdownMenuItem>
-
-                                      <DropdownMenuItem
-                                        onClick={() => { }}
-                                        className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
-                                      >
-                                        <Flag className='h-3.5 w-3.5 text-muted-foreground' />
-                                        <span>Flag</span>
-                                      </DropdownMenuItem>
-
-                                      <DropdownMenuItem
-                                        onClick={() => { }}
-                                        className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
-                                      >
-                                        <Archive className='h-3.5 w-3.5 text-muted-foreground' />
-                                        <span>Archive</span>
-                                      </DropdownMenuItem>
-
-                                      <DropdownMenuItem
-                                        onClick={() => {
-                                          if (voucher.pdfUrl || voucher.originalFileUrl) {
-                                            navigator.clipboard?.writeText(voucher.pdfUrl || voucher.originalFileUrl || '')
-                                          }
-                                        }}
-                                        className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium rounded-lg'
-                                      >
-                                        <Share2 className='h-3.5 w-3.5 text-muted-foreground' />
-                                        <span>Share</span>
-                                      </DropdownMenuItem>
-
-                                      <DropdownMenuItem
-                                        onClick={() => {
-                                          useVoucherStore.getState().deleteVoucher(voucher.id)
-                                        }}
-                                        className='cursor-pointer text-xs flex items-center gap-2 py-1.5 font-medium text-destructive hover:text-destructive rounded-lg hover:bg-destructive/10'
-                                      >
-                                        <Trash2 className='h-3.5 w-3.5 text-destructive' />
-                                        <span className='text-destructive'>Delete</span>
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
+                                      {isExpanded ? (
+                                        <ChevronDown className="h-3 w-3" />
+                                      ) : (
+                                        <ChevronRight className="h-3 w-3" />
+                                      )}
+                                    </button>
+                                  )}
+                                  <div
+                                    className={cn(
+                                      'flex shrink-0 items-center justify-center rounded-lg text-indigo-600 dark:text-indigo-400 transition-colors',
+                                      isLevel0 ? 'h-6 w-6 border border-indigo-200/40 bg-indigo-500/10' :
+                                      isLevel1 ? 'h-5.5 w-5.5 border border-indigo-200/30 bg-indigo-500/5' :
+                                      'h-5 w-5'
+                                    )}
+                                  >
+                                    <FolderOpen className={isLevel0 ? 'h-3.5 w-3.5' : isLevel1 ? 'h-3 w-3' : 'h-3 w-3 text-indigo-500'} />
+                                  </div>
+                                  <span
+                                    className={cn(
+                                      'truncate text-foreground',
+                                      isLevel0 ? 'text-xs font-bold' : isLevel1 ? 'text-[11px] font-semibold' : 'text-[11px] font-medium',
+                                      isFolderActive && 'text-indigo-600 dark:text-indigo-400'
+                                    )}
+                                  >
+                                    {folder.name}
+                                  </span>
                                 </div>
+
+                                <Badge
+                                  variant={isFolderActive ? 'default' : 'secondary'}
+                                  className={cn('px-1.5 font-bold shrink-0', isLevel0 ? 'h-4 text-[9px]' : 'h-3.5 text-[8px]')}
+                                >
+                                  {folder.fileCount}
+                                </Badge>
                               </div>
-                            </div>
-                          )
-                        })
+                            )
+                          })}
+                        </div>
                       )}
                     </>
                   )}

@@ -59,6 +59,13 @@ import { InvoiceMaker } from '../vouchers/components/invoice-maker'
 import { ReviewPanel } from '@/components/dynamic-form/ReviewPanel'
 import { SafeDocumentPreview } from '@/components/dynamic-form/SafeDocumentPreview'
 import { useVoucherStore } from '@/stores/voucher-store'
+import {
+  getUserStorageFilesAndFolders,
+  StorageFileItem,
+  UserFolder,
+  DEFAULT_USER_FOLDERS,
+} from './services/user-storage-files.service'
+import { UserFileCardsView } from './components/files/user-file-cards-view'
 
 
 interface DirectoryChat {
@@ -81,6 +88,7 @@ export default function MessageFeature() {
   const [isComposing, setIsComposing] = useState(false)
   const [isEmailsLoading, setIsEmailsLoading] = useState(false)
   const [emailsError, setEmailsError] = useState<string | null>(null)
+  const [hasFetchedMail, setHasFetchedMail] = useState(false)
   const [sentEmails, setSentEmails] = useState<Email[]>([])
   const [isSentLoading, setIsSentLoading] = useState(false)
   const [sentError, setSentError] = useState<string | null>(null)
@@ -104,14 +112,29 @@ export default function MessageFeature() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [isKanbanOpen, setIsKanbanOpen] = useState(false)
   const [isFileOpen, setIsFileOpen] = useState(false)
+  const currentUser = useAuthStore((state) => state.auth.user)
+  const [userStorageFiles, setUserStorageFiles] = useState<StorageFileItem[]>([])
+  const [userFolders, setUserFolders] = useState<UserFolder[]>(DEFAULT_USER_FOLDERS)
+  const [selectedUserFolder, setSelectedUserFolder] = useState<UserFolder | null>(null)
+  const [activePreviewFile, setActivePreviewFile] = useState<StorageFileItem | null>(null)
   const selectedVoucher = useVoucherStore((state) => state.selectedVoucher)
+
+  useEffect(() => {
+    if (currentUser?.email || isFileOpen) {
+      getUserStorageFilesAndFolders(currentUser?.email)
+        .then(({ files, folders }) => {
+          setUserStorageFiles(files)
+          setUserFolders(folders)
+        })
+        .catch((err) => console.warn('Failed to load user storage files:', err))
+    }
+  }, [currentUser?.email, isFileOpen])
   const [previewAttachment, setPreviewAttachment] = useState<{ fileName: string; fileUrl: string } | null>(null)
   const [isEmailSettingsOpen, setIsEmailSettingsOpen] = useState(false)
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const [selectedNotification, setSelectedNotification] = useState<DbNotification | null>(null)
   const [selectedNotificationMessage, setSelectedNotificationMessage] = useState<ChatMessageDetail | null>(null)
   const [isFetchingNotificationMessage, setIsFetchingNotificationMessage] = useState(false)
-  const currentUser = useAuthStore((state) => state.auth.user)
   const router = useRouter()
   const { unreadCount } = useNotificationStore()
   const { conversations, setConversations, loadConversations } =
@@ -351,9 +374,36 @@ export default function MessageFeature() {
 
   useEffect(() => {
     void fetchContactsAndGroups()
-    void fetchInbox()
-    void fetchSentMails()
   }, [currentUser?.accountNo, currentUser?.email])
+
+  // Defer SMTP Email Fetching to execute ONLY when Email tab is active
+  useEffect(() => {
+    const isEmailTabActive =
+      !isFileOpen &&
+      !isAiChatOpen &&
+      !isCalendarOpen &&
+      !isKanbanOpen &&
+      !isEmailSettingsOpen &&
+      !isNotificationOpen &&
+      sectionMode === 'mail'
+
+    if (isEmailTabActive && currentUser?.accountNo && !hasFetchedMail && !isEmailsLoading) {
+      setHasFetchedMail(true)
+      void fetchInbox()
+      void fetchSentMails()
+    }
+  }, [
+    isFileOpen,
+    isAiChatOpen,
+    isCalendarOpen,
+    isKanbanOpen,
+    isEmailSettingsOpen,
+    isNotificationOpen,
+    sectionMode,
+    currentUser?.accountNo,
+    hasFetchedMail,
+    isEmailsLoading,
+  ])
 
   // Set default state on initial page load
   useEffect(() => {
@@ -782,19 +832,14 @@ export default function MessageFeature() {
             setSelectedNotification(null)
             setIsComposing(false)
             setIsFileOpen(true)
-
-            // Automatically select top (latest) file as default ONLY if no file is currently selected
-            const storeState = useVoucherStore.getState()
-            if (!storeState.selectedVoucher && storeState.vouchers && storeState.vouchers.length > 0) {
-              const sorted = [...storeState.vouchers].sort((a, b) => {
-                const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
-                const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0
-                return timeB - timeA
-              })
-              storeState.setSelectedVoucher(sorted[0])
-            }
           } : undefined}
           isFileSelected={isFileOpen}
+          userFolders={userFolders}
+          selectedFolderId={selectedUserFolder?.id ?? null}
+          onSelectFolder={(folder) => {
+            setSelectedUserFolder(folder)
+            setActivePreviewFile(null)
+          }}
           onSelectEmailSettings={!doneMode ? () => {
             setSelectedEmail(null)
             setSelectedDirectoryChat(null)
@@ -903,14 +948,23 @@ export default function MessageFeature() {
         ) : isKanbanOpen ? (
           <KanbanTemplate embedded onBack={() => setIsKanbanOpen(false)} />
         ) : isFileOpen ? (
-          <SafeDocumentPreview
-            key={`${selectedVoucher?.id || 'doc'}-${selectedVoucher?._selectedAt || 0}`}
-            fileName={selectedVoucher?.fileName || 'invoice.pdf'}
-            fileUrl={selectedVoucher?.editedFileUrl || selectedVoucher?.pdfUrl || selectedVoucher?.originalFileUrl}
-            editedJson={selectedVoucher?.editedJson}
-            onClose={() => setIsFileOpen(false)}
-            hideToggle={true}
-          />
+          activePreviewFile ? (
+            <SafeDocumentPreview
+              key={`${activePreviewFile.id}-${activePreviewFile.fileName}`}
+              fileName={activePreviewFile.fileName}
+              fileUrl={activePreviewFile.fileUrl}
+              editedJson={activePreviewFile.editedJson}
+              onClose={() => setActivePreviewFile(null)}
+              hideToggle={true}
+            />
+          ) : (
+            <UserFileCardsView
+              folder={selectedUserFolder}
+              files={userStorageFiles}
+              onSelectFileForPreview={(file) => setActivePreviewFile(file)}
+              onBack={() => setIsFileOpen(false)}
+            />
+          )
         ) : activeTab === 'contact' ? (
           <div className='flex h-full flex-col overflow-y-auto p-4 md:p-6 bg-background'>
             <MsgContactTab

@@ -1,192 +1,57 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import {
-  Info,
-  Phone,
-  Video,
-  MoreVertical,
-  Smile,
-  Paperclip,
-  Camera,
-  Mic,
-  Send,
-  Check,
-  Download,
-  Eye,
-  FileText,
-  FileType,
-  RefreshCw,
-  ImagePlus,
-  Video as VideoIcon,
-  X,
-  MapPin,
-  CheckCheck,
-  Clock,
-  Scan,
-  ScanLine,
-  Loader2,
-  AlertCircle,
-} from 'lucide-react'
+import { X } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { toast } from 'sonner'
 import { SafeDocumentPreview } from '@/components/dynamic-form/SafeDocumentPreview'
-import { ImageConverterDialog, ConvertedPdfResult } from '@/components/image-converter-dialog'
-import { DocConverterDialog, ConvertedDocResult } from '@/components/doc-converter-dialog'
+import {
+  ImageConverterDialog,
+  ConvertedPdfResult,
+} from '@/components/image-converter-dialog'
+import {
+  DocConverterDialog,
+  ConvertedDocResult,
+} from '@/components/doc-converter-dialog'
 import { DocumentScannerModal } from '@/features/chattemplate/scanner/DocumentScannerModal'
 import { TextExtractorModal } from '@/features/chattemplate/extractor/TextExtractorModal'
 import { ScannedPdfResult } from '@/features/chattemplate/scanner/types'
 import { useCapacitorDocScanner } from '@/hooks/useCapacitorDocScanner'
-import { downloadFileFromUrl } from '@/utils/download'
-import { cn } from '@/lib/utils'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { MessageToolbar } from '@/features/chattemplate/chat/components/message-toolbar'
 import { Message, Conversation } from '@/features/chattemplate/chat/types/chat.types'
-import { VoiceMessagePlayer } from '@/features/chattemplate/files/components/voice-message-player'
 import { ChatProfilePage } from '@/features/chattemplate/chat/components/chat-profile-drawer'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import { getDisplayNameInitials } from '@/lib/utils'
-import { HeaderActions } from './header-actions'
+import {
+  ChatMessage,
+  ChatAttachment,
+  ChatLocation,
+  ChatViewProps,
+  MessageActionType,
+} from '../../types/chat.types'
+import { ChatHeader } from './chat-header'
+import { MessageBubble } from './message-bubble'
+import { MessageInput } from './message-input'
 import { FileUploadProgress } from './file-upload-progress'
 
-const DynamicDocViewer = dynamic(
-  () =>
-    import('@cyntler/react-doc-viewer').then((mod) => {
-      return function WrappedDocViewer({
-        documents,
-      }: {
-        documents: { uri: string; fileName: string; fileType?: string }[]
-      }) {
-        return (
-          <mod.default
-            documents={documents}
-            pluginRenderers={mod.DocViewerRenderers}
-            config={{
-              header: {
-                disableHeader: true,
-                disableFileName: true,
-                retainURLParams: false,
-              },
-            }}
-            style={{ height: '100%' }}
-          />
-        )
-      }
-    }),
-  { ssr: false }
-)
+export type { ChatMessage, ChatAttachment, ChatLocation, ChatViewProps, MessageActionType }
+
 const LocationMap = dynamic(() => import('@/components/ui/leaflet-map'), {
   ssr: false,
 })
-const EmojiPicker = dynamic(
-  () => import('@/features/chattemplate/chat/components/emoji-picker'),
-  { ssr: false }
-)
-
-export interface ChatAttachment {
-  type: 'image' | 'video' | 'document' | 'audio'
-  name: string
-  size: number
-  url: string
-  mimeType: string
-  file?: File
-  duration?: number
-  fileContentText?: string
-  fileContentJson?: any
-}
-export interface ChatLocation {
-  latitude: number
-  longitude: number
-  address?: string
-  type?: 'current' | 'live'
-}
-
-export interface ChatMessage {
-  id: string
-  sender: string
-  content: string
-  time: Date
-  isOwn: boolean
-  avatarInitials?: string
-  attachment?: ChatAttachment
-  location?: ChatLocation
-  senderUserId?: string
-  pin?: boolean
-  star?: boolean
-  favorite?: boolean
-  flag?: boolean
-  archive?: boolean
-  actionThis?: boolean
-  thumb?: boolean
-  forwarded?: boolean
-  messageStatus?: 'pending' | 'sent' | 'delivered' | 'read' | 'failed'
-  processingStatus?: 'pending' | 'processing' | 'completed' | 'failed' | null
-  replyTo?: {
-    id?: string
-    sender: string
-    content: string
-    unavailable?: boolean
-  }
-}
-
-interface ChatViewProps {
-  chatName: string
-  chatAvatar?: string
-  membersCount?: number
-  onlineCount?: number
-  messages: ChatMessage[]
-  onBack: () => void
-  onSendMessage: (
-    content: string,
-    attachment?: ChatAttachment,
-    replyTo?: ChatMessage
-  ) => void
-  onShareLocation?: () => void
-  typingText?: string
-  onTypingChange?: (value: string) => void
-  onRecordingChange?: (recording: boolean) => void
-  onLoadOlder?: () => Promise<void> | void
-  hasMoreMessages?: boolean
-  isLoadingOlder?: boolean
-  onMessageAction?: (
-    action:
-      | 'reply'
-      | 'forward'
-      | 'edit'
-      | 'thumb'
-      | 'pin'
-      | 'star'
-      | 'favorite'
-      | 'flag'
-      | 'archive'
-      | 'action_this'
-      | 'delete'
-      | 'deleteForEveryone',
-    message: ChatMessage,
-    value?: boolean
-  ) => void
-  onReply?: (message: ChatMessage) => void
-  rawMessages?: Message[]
-  currentUser?: { accountNo: string; name?: string; email?: string } | null
-  conversation?: Conversation | null
-}
 
 function formatTime(date: Date) {
   return date.toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function getFileType(name: string) {
+  return name.split('.').pop()?.toLowerCase()
 }
 
 export function ChatView({
@@ -224,6 +89,25 @@ export function ChatView({
   const [mapPreview, setMapPreview] = useState<ChatLocation | null>(null)
   const [previewImage, setPreviewImage] = useState<ChatAttachment | null>(null)
   const [isImageConverterOpen, setIsImageConverterOpen] = useState(false)
+  const [isDocConverterOpen, setIsDocConverterOpen] = useState(false)
+  const [isDocumentScannerOpen, setIsDocumentScannerOpen] = useState(false)
+  const [isTextExtractorOpen, setIsTextExtractorOpen] = useState(false)
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null)
+  const [activeToolbarMessageId, setActiveToolbarMessageId] = useState<string | null>(null)
+  const [uploadState, setUploadState] = useState<{
+    fileName: string
+    fileSize: number
+    progress: number
+    status: 'uploading' | 'completed' | 'error'
+  } | null>(null)
+
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const videoInputRef = useRef<HTMLInputElement>(null)
+  const documentInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+
+  const { startDocScan } = useCapacitorDocScanner()
 
   const handleRetryPdf = async (messageId: string) => {
     try {
@@ -242,10 +126,6 @@ export function ChatView({
       toast.error('Network error triggering retry.')
     }
   }
-  const [isDocConverterOpen, setIsDocConverterOpen] = useState(false)
-  const [isDocumentScannerOpen, setIsDocumentScannerOpen] = useState(false)
-  const [isTextExtractorOpen, setIsTextExtractorOpen] = useState(false)
-  const { startDocScan } = useCapacitorDocScanner()
 
   const handlePdfConverted = (result: ConvertedPdfResult) => {
     onSendMessage('', {
@@ -303,23 +183,11 @@ export function ChatView({
     )
   }
 
-  const [highlightedMessageId, setHighlightedMessageId] = useState<
-    string | null
-  >(null)
-  const [activeToolbarMessageId, setActiveToolbarMessageId] = useState<
-    string | null
-  >(null)
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const imageInputRef = useRef<HTMLInputElement>(null)
-  const videoInputRef = useRef<HTMLInputElement>(null)
-  const documentInputRef = useRef<HTMLInputElement>(null)
-  const cameraInputRef = useRef<HTMLInputElement>(null)
-
   useEffect(() => {
     if (!isLoadingOlder) {
       scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
     }
-  }, [messages])
+  }, [messages, isLoadingOlder])
 
   const handleSend = () => {
     const trimmed = draft.trim()
@@ -327,13 +195,6 @@ export function ChatView({
     onSendMessage(trimmed, undefined, replyingTo || undefined)
     setDraft('')
     setReplyingTo(null)
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
   }
 
   const stopRecording = () => {
@@ -357,8 +218,6 @@ export function ChatView({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       recordingStreamRef.current = stream
 
-      // If the user released while the permission prompt was open, do not leave
-      // the microphone running or send an empty recording.
       if (releaseRequestedRef.current) {
         stream.getTracks().forEach((track) => track.stop())
         recordingStreamRef.current = null
@@ -417,13 +276,6 @@ export function ChatView({
     }
   }
 
-  const [uploadState, setUploadState] = useState<{
-    fileName: string
-    fileSize: number
-    progress: number
-    status: 'uploading' | 'completed' | 'error'
-  } | null>(null)
-
   useEffect(() => {
     return () => {
       discardRecordingRef.current = true
@@ -472,47 +324,6 @@ export function ChatView({
     event.target.value = ''
   }
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  }
-
-  const getFileType = (name: string) => name.split('.').pop()?.toLowerCase()
-
-  const getToolbarMessage = (message: ChatMessage): Message => ({
-    id: message.id,
-    conversation_id: '',
-    owner_user_id: '',
-    sender_user_id: message.senderUserId || null,
-    message: message.content,
-    message_type: message.location
-      ? 'location'
-      : message.attachment?.type || 'text',
-    direction: message.isOwn ? 'Sent' : 'Received',
-    sent: message.messageStatus !== 'pending',
-    received:
-      message.messageStatus === 'delivered' || message.messageStatus === 'read',
-    created_at: message.time.toISOString(),
-    message_status:
-      message.messageStatus === 'failed' ? undefined : message.messageStatus,
-    file_url: message.attachment?.url,
-    file_name: message.attachment?.name,
-    file_size: message.attachment?.size,
-    mime_type: message.attachment?.mimeType,
-    duration: message.attachment?.duration,
-    thumb: !!message.thumb,
-    favorite: !!message.favorite,
-    flag: !!message.flag,
-    star: !!message.star,
-    pin: !!message.pin,
-    archive: !!message.archive,
-    deleted: false,
-    action_this: !!message.actionThis,
-    reply: !!message.replyTo,
-    forward: !!message.forwarded,
-  })
-
   const scrollToMessage = (messageId?: string) => {
     if (!messageId) return
     const target = document.getElementById(`email-chat-message-${messageId}`)
@@ -548,51 +359,66 @@ export function ChatView({
       : 'Last seen today at ' + formatTime(new Date())
 
   if (showProfile) {
-    const displayConvo = conversation || ({
-      id: 'synthetic-convo',
-      name: chatName,
-      image: chatAvatar,
-      type: (membersCount && membersCount > 2) ? 'group' : 'direct',
-      created_at: new Date().toISOString(),
-      members: (membersCount && membersCount > 2)
-        ? Array.from({ length: membersCount }).map((_, i) => ({
-          id: `m-${i}`,
-          name: `Member ${i + 1}`,
-          email: `member${i + 1}@example.com`,
-          avatar_url: ''
-        }))
-        : [
-          { id: currentUser?.accountNo || '1', name: currentUser?.name || 'You', email: currentUser?.email || '', avatar_url: '' },
-          { id: '2', name: chatName, email: 'partner@example.com', avatar_url: chatAvatar || '' }
-        ]
-    } as Conversation)
+    const displayConvo =
+      conversation ||
+      ({
+        id: 'synthetic-convo',
+        name: chatName,
+        image: chatAvatar,
+        type: membersCount && membersCount > 2 ? 'group' : 'direct',
+        created_at: new Date().toISOString(),
+        members:
+          membersCount && membersCount > 2
+            ? Array.from({ length: membersCount }).map((_, i) => ({
+                id: `m-${i}`,
+                name: `Member ${i + 1}`,
+                email: `member${i + 1}@example.com`,
+                avatar_url: '',
+              }))
+            : [
+                {
+                  id: currentUser?.accountNo || '1',
+                  name: currentUser?.name || 'You',
+                  email: currentUser?.email || '',
+                  avatar_url: '',
+                },
+                {
+                  id: '2',
+                  name: chatName,
+                  email: 'partner@example.com',
+                  avatar_url: chatAvatar || '',
+                },
+              ],
+      } as Conversation)
 
-    const displayRawMessages = rawMessages || messages.map(msg => ({
-      id: msg.id,
-      conversation_id: displayConvo.id,
-      owner_user_id: msg.isOwn ? (currentUser?.accountNo || '1') : '2',
-      sender_user_id: msg.isOwn ? (currentUser?.accountNo || '1') : '2',
-      message: msg.content,
-      message_type: msg.location
-        ? 'location'
-        : msg.attachment?.type || 'text',
-      direction: msg.isOwn ? 'Sent' : 'Received',
-      sent: true,
-      received: true,
-      created_at: msg.time.toISOString(),
-      file_url: msg.attachment?.url,
-      file_name: msg.attachment?.name,
-      file_size: msg.attachment?.size,
-      mime_type: msg.attachment?.mimeType,
-      duration: msg.attachment?.duration,
-      deleted: false,
-      star: !!msg.star,
-      pin: !!msg.pin,
-      favorite: !!msg.favorite,
-      flag: !!msg.flag,
-      archive: !!msg.archive,
-      thumb: !!msg.thumb,
-    })) as Message[]
+    const displayRawMessages =
+      rawMessages ||
+      (messages.map((msg) => ({
+        id: msg.id,
+        conversation_id: displayConvo.id,
+        owner_user_id: msg.isOwn ? currentUser?.accountNo || '1' : '2',
+        sender_user_id: msg.isOwn ? currentUser?.accountNo || '1' : '2',
+        message: msg.content,
+        message_type: msg.location
+          ? 'location'
+          : msg.attachment?.type || 'text',
+        direction: msg.isOwn ? 'Sent' : 'Received',
+        sent: true,
+        received: true,
+        created_at: msg.time.toISOString(),
+        file_url: msg.attachment?.url,
+        file_name: msg.attachment?.name,
+        file_size: msg.attachment?.size,
+        mime_type: msg.attachment?.mimeType,
+        duration: msg.attachment?.duration,
+        deleted: false,
+        star: !!msg.star,
+        pin: !!msg.pin,
+        favorite: !!msg.favorite,
+        flag: !!msg.flag,
+        archive: !!msg.archive,
+        thumb: !!msg.thumb,
+      })) as Message[])
 
     return (
       <div className='animate-in fade-in flex h-full w-full flex-col overflow-hidden bg-card duration-200 select-none'>
@@ -603,7 +429,13 @@ export function ChatView({
           onBack={() => setShowProfile(false)}
           onViewDocument={(url, name) => {
             setShowProfile(false)
-            setPreviewDoc({ type: 'document', url, name, size: 0, mimeType: '' })
+            setPreviewDoc({
+              type: 'document',
+              url,
+              name,
+              size: 0,
+              mimeType: '',
+            })
           }}
         />
       </div>
@@ -629,7 +461,7 @@ export function ChatView({
           <button
             type='button'
             onClick={() => setMapPreview(null)}
-            className='rounded-md p-1.5 text-muted-foreground hover:bg-muted'
+            className='rounded-md p-1.5 text-muted-foreground hover:bg-muted cursor-pointer'
             aria-label='Close map preview'
           >
             <X className='h-5 w-5' />
@@ -648,51 +480,14 @@ export function ChatView({
   return (
     <div className='fixed inset-0 z-50 flex h-full w-full flex-col bg-card overflow-hidden rounded-none border-0 border-border shadow-xs md:relative md:z-auto sm:rounded-xl sm:border'>
       {/* Header */}
-      <div className='flex flex-none shrink-0 items-center justify-between border-b border-border bg-muted/10 p-3 sm:p-4 select-none'>
-        <div className='flex min-w-0 items-center gap-2 sm:gap-3'>
-          {onBack && (
-            <button
-              type='button'
-              onClick={onBack}
-              className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden'
-              title='Close'
-              aria-label='Close chat'
-            >
-              <X className='h-4.5 w-4.5' />
-            </button>
-          )}
-
-          <div
-            onClick={() => setShowProfile(true)}
-            className='flex cursor-pointer items-center gap-2.5 sm:gap-3 transition-opacity select-none hover:opacity-85 min-w-0'
-            title='Click to view info'
-          >
-            <div className='relative shrink-0'>
-              <Avatar className='h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-border/60'>
-                {chatAvatar ? (
-                  <AvatarImage src={chatAvatar} alt={chatName} />
-                ) : null}
-                <AvatarFallback className='rounded-xl bg-primary/10 font-bold text-primary'>
-                  {chatName?.charAt(0)?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-
-            <div className='flex min-w-0 flex-col'>
-              <span className='block truncate text-sm leading-tight font-bold text-foreground'>
-                {chatName}
-              </span>
-              <span className='truncate text-xs leading-tight text-muted-foreground'>
-                {typingText || subtitle}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className='flex items-center gap-1 shrink-0'>
-          <HeaderActions onDelete={onBack} />
-        </div>
-      </div>
+      <ChatHeader
+        chatName={chatName}
+        chatAvatar={chatAvatar}
+        subtitle={subtitle}
+        typingText={typingText}
+        onBack={onBack}
+        onShowProfile={() => setShowProfile(true)}
+      />
 
       {/* Messages */}
       <div
@@ -711,230 +506,23 @@ export function ChatView({
           </div>
         ) : (
           messages.map((msg) => (
-            <div
-              id={`email-chat-message-${msg.id}`}
+            <MessageBubble
               key={msg.id}
-              className={cn(
-                'mb-3 flex justify-start rounded-lg transition-colors duration-300',
-                highlightedMessageId === msg.id && 'bg-primary/10'
-              )}
-            >
-              <div className='relative mt-0.5 mr-2.5 h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-muted'>
-                <div className='flex h-full w-full items-center justify-center bg-muted text-xs font-medium text-muted-foreground'>
-                  {msg.avatarInitials ||
-                    msg.sender?.charAt(0)?.toUpperCase() ||
-                    '?'}
-                </div>
-              </div>
-
-              <div className='group/message relative flex max-w-[85%] flex-col items-start pb-3 sm:max-w-[75%]'>
-                <div className='mb-0.5 ml-1 text-xs font-medium text-muted-foreground'>
-                  {msg.sender || 'Unknown'}
-                </div>
-
-                <div
-                  onClick={() =>
-                    setActiveToolbarMessageId((activeId) =>
-                      activeId === msg.id ? null : msg.id
-                    )
-                  }
-                  className='relative px-1 py-0.5'
-                >
-                  {msg.forwarded && (
-                    <div className='mb-1 text-[10px] font-semibold text-muted-foreground'>
-                      Forwarded
-                    </div>
-                  )}
-                  {msg.replyTo && (
-                    <button
-                      type='button'
-                      onClick={() => scrollToMessage(msg.replyTo?.id)}
-                      className='mb-1.5 block w-full rounded-r-md border-l-2 border-primary bg-muted/40 px-2 py-1.5 text-left transition-colors hover:bg-muted/70'
-                    >
-                      <span className='block truncate text-[10px] font-bold text-primary'>
-                        ↩ Replying to {msg.replyTo.sender}
-                      </span>
-                      <span className='block truncate text-xs text-muted-foreground'>
-                        {msg.replyTo.unavailable
-                          ? 'Original message unavailable'
-                          : msg.replyTo.content}
-                      </span>
-                    </button>
-                  )}
-                  {msg.content && (
-                    <div className='text-[15px] break-words whitespace-pre-wrap text-black dark:text-white'>
-                      {msg.content}
-                    </div>
-                  )}
-                  {msg.attachment?.type === 'document' && (
-                    <div className='flex w-full max-w-80 min-w-60 items-center gap-2.5 rounded-2xl border border-border/80 bg-card p-3 transition-colors hover:bg-muted/10 my-1 shadow-2xs'>
-                      <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-amber-500/30 bg-amber-500/15 text-amber-600 dark:text-amber-400'>
-                        <FileText className='h-4.5 w-4.5' />
-                      </div>
-                      <span className='min-w-0 flex-1 overflow-hidden'>
-                        <span className='block truncate text-xs font-bold text-foreground'>
-                          {msg.attachment.name}
-                        </span>
-                        <span className='mt-0.5 block truncate text-[10px] font-semibold text-muted-foreground'>
-                          {formatFileSize(msg.attachment.size)} &bull;{' '}
-                          {getFileType(msg.attachment.name)?.toUpperCase() ||
-                            'FILE'}
-                        </span>
-                        {msg.processingStatus === 'pending' || msg.processingStatus === 'processing' ? (
-                          <span className="text-[10px] text-sky-600 dark:text-sky-400 font-semibold leading-normal mt-0.5 flex items-center gap-1 select-none">
-                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                            Parsing...
-                          </span>
-                        ) : msg.processingStatus === 'failed' ? (
-                          <span className="text-[10px] text-destructive font-semibold leading-normal mt-0.5 flex items-center gap-1 select-none">
-                            <AlertCircle className="h-2.5 w-2.5" />
-                            Parsing failed
-                          </span>
-                        ) : msg.processingStatus === 'completed' ? (
-                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold leading-normal mt-0.5 select-none">
-                            Parsed
-                          </span>
-                        ) : null}
-                      </span>
-                      <div className='flex shrink-0 items-center gap-0.5'>
-                        {msg.processingStatus === 'failed' && (
-                          <button
-                            type='button'
-                            onClick={() => handleRetryPdf(msg.id)}
-                            className='rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer'
-                            aria-label='Retry parsing'
-                            title='Retry parsing'
-                          >
-                            <RefreshCw className='h-4 w-4' />
-                          </button>
-                        )}
-                        <button
-                          type='button'
-                          onClick={() => setPreviewDoc(msg.attachment!)}
-                          className='rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground'
-                          aria-label={`Preview ${msg.attachment.name}`}
-                          title='Preview'
-                        >
-                          <Eye className='h-4 w-4' />
-                        </button>
-                        <button
-                          type='button'
-                          onClick={() => msg.attachment && downloadFileFromUrl(msg.attachment.url, msg.attachment.name)}
-                          className='rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer'
-                          aria-label={`Download ${msg.attachment.name}`}
-                          title='Download'
-                        >
-                          <Download className='h-4 w-4' />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  {msg.attachment?.type === 'image' && (
-                    <button
-                      type='button'
-                      onClick={() => setPreviewImage(msg.attachment!)}
-                      className='outline-none block my-1 overflow-hidden rounded-2xl cursor-pointer'
-                    >
-                      <img
-                        src={msg.attachment.url}
-                        alt={msg.attachment.name}
-                        className='max-h-72 max-w-full rounded-2xl object-cover hover:opacity-95 transition-opacity'
-                      />
-                    </button>
-                  )}
-                  {msg.attachment?.type === 'video' && (
-                    <video
-                      controls
-                      src={msg.attachment.url}
-                      className='max-h-64 rounded-lg'
-                    />
-                  )}
-                  {msg.attachment?.type === 'audio' && (
-                    <VoiceMessagePlayer
-                      fileUrl={msg.attachment.url}
-                      duration={msg.attachment.duration}
-                    />
-                  )}
-                  {msg.location && (
-                    <button
-                      type='button'
-                      onClick={() => setMapPreview(msg.location!)}
-                      className='mt-1 block w-64 overflow-hidden rounded-xl border border-border/60 bg-muted/40 text-left'
-                    >
-                      <div className='h-36 w-full'>
-                        <LocationMap {...msg.location} />
-                      </div>
-                      <div className='flex items-center gap-2 px-3 py-2'>
-                        <MapPin className='h-4 w-4 shrink-0 text-emerald-600' />
-                        <div className='min-w-0'>
-                          <p className='truncate text-xs font-semibold'>
-                            {msg.location.type === 'live'
-                              ? 'Live Location'
-                              : 'Current Location'}
-                          </p>
-                          <p className='truncate text-[10px] text-muted-foreground'>
-                            {msg.location.address ||
-                              `${msg.location.latitude.toFixed(5)}, ${msg.location.longitude.toFixed(5)}`}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  )}
-                  <div className='mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground'>
-                    {formatTime(msg.time)}
-                    {msg.isOwn && (
-                      <span title={msg.messageStatus || 'sent'}>
-                        {msg.messageStatus === 'pending' ? (
-                          <Clock className='h-3.5 w-3.5 animate-pulse' />
-                        ) : msg.messageStatus === 'delivered' ? (
-                          <CheckCheck className='h-3.5 w-3.5' />
-                        ) : msg.messageStatus === 'read' ? (
-                          <CheckCheck className='h-3.5 w-3.5 text-sky-500' />
-                        ) : (
-                          <Check className='h-3.5 w-3.5' strokeWidth={2} />
-                        )}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {onMessageAction && (
-                  <MessageToolbar
-                    message={getToolbarMessage(msg)}
-                    onCopy={() => {
-                      if (msg.content) {
-                        void navigator.clipboard.writeText(msg.content)
-                        toast.success('Message copied to clipboard!')
-                      }
-                    }}
-                    onReact={(action, value) =>
-                      onMessageAction(action, msg, value)
-                    }
-                    onDeleteForMe={() => onMessageAction('delete', msg)}
-                    onDeleteForEveryone={() =>
-                      onMessageAction('deleteForEveryone', msg)
-                    }
-                    onReply={() => {
-                      setReplyingTo(msg)
-                      if (onReply) onReply(msg)
-                      else onMessageAction('reply', msg)
-                    }}
-                    onForward={() => onMessageAction('forward', msg)}
-                    onEdit={() => onMessageAction('edit', msg)}
-                    onShare={() => {
-                      if (navigator.share && msg.content) {
-                        void navigator.share({ text: msg.content })
-                      }
-                    }}
-                    isSender={msg.isOwn}
-                    className={cn(
-                      'pointer-events-none absolute -bottom-4 left-2 z-30 scale-95 opacity-0 transition-all duration-200 group-hover/message:pointer-events-auto group-hover/message:scale-100 group-hover/message:opacity-100',
-                      activeToolbarMessageId === msg.id &&
-                      'pointer-events-auto scale-100 opacity-100'
-                    )}
-                  />
-                )}
-              </div>
-            </div>
+              msg={msg}
+              isHighlighted={highlightedMessageId === msg.id}
+              activeToolbarMessageId={activeToolbarMessageId}
+              setActiveToolbarMessageId={setActiveToolbarMessageId}
+              onScrollToReply={scrollToMessage}
+              onPreviewDoc={setPreviewDoc}
+              onPreviewImage={setPreviewImage}
+              onPreviewMap={setMapPreview}
+              onRetryPdf={handleRetryPdf}
+              onMessageAction={onMessageAction}
+              onReply={onReply}
+              formatTime={formatTime}
+              formatFileSize={formatFileSize}
+              getFileType={getFileType}
+            />
           ))
         )}
       </div>
@@ -953,201 +541,29 @@ export function ChatView({
       )}
 
       {/* Input bar */}
-      {replyingTo && (
-        <div className='flex items-center gap-2 border-t border-border bg-muted/40 px-4 py-2'>
-          <div className='min-w-0 flex-1 border-l-2 border-primary pl-2'>
-            <p className='text-[10px] font-bold text-primary'>
-              Replying to {replyingTo.sender}
-            </p>
-            <p className='truncate text-xs text-muted-foreground'>
-              {replyingTo.content ||
-                replyingTo.attachment?.name ||
-                'Attachment'}
-            </p>
-          </div>
-          <button
-            type='button'
-            onClick={() => setReplyingTo(null)}
-            className='rounded-full p-1 text-muted-foreground hover:bg-muted'
-            aria-label='Cancel reply'
-          >
-            <X className='h-4 w-4' />
-          </button>
-        </div>
-      )}
-      <div className='pb-safe relative flex flex-none shrink-0 items-center gap-2.5 border-t border-border bg-muted/10 p-3'>
-        <div className='relative flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-full border border-border bg-background px-3.5 py-1.5 shadow-xs'>
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type='button'
-                className='shrink-0 cursor-pointer rounded-md p-0.5 hover:bg-muted focus:ring-1 focus:ring-ring focus:outline-none'
-                aria-label='Open emoji picker'
-              >
-                <Smile className='h-5 w-5 text-muted-foreground/80 transition-colors hover:text-foreground' />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent
-              side='top'
-              align='start'
-              className='border-none bg-transparent p-0 shadow-none'
-              sideOffset={12}
-            >
-              <EmojiPicker
-                onSelectEmoji={(emoji: string) =>
-                  setDraft((value) => value + emoji)
-                }
-              />
-            </PopoverContent>
-          </Popover>
+      <MessageInput
+        draft={draft}
+        setDraft={setDraft}
+        onTypingChange={onTypingChange}
+        onSend={handleSend}
+        isRecording={isRecording}
+        startRecording={startRecording}
+        stopRecording={stopRecording}
+        replyingTo={replyingTo}
+        onCancelReply={() => setReplyingTo(null)}
+        onShareLocation={onShareLocation}
+        onNativeDocScanner={handleNativeDocScanner}
+        onOpenImageConverter={() => setIsImageConverterOpen(true)}
+        onOpenDocConverter={() => setIsDocConverterOpen(true)}
+        onOpenDocScanner={() => setIsDocumentScannerOpen(true)}
+        onOpenTextExtractor={() => setIsTextExtractorOpen(true)}
+        imageInputRef={imageInputRef}
+        videoInputRef={videoInputRef}
+        documentInputRef={documentInputRef}
+        cameraInputRef={cameraInputRef}
+      />
 
-          <input
-            type='text'
-            value={draft}
-            onChange={(e) => {
-              setDraft(e.target.value)
-              onTypingChange?.(e.target.value)
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder='Message'
-            className='min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground focus:border-0 focus:ring-0 focus:outline-none'
-          />
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type='button'
-                className='shrink-0 cursor-pointer rounded-md p-0.5 hover:bg-muted focus:ring-1 focus:ring-ring focus:outline-none'
-                aria-label='Attachment options'
-              >
-                <Paperclip className='h-5 w-5 text-muted-foreground/80 transition-colors hover:text-foreground' />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align='end'
-              side='top'
-              sideOffset={12}
-              className='w-44 max-w-[calc(100vw-32px)]'
-            >
-              <DropdownMenuItem
-                onClick={() => imageInputRef.current?.click()}
-                className='cursor-pointer gap-2 font-semibold'
-              >
-                <ImagePlus className='h-4 w-4' /> Images
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => videoInputRef.current?.click()}
-                className='cursor-pointer gap-2 font-semibold'
-              >
-                <VideoIcon className='h-4 w-4' /> Videos
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => documentInputRef.current?.click()}
-                className='cursor-pointer gap-2 font-semibold'
-              >
-                <FileText className='h-4 w-4' /> Documents
-              </DropdownMenuItem>
-              {onShareLocation && (
-                <DropdownMenuItem
-                  onClick={onShareLocation}
-                  className='cursor-pointer gap-2 font-semibold'
-                >
-                  <MapPin className='h-4 w-4' /> Location
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem
-                onClick={() => setIsImageConverterOpen(true)}
-                className='cursor-pointer gap-2 font-semibold'
-              >
-                <FileType className='h-4 w-4' /> Image Converter
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setIsDocConverterOpen(true)}
-                className='cursor-pointer gap-2 font-semibold'
-              >
-                <RefreshCw className='h-4 w-4' /> Doc Converter
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleNativeDocScanner}
-                className='cursor-pointer gap-2 font-semibold'
-              >
-                <ScanLine className='h-4 w-4 text-primary' /> Doc Scanner
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setIsDocumentScannerOpen(true)}
-                className='cursor-pointer gap-2 font-semibold'
-              >
-                <Scan className='h-4 w-4' /> Scan Document
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setIsTextExtractorOpen(true)}
-                className='cursor-pointer gap-2 font-semibold'
-              >
-                <FileText className='h-4 w-4 text-primary' /> Extract Text
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <button
-            type='button'
-            onClick={() => cameraInputRef.current?.click()}
-            className='shrink-0 cursor-pointer rounded-md p-0.5 hover:bg-muted focus:ring-1 focus:ring-ring focus:outline-none'
-            aria-label='Take photo'
-          >
-            <Camera className='h-5 w-5 text-muted-foreground/80 transition-colors hover:text-foreground' />
-          </button>
-        </div>
-
-        <button
-          type='button'
-          onClick={() => {
-            if (draft.trim()) handleSend()
-          }}
-          onPointerDown={(event) => {
-            if (draft.trim()) return
-            try {
-              event.currentTarget.setPointerCapture(event.pointerId)
-            } catch (err) { }
-            void startRecording()
-          }}
-          onPointerUp={(event) => {
-            if (draft.trim()) return
-            try {
-              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-                event.currentTarget.releasePointerCapture(event.pointerId)
-              }
-            } catch (err) { }
-            stopRecording()
-          }}
-          onPointerCancel={(event) => {
-            try {
-              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-                event.currentTarget.releasePointerCapture(event.pointerId)
-              }
-            } catch (err) { }
-            if (!draft.trim()) stopRecording()
-          }}
-          onContextMenu={(event) => event.preventDefault()}
-          aria-label={
-            draft.trim()
-              ? 'Send message'
-              : isRecording
-                ? 'Release to send voice message'
-                : 'Hold to record voice message'
-          }
-          title={draft.trim() ? 'Send' : 'Hold to record'}
-          className={cn(
-            'flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-emerald-600 text-white shadow-md transition-all duration-100 hover:bg-emerald-700 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-95 disabled:opacity-55',
-            isRecording && 'scale-110 bg-red-600'
-          )}
-        >
-          {draft.trim() ? (
-            <Send className='h-4.5 w-4.5 translate-x-[1px]' strokeWidth={2} />
-          ) : (
-            <Mic className='h-4.5 w-4.5' strokeWidth={2} />
-          )}
-        </button>
-      </div>
+      {/* Hidden File Inputs */}
       <input
         ref={imageInputRef}
         type='file'
@@ -1160,7 +576,7 @@ export function ChatView({
           <button
             type='button'
             onClick={() => setPreviewImage(null)}
-            className='absolute top-4 right-4 rounded-full bg-black/60 p-2 text-white'
+            className='absolute top-4 right-4 rounded-full bg-black/60 p-2 text-white cursor-pointer'
             aria-label='Close image preview'
           >
             <X className='h-5 w-5' />
@@ -1194,6 +610,8 @@ export function ChatView({
         capture='environment'
         onChange={(event) => handleFileSelect(event, 'image')}
       />
+
+      {/* Dialogs */}
       <ImageConverterDialog
         open={isImageConverterOpen}
         onOpenChange={setIsImageConverterOpen}

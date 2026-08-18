@@ -66,11 +66,10 @@ const mockTemplates = [
 
 const FOLDER_OPTIONS = ['Finance', 'Chat', 'Files', 'Email', 'AI Chat', 'Order']
 const SUB_FOLDER_OPTIONS: ChatFileCategory[] = [
-  'Banking',
-  'Images',
   'Pdf',
   'Doc',
   'Xls',
+  'Images',
   'Videos',
   'Ppt',
   'Txt',
@@ -90,7 +89,7 @@ export function FileUploadForm({
   const [template, setTemplate] = useState(mockTemplates[0].id)
   const [subject, setSubject] = useState('')
   const [folder, setFolder] = useState<string>('Finance')
-  const [subFolder, setSubFolder] = useState<ChatFileCategory>('Banking')
+  const [subFolder, setSubFolder] = useState<ChatFileCategory>('Pdf')
   const [remarks, setRemarks] = useState('')
   const [body, setBody] = useState('')
 

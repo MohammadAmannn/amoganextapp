@@ -1,25 +1,14 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowLeft, Mail, MessageSquare, Plus, MoreVertical, Bell, X } from 'lucide-react'
+import { MessageSquare, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { LinksTab } from '@/features/email-settings/components/accounts-tab'
 import { ComingSoon } from '@/components/coming-soon'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
-import { useNotificationStore } from '@/stores/notification-store'
+import { useNotificationStore, DbNotification } from '@/stores/notification-store'
+import { useVoucherStore } from '@/stores/voucher-store'
 import { cn } from '@/lib/utils'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
-import { Search } from '@/components/search'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-
 import { AppHeader } from '@/components/layout/app-header'
 import { Main } from '@/components/layout/main'
 import { useConversation } from '@/features/chattemplate/chat/hooks/use-conversation'
@@ -29,8 +18,10 @@ import {
   getOrCreateDirectConversation,
   getUserConversations,
 } from '@/features/chattemplate/chat/repositories/conversation-repository'
-import { getOrCreateProfileForContact } from '@/features/chattemplate/chat/repositories/profile-repository'
-import { ensureProfileExists } from '@/features/chattemplate/chat/repositories/profile-repository'
+import {
+  getOrCreateProfileForContact,
+  ensureProfileExists,
+} from '@/features/chattemplate/chat/repositories/profile-repository'
 import {
   Conversation,
   Message,
@@ -38,46 +29,37 @@ import {
 import { getUserContacts } from '@/features/chattemplate/contacts/repositories/contact-repository'
 import { Contact } from '@/features/chattemplate/contacts/types/contact.types'
 import { Group } from '@/features/chattemplate/groups/types/group.types'
-import { ChatAttachment, ChatMessage, ChatView } from './components/chat/chat-view'
-import { RealtimeChatView } from './components/chat/realtime-chat-view'
-import { EmailList } from './components/emails/email-list'
-import { EmailView } from './components/emails/email-view'
-import { NewEmail } from './components/emails/new-email'
-import { ContactManagerTab, MsgContactTab } from './components/tabs/contact-manager-tab'
-import { GroupManagerTab, MsgGroupTab } from './components/tabs/group-manager-tab'
-import { AiChatPanel } from './components/panels/ai-chat-panel'
-import { MessageEmailSettings } from './components/panels/message-email-settings'
-import { NotificationDetailPanel, ChatMessageDetail } from './components/panels/notification-detail-panel'
 import { createClient } from '@/lib/supabase/client'
-import { DbNotification } from '@/stores/notification-store'
-import { HeaderActions } from './components/chat/header-actions'
 import CalendarTemplate from '@/features/calendartemplate'
 import KanbanTemplate from '@/features/kanbantemplate'
-import { emails as initialEmails, Email } from './data/emails'
-import dynamic from 'next/dynamic'
-import { InvoiceMaker } from '../vouchers/components/invoice-maker'
-import { ReviewPanel } from '@/components/dynamic-form/ReviewPanel'
 import { SafeDocumentPreview } from '@/components/dynamic-form/SafeDocumentPreview'
-import { useVoucherStore } from '@/stores/voucher-store'
+import { emails as initialEmails, Email } from './data/emails'
 import {
   getUserStorageFilesAndFolders,
   StorageFileItem,
   UserFolder,
   DEFAULT_USER_FOLDERS,
 } from './services/user-storage-files.service'
-import { UserFileCardsView } from './components/files/user-file-cards-view'
-import { FileUploadForm } from './components/files/file-upload-form'
-
-
-interface DirectoryChat {
-  id: string
-  conversationId?: string
-  kind: 'contact' | 'group'
-  name: string
-  avatar?: string
-  membersCount?: number
-  onlineCount?: number
-}
+import {
+  DirectoryChat,
+  ChatMessage,
+  ChatAttachment,
+} from './types'
+import {
+  ChatView,
+  RealtimeChatView,
+  EmailList,
+  EmailView,
+  NewEmail,
+  MsgContactTab,
+  MsgGroupTab,
+  AiChatPanel,
+  MessageEmailSettings,
+  NotificationDetailPanel,
+  UserFileCardsView,
+  FileUploadForm,
+} from './components'
+import { ChatMessageDetail } from './components/panels/notification-detail-panel'
 
 export default function MessageFeature() {
   const [emails, setEmails] = useState<Email[]>(initialEmails)

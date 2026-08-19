@@ -14,7 +14,11 @@ import { SidebarPagination } from '@/features/Message/components/sidebar/sidebar
 import { EmailView } from '@/features/Message/components/emails/email-view'
 import { NewEmail } from '@/features/Message/components/emails/new-email'
 
-export function CompleteMailPagePreview() {
+interface PagePreviewProps {
+  isMobileView?: boolean
+}
+
+export function CompleteMailPagePreview({ isMobileView = false }: PagePreviewProps) {
   const [emails, setEmails] = useState<Email[]>(mockEmails)
   const [selectedEmailId, setSelectedEmailId] = useState<string>(mockEmails[0]?.id || '')
   const [searchQuery, setSearchQuery] = useState('')
@@ -67,12 +71,13 @@ export function CompleteMailPagePreview() {
   }
 
   return (
-    <div className='flex h-full w-full overflow-hidden bg-background select-none'>
+    <div className='flex h-full w-full overflow-hidden bg-background select-none relative'>
       {/* ── LEFT SIDEBAR (Hidden on mobile when viewing detail) ─────────────────── */}
       <div
         className={cn(
-          'flex flex-col h-full w-full md:w-80 border-r border-border shrink-0 bg-card/20',
-          isMobileDetailOpen && 'hidden md:flex'
+          'flex flex-col h-full w-full md:w-80 border-r border-border shrink-0 bg-card/20 overflow-hidden',
+          isMobileDetailOpen ? 'hidden md:flex' : 'flex',
+          isMobileView && (isMobileDetailOpen ? 'hidden' : 'flex w-full')
         )}
       >
         {/* Header */}
@@ -161,8 +166,9 @@ export function CompleteMailPagePreview() {
       {/* ── RIGHT MAIN PANEL (Full width on mobile when viewing detail) ──────────── */}
       <div
         className={cn(
-          'flex-1 min-w-0 h-full overflow-hidden bg-background',
-          !isMobileDetailOpen && 'hidden md:flex'
+          'flex-1 min-w-0 h-full overflow-hidden bg-background flex flex-col',
+          !isMobileDetailOpen ? 'hidden md:flex' : 'flex',
+          isMobileView && (!isMobileDetailOpen ? 'hidden' : 'flex w-full')
         )}
       >
         {isComposing ? (

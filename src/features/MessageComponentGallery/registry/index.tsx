@@ -55,7 +55,21 @@ import {
   NewEmailPreview,
   AiChatWindowPreview,
   EmailDetailPreview,
+  QuestionnaireWizardPreview,
+  ProgressLinearPreview,
+  ProgressStepIndicatorPreview,
+  ProgressCircularPreview,
 } from '../previews'
+
+import {
+  DatePickerSimplePreview,
+  DatePickerRangePreview,
+  DatePickerPresetsPreview,
+  DatePickerFormPreview,
+  CalendarSinglePreview,
+  CalendarRangePreview,
+  CalendarEventsPreview,
+} from '../previews/DatePickerAndCalendarPreviews'
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 import {
@@ -73,6 +87,7 @@ import {
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type GalleryCategory =
   | 'All'
+  | 'Wizards'
   | 'Task'
   | 'Mail'
   | 'Notifications'
@@ -80,6 +95,8 @@ export type GalleryCategory =
   | 'Chat'
   | 'AI'
   | 'Shared'
+  | 'Date Picker'
+  | 'Calendar'
 
 export interface ComponentState {
   label: string
@@ -93,12 +110,134 @@ export interface GalleryEntry {
   description: string
   filePath: string
   states: ComponentState[]
-  renderPreview: (stateIndex: number) => React.ReactNode
+  renderPreview: (stateIndex: number, options?: { viewport?: string; isMobileView?: boolean }) => React.ReactNode
   usageCode: (stateIndex: number) => string
 }
 
 // ─── Shared no-op helpers ─────────────────────────────────────────────────────
 const noop = () => {}
+
+function FloatingChatToolbarPill({ isCardClicked }: { isCardClicked?: boolean }) {
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+
+  const isVisible = isMenuOpen || isCardClicked
+
+  return (
+    <div
+      className={cn(
+        'absolute bottom-2 right-2 transition-all duration-200 transform z-10',
+        isVisible
+          ? 'opacity-100 pointer-events-auto translate-y-0'
+          : 'opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto translate-y-1 group-hover:translate-y-0'
+      )}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className='flex items-center gap-1 rounded-full border border-border/80 bg-background/95 px-2.5 py-1 shadow-lg text-muted-foreground text-xs backdrop-blur-xs'>
+        <button
+          type='button'
+          onClick={(e) => {
+            e.stopPropagation()
+            toast.info('Playing audio...')
+          }}
+          className='p-1 rounded-full hover:bg-muted hover:text-foreground transition-colors cursor-pointer'
+          title='Audio'
+        >
+          <Volume2 className='h-3.5 w-3.5' />
+        </button>
+        <button
+          type='button'
+          onClick={(e) => {
+            e.stopPropagation()
+            toast.success('Liked')
+          }}
+          className='p-1 rounded-full hover:bg-muted hover:text-foreground transition-colors cursor-pointer'
+          title='Like'
+        >
+          <ThumbsUp className='h-3.5 w-3.5' />
+        </button>
+        <button
+          type='button'
+          onClick={(e) => {
+            e.stopPropagation()
+            toast.info('Disliked')
+          }}
+          className='p-1 rounded-full hover:bg-muted hover:text-foreground transition-colors cursor-pointer'
+          title='Dislike'
+        >
+          <ThumbsDown className='h-3.5 w-3.5' />
+        </button>
+        <button
+          type='button'
+          onClick={(e) => {
+            e.stopPropagation()
+            toast.success('Copied text')
+          }}
+          className='p-1 rounded-full hover:bg-muted hover:text-foreground transition-colors cursor-pointer'
+          title='Copy'
+        >
+          <Copy className='h-3.5 w-3.5' />
+        </button>
+        <button
+          type='button'
+          onClick={(e) => {
+            e.stopPropagation()
+            toast.info('Shared link')
+          }}
+          className='p-1 rounded-full hover:bg-muted hover:text-foreground transition-colors cursor-pointer'
+          title='Share'
+        >
+          <Share2 className='h-3.5 w-3.5' />
+        </button>
+        <ThreeDotMenu onOpenChange={setIsMenuOpen} />
+      </div>
+    </div>
+  )
+}
+
+function SideListCardPreview({ stateIndex }: { stateIndex: number }) {
+  const [isClicked, setIsClicked] = React.useState(false)
+
+  return (
+    <div className='w-full flex flex-col items-start justify-start select-none font-sans'>
+      <div
+        onClick={() => setIsClicked((prev) => !prev)}
+        className={cn(
+          'group relative flex flex-col gap-1.5 rounded-xl p-4 transition-all duration-200 cursor-pointer border w-full',
+          stateIndex === 1
+            ? 'border-purple-300 dark:border-purple-700 bg-purple-500/15 shadow-sm'
+            : 'border-purple-200/60 dark:border-purple-900/40 bg-purple-500/10 hover:bg-purple-500/15'
+        )}
+      >
+        {/* Left accent bar */}
+        <div className='absolute top-0 bottom-0 left-0 w-1 bg-purple-600 rounded-l-xl' />
+
+        {/* Top Row: Sender Name & Clean Aligned Timestamp */}
+        <div className='flex items-start justify-between gap-3 pl-1 pr-1'>
+          <span className='font-bold text-sm text-foreground truncate'>
+            Jordan Lee
+          </span>
+          <div className='text-right text-xs text-muted-foreground shrink-0 font-medium leading-tight'>
+            <div>18 aug 26 14.41</div>
+            <div className='text-[10px] text-muted-foreground/70 font-normal'>about 2 hours ago</div>
+          </div>
+        </div>
+
+        {/* Subject & Body */}
+        <div className='pl-1 pr-1 space-y-0.5 pb-2'>
+          <p className='text-xs font-semibold text-foreground/90 line-clamp-1'>
+            test to check auto sync aug 18 2.40
+          </p>
+          <p className='text-xs text-muted-foreground/80 line-clamp-1'>
+            test to check auto sync aug 18 2.40
+          </p>
+        </div>
+
+        {/* Mouse Hover / Mobile Click Floating Chat Icon Bar at Bottom */}
+        <FloatingChatToolbarPill isCardClicked={isClicked} />
+      </div>
+    </div>
+  )
+}
 
 // ─── Registry Definition ──────────────────────────────────────────────────────
 export const galleryRegistry: GalleryEntry[] = [
@@ -113,7 +252,7 @@ export const galleryRegistry: GalleryEntry[] = [
     states: [
       { label: 'Live Sprint Board Layout', description: 'Full responsive dual-pane layout with interactive Kanban board' },
     ],
-    renderPreview: (_si) => <CompleteTaskPagePreview />,
+    renderPreview: (_si, opts) => <CompleteTaskPagePreview isMobileView={opts?.isMobileView} />,
     usageCode: (_si) => `<div className="flex h-full w-full">
   {/* Left Sidebar */}
   <div className="w-80 border-r">
@@ -163,7 +302,7 @@ export const galleryRegistry: GalleryEntry[] = [
     states: [
       { label: 'Interactive Notifications View', description: 'Dual-pane notification management experience' },
     ],
-    renderPreview: (_si) => <CompleteNotificationPagePreview />,
+    renderPreview: (_si, opts) => <CompleteNotificationPagePreview isMobileView={opts?.isMobileView} />,
     usageCode: (_si) => `<div className="flex h-full w-full">
   <div className="w-80 border-r">
     <SidebarHeader isNotificationSelected={true} />
@@ -218,7 +357,7 @@ export const galleryRegistry: GalleryEntry[] = [
     states: [
       { label: 'Interactive Storage Explorer', description: 'Dual-pane storage and file explorer view' },
     ],
-    renderPreview: (_si) => <CompleteFilesPagePreview />,
+    renderPreview: (_si, opts) => <CompleteFilesPagePreview isMobileView={opts?.isMobileView} />,
     usageCode: (_si) => `<div className="flex h-full w-full">
   <div className="w-80 border-r">
     <SidebarHeader />
@@ -282,7 +421,7 @@ export const galleryRegistry: GalleryEntry[] = [
     states: [
       { label: 'Interactive Live Mail Page', description: 'Full responsive dual-pane layout with email switching and compose mode' },
     ],
-    renderPreview: (_si) => <CompleteMailPagePreview />,
+    renderPreview: (_si, opts) => <CompleteMailPagePreview isMobileView={opts?.isMobileView} />,
     usageCode: (_si) => `<div className="flex h-full w-full">
   <div className="w-80 border-r">
     <SidebarHeader unreadCount={unreadCount} />
@@ -442,7 +581,7 @@ export const galleryRegistry: GalleryEntry[] = [
     states: [
       { label: 'Interactive Live Chat Page', description: 'Full dual-pane chat conversation view' },
     ],
-    renderPreview: (_si) => <CompleteChatPagePreview />,
+    renderPreview: (_si, opts) => <CompleteChatPagePreview isMobileView={opts?.isMobileView} />,
     usageCode: (_si) => `<div className="flex h-full w-full">
   <div className="w-80 border-r">
     <SidebarHeader />
@@ -651,7 +790,7 @@ export const galleryRegistry: GalleryEntry[] = [
     states: [
       { label: 'Interactive AI Assistant Page', description: 'Full dual-pane AI assistant workspace' },
     ],
-    renderPreview: (_si) => <CompleteAiPagePreview />,
+    renderPreview: (_si, opts) => <CompleteAiPagePreview isMobileView={opts?.isMobileView} />,
     usageCode: (_si) => `<div className="flex h-full w-full">
   <div className="w-80 border-r">
     <SidebarHeader />
@@ -1089,110 +1228,13 @@ export const galleryRegistry: GalleryEntry[] = [
     id: 'side-list-card',
     name: 'Side List Card',
     category: 'Shared',
-    description: 'Purple/indigo tinted item card with left accent bar, clean top timestamp ("18 aug 26 14.41 / about 2 hours ago"), demo sender name ("Jordan Lee"), and on mouse hover displays the Chat Icon Bar at the bottom.',
+    description: 'Purple/indigo tinted item card with left accent bar, clean top timestamp ("18 aug 26 14.41 / about 2 hours ago"), demo sender name ("Jordan Lee"), and on hover or tap displays the Chat Icon Bar at the bottom with 3-dot menu.',
     filePath: 'src/features/Message/components/sidebar/side-list-card.tsx',
     states: [
-      { label: 'Default Card', description: 'Clean card with top timestamp & hover Chat Icon Bar on bottom' },
+      { label: 'Default Card', description: 'Clean card with top timestamp & hover/tap Chat Icon Bar on bottom' },
       { label: 'Selected State', description: 'Active selected state with prominent left border' },
     ],
-    renderPreview: (si) => (
-      <div className='w-full flex flex-col items-start justify-start select-none font-sans'>
-        <div
-          className={cn(
-            'group relative flex flex-col gap-1.5 rounded-xl p-4 transition-all duration-200 cursor-pointer border w-full',
-            si === 1
-              ? 'border-purple-300 dark:border-purple-700 bg-purple-500/15 shadow-sm'
-              : 'border-purple-200/60 dark:border-purple-900/40 bg-purple-500/10 hover:bg-purple-500/15'
-          )}
-        >
-          {/* Left accent bar */}
-          <div className='absolute top-0 bottom-0 left-0 w-1 bg-purple-600 rounded-l-xl' />
-
-          {/* Top Row: Sender Name & Clean Aligned Timestamp */}
-          <div className='flex items-start justify-between gap-3 pl-1 pr-1'>
-            <span className='font-bold text-sm text-foreground truncate'>
-              Jordan Lee
-            </span>
-            <div className='text-right text-xs text-muted-foreground shrink-0 font-medium leading-tight'>
-              <div>18 aug 26 14.41</div>
-              <div className='text-[10px] text-muted-foreground/70 font-normal'>about 2 hours ago</div>
-            </div>
-          </div>
-
-          {/* Subject & Body */}
-          <div className='pl-1 pr-1 space-y-0.5 pb-2'>
-            <p className='text-xs font-semibold text-foreground/90 line-clamp-1'>
-              test to check auto sync aug 18 2.40
-            </p>
-            <p className='text-xs text-muted-foreground/80 line-clamp-1'>
-              test to check auto sync aug 18 2.40
-            </p>
-          </div>
-
-          {/* Mouse Hover Floating Chat Icon Bar at Bottom */}
-          <div className='absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0 z-10'>
-            <div className='flex items-center gap-1 rounded-full border border-border/80 bg-background/95 px-2.5 py-1 shadow-lg text-muted-foreground text-xs backdrop-blur-xs'>
-              <button
-                type='button'
-                onClick={(e) => {
-                  e.stopPropagation()
-                  toast.info('Playing audio...')
-                }}
-                className='p-1 rounded-full hover:bg-muted hover:text-foreground transition-colors cursor-pointer'
-                title='Audio'
-              >
-                <Volume2 className='h-3.5 w-3.5' />
-              </button>
-              <button
-                type='button'
-                onClick={(e) => {
-                  e.stopPropagation()
-                  toast.success('Liked')
-                }}
-                className='p-1 rounded-full hover:bg-muted hover:text-foreground transition-colors cursor-pointer'
-                title='Like'
-              >
-                <ThumbsUp className='h-3.5 w-3.5' />
-              </button>
-              <button
-                type='button'
-                onClick={(e) => {
-                  e.stopPropagation()
-                  toast.info('Disliked')
-                }}
-                className='p-1 rounded-full hover:bg-muted hover:text-foreground transition-colors cursor-pointer'
-                title='Dislike'
-              >
-                <ThumbsDown className='h-3.5 w-3.5' />
-              </button>
-              <button
-                type='button'
-                onClick={(e) => {
-                  e.stopPropagation()
-                  toast.success('Copied text')
-                }}
-                className='p-1 rounded-full hover:bg-muted hover:text-foreground transition-colors cursor-pointer'
-                title='Copy'
-              >
-                <Copy className='h-3.5 w-3.5' />
-              </button>
-              <button
-                type='button'
-                onClick={(e) => {
-                  e.stopPropagation()
-                  toast.info('Shared link')
-                }}
-                className='p-1 rounded-full hover:bg-muted hover:text-foreground transition-colors cursor-pointer'
-                title='Share'
-              >
-                <Share2 className='h-3.5 w-3.5' />
-              </button>
-              <ThreeDotMenu />
-            </div>
-          </div>
-        </div>
-      </div>
-    ),
+    renderPreview: (si) => <SideListCardPreview stateIndex={si} />,
     usageCode: (si) => `<div className="group relative flex flex-col gap-1.5 rounded-xl p-4 bg-purple-500/10 border border-purple-200/60">
   <div className="absolute top-0 bottom-0 left-0 w-1 bg-purple-600 rounded-l-xl" />
 
@@ -1239,10 +1281,258 @@ export const galleryRegistry: GalleryEntry[] = [
   ]}
 />`,
   },
+
+  {
+    id: 'progress-linear',
+    name: 'Progress - Linear Bar & Status Colors',
+    category: 'Shared',
+    description: 'Animated linear progress bar with value display, status color variants (success emerald, processing indigo, warning amber), and interactive controls.',
+    filePath: 'src/components/ui/progress.tsx',
+    states: [
+      { label: '45% Progress', description: 'Standard linear progress bar at 45%' },
+      { label: '75% Progress', description: 'Progress bar at 75% completed state' },
+      { label: 'Animated Simulation', description: 'Live progress simulation loop' },
+    ],
+    renderPreview: (si) => <ProgressLinearPreview stateIndex={si} />,
+    usageCode: (si) => `import { Progress } from "@/components/ui/progress"
+
+export function ProgressDemo() {
+  return <Progress value={45} className="w-full" />
+}`,
+  },
+
+  {
+    id: 'progress-step-indicator',
+    name: 'Progress - Segmented Step Indicator',
+    category: 'Shared',
+    description: 'Multi-stage step progress tracker showing active, completed, and pending workflow steps with connecting line indicator.',
+    filePath: 'src/features/MessageComponentGallery/previews/ProgressPreviews.tsx',
+    states: [
+      { label: 'Step 2 Active', description: 'Step 2 currently active with Step 1 completed' },
+      { label: 'Step 3 Active', description: 'Step 3 currently active with Steps 1 & 2 completed' },
+      { label: 'All Completed', description: 'All steps completed' },
+    ],
+    renderPreview: (si) => <ProgressStepIndicatorPreview stateIndex={si} />,
+    usageCode: (si) => `// Segmented Step Indicator Flow
+import { ProgressStepIndicatorPreview } from '@/features/MessageComponentGallery/previews/ProgressPreviews'
+
+export default function StepperDemo() {
+  return <ProgressStepIndicatorPreview stateIndex={${si}} />
+}`,
+  },
+
+  {
+    id: 'progress-circular',
+    name: 'Progress - Circular Radial Ring',
+    category: 'Shared',
+    description: 'Radial circular progress ring with center percentage readout and sync status message.',
+    filePath: 'src/features/MessageComponentGallery/previews/ProgressPreviews.tsx',
+    states: [
+      { label: '68% Syncing', description: 'Radial ring at 68% in progress' },
+      { label: '100% Synced', description: 'Completed ring at 100% with success check' },
+      { label: '25% Low Progress', description: 'Warning state ring at 25%' },
+    ],
+    renderPreview: (si) => <ProgressCircularPreview stateIndex={si} />,
+    usageCode: (si) => `// Radial Circular Progress Ring
+import { ProgressCircularPreview } from '@/features/MessageComponentGallery/previews/ProgressPreviews'
+
+export default function RadialDemo() {
+  return <ProgressCircularPreview stateIndex={${si}} />
+}`,
+  },
+
+  // ───────────────────────── WIZARDS SECTION ─────────────────────────────────
+  {
+    id: 'questionnaire-wizard',
+    name: 'Questionnaire & Onboarding Wizard',
+    category: 'Wizards',
+    description: 'Multi-step questionnaire flow matching shadcn Questionnaire specs. Features personal details, calendar session date & time picker, feature choices, progress bar, and summary view.',
+    filePath: 'src/features/MessageComponentGallery/previews/QuestionnaireAndWizardPreviews.tsx',
+    states: [
+      { label: 'Step 1: Personal Details', description: 'Initial step with full name input and role selection cards' },
+      { label: 'Step 2: Schedule & Date Picker', description: 'Session scheduling step with date picker popover and time slots' },
+      { label: 'Summary & Completed', description: 'Completed questionnaire state with full recorded summary' },
+    ],
+    renderPreview: (si) => <QuestionnaireWizardPreview stateIndex={si} />,
+    usageCode: (si) => `// Questionnaire Multi-Step Wizard
+import { QuestionnaireWizardPreview } from '@/features/MessageComponentGallery/previews/QuestionnaireAndWizardPreviews'
+
+export default function QuestionnairePage() {
+  return <QuestionnaireWizardPreview stateIndex={${si}} />
+}`,
+  },
+
+  // ───────────────────────── DATE PICKER SECTION ─────────────────────────────
+  {
+    id: 'date-picker-simple',
+    name: 'Date Picker - Simple',
+    category: 'Date Picker',
+    description: 'Standard popover date picker with calendar trigger button, formatted date string ("August 19, 2026"), and clear date action.',
+    filePath: 'src/components/ui/date-picker.tsx',
+    states: [
+      { label: 'Default State', description: 'Trigger button with "Pick a date" placeholder' },
+      { label: 'Selected Date', description: 'Trigger displaying formatted date ("August 19, 2026")' },
+    ],
+    renderPreview: (si) => <DatePickerSimplePreview stateIndex={si} />,
+    usageCode: (si) => `<Popover>
+  <PopoverTrigger asChild>
+    <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
+      <CalendarIcon className="mr-2 h-4 w-4 text-teal-600" />
+      {date ? format(date, "PPP") : <span>Pick a date</span>}
+    </Button>
+  </PopoverTrigger>
+  <PopoverContent className="w-auto p-0" align="start">
+    <Calendar mode="single" selected={date} onSelect={setDate} />
+  </PopoverContent>
+</Popover>`,
+  },
+
+  {
+    id: 'date-picker-range',
+    name: 'Date Picker - Range',
+    category: 'Date Picker',
+    description: 'Date range selection trigger button allowing start and end date pick with dual month view on desktop and single month view on mobile screens.',
+    filePath: 'src/components/ui/date-picker.tsx',
+    states: [
+      { label: 'Default Range', description: 'Pre-selected 7-day range' },
+      { label: 'Custom Range', description: 'Aug 10, 2026 - Aug 24, 2026 range' },
+    ],
+    renderPreview: (si) => <DatePickerRangePreview stateIndex={si} />,
+    usageCode: (si) => `<Popover>
+  <PopoverTrigger asChild>
+    <Button variant="outline" className="w-[300px] justify-start text-left font-normal">
+      <CalendarDays className="mr-2 h-4 w-4 text-teal-600" />
+      {dateRange?.from ? (
+        dateRange.to ? (
+          <>{format(dateRange.from, "LLL dd, yyyy")} - {format(dateRange.to, "LLL dd, yyyy")}</>
+        ) : format(dateRange.from, "LLL dd, yyyy")
+      ) : <span>Pick a date range</span>}
+    </Button>
+  </PopoverTrigger>
+  <PopoverContent className="w-auto p-0" align="start">
+    <Calendar mode="range" selected={dateRange} onSelect={setDateRange} numberOfMonths={2} />
+  </PopoverContent>
+</Popover>`,
+  },
+
+  {
+    id: 'date-picker-presets',
+    name: 'Date Picker - Quick Presets',
+    category: 'Date Picker',
+    description: 'Date picker popover featuring sidebar shortcuts ("Today", "Tomorrow", "In 3 days", "In 1 week", "In 1 month") for quick date selection.',
+    filePath: 'src/components/ui/date-picker.tsx',
+    states: [
+      { label: 'With Presets', description: 'Date picker popover with quick selection shortcuts' },
+    ],
+    renderPreview: () => <DatePickerPresetsPreview />,
+    usageCode: () => `<Popover>
+  <PopoverTrigger asChild>
+    <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
+      <Clock className="mr-2 h-4 w-4 text-teal-600" />
+      {date ? format(date, "PPP") : <span>Pick a date</span>}
+    </Button>
+  </PopoverTrigger>
+  <PopoverContent className="flex w-auto p-0" align="start">
+    <div className="flex flex-col border-r border-border p-2 gap-1 bg-muted/20">
+      <Button variant="ghost" size="sm" onClick={() => setDate(new Date())}>Today</Button>
+      <Button variant="ghost" size="sm" onClick={() => setDate(addDays(new Date(), 1))}>Tomorrow</Button>
+      <Button variant="ghost" size="sm" onClick={() => setDate(addDays(new Date(), 7))}>In 1 week</Button>
+    </div>
+    <Calendar mode="single" selected={date} onSelect={setDate} className="p-3" />
+  </PopoverContent>
+</Popover>`,
+  },
+
+  {
+    id: 'date-picker-form',
+    name: 'Date Picker - Form Field',
+    category: 'Date Picker',
+    description: 'Date picker input integrated into a form structure with label, description, error validation state, and submit action.',
+    filePath: 'src/components/ui/date-picker.tsx',
+    states: [
+      { label: 'Default State', description: 'Clean form input field' },
+      { label: 'Validation Error', description: 'Field showing required error validation message' },
+    ],
+    renderPreview: (si) => <DatePickerFormPreview stateIndex={si} />,
+    usageCode: (si) => `<div className="space-y-1.5">
+  <Label>Date of Birth *</Label>
+  <Popover>
+    <PopoverTrigger asChild>
+      <Button variant="outline" className="w-full justify-start text-left font-normal">
+        <CalendarIcon className="mr-2 h-4 w-4 text-teal-600" />
+        {date ? format(date, "PPP") : <span>Pick your date of birth</span>}
+      </Button>
+    </PopoverTrigger>
+    <PopoverContent className="w-auto p-0" align="start">
+      <Calendar mode="single" selected={date} onSelect={setDate} captionLayout="dropdown" fromYear={1960} toYear={2026} />
+    </PopoverContent>
+  </Popover>
+  <p className="text-[11px] text-muted-foreground">Your date of birth is used to verify account eligibility.</p>
+</div>`,
+  },
+
+  // ───────────────────────── CALENDAR SECTION ────────────────────────────────
+  {
+    id: 'calendar-single',
+    name: 'Calendar - Single Selection',
+    category: 'Calendar',
+    description: 'Standalone interactive calendar grid with month navigation controls, today highlight, single date selection, and selected date info card.',
+    filePath: 'src/components/ui/calendar.tsx',
+    states: [
+      { label: 'Single Selection', description: 'Interactive calendar grid with date highlight' },
+    ],
+    renderPreview: (si) => <CalendarSinglePreview stateIndex={si} />,
+    usageCode: () => `<Calendar
+  mode="single"
+  selected={date}
+  onSelect={setDate}
+  className="rounded-md border border-border bg-background p-3"
+/>`,
+  },
+
+  {
+    id: 'calendar-range',
+    name: 'Calendar - Range Selection',
+    category: 'Calendar',
+    description: 'Multi-day range selection calendar grid with highlighted start date, end date, and intermediate range span.',
+    filePath: 'src/components/ui/calendar.tsx',
+    states: [
+      { label: 'Range Selection', description: 'Calendar grid with multi-day range highlight' },
+    ],
+    renderPreview: (si) => <CalendarRangePreview stateIndex={si} />,
+    usageCode: () => `<Calendar
+  mode="range"
+  selected={range}
+  onSelect={setRange}
+  className="rounded-md border border-border bg-background p-3"
+/>`,
+  },
+
+  {
+    id: 'calendar-events',
+    name: 'Calendar - Event & Schedule View',
+    category: 'Calendar',
+    description: 'Responsive event calendar view featuring dated indicators, agenda list panel, team tags, and Google Calendar sync status.',
+    filePath: 'src/components/ui/calendar.tsx',
+    states: [
+      { label: 'Event Schedule', description: 'Interactive calendar with agenda schedule list' },
+    ],
+    renderPreview: () => <CalendarEventsPreview />,
+    usageCode: () => `<div className="flex flex-col lg:flex-row w-full max-w-2xl border rounded-2xl overflow-hidden">
+  <div className="p-4 border-r bg-background">
+    <Calendar mode="single" selected={date} onSelect={setDate} />
+  </div>
+  <div className="flex-1 p-5 flex flex-col justify-between">
+    <h4>{format(date, 'EEEE, MMMM d')}</h4>
+    {/* Agenda Events */}
+  </div>
+</div>`,
+  },
 ]
 
 export const GALLERY_CATEGORIES: GalleryCategory[] = [
   'All',
+  'Wizards',
   'Task',
   'Mail',
   'Notifications',
@@ -1250,4 +1540,6 @@ export const GALLERY_CATEGORIES: GalleryCategory[] = [
   'Chat',
   'AI',
   'Shared',
+  'Date Picker',
+  'Calendar',
 ]

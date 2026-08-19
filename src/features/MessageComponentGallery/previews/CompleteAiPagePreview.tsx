@@ -11,18 +11,23 @@ import { SidebarSearchBar } from '@/features/Message/components/sidebar/sidebar-
 import { AiCardItem } from '@/features/Message/components/sidebar/ai-card-item'
 import { AiChatWindowPreview } from './AiChatWindowPreview'
 
-export function CompleteAiPagePreview() {
+interface PagePreviewProps {
+  isMobileView?: boolean
+}
+
+export function CompleteAiPagePreview({ isMobileView = false }: PagePreviewProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState('ai-chat')
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false)
 
   return (
-    <div className='flex h-full w-full overflow-hidden bg-background select-none'>
+    <div className='flex h-full w-full overflow-hidden bg-background select-none relative'>
       {/* ── LEFT SIDEBAR (Hidden on mobile when detail is open) ─────────────────── */}
       <div
         className={cn(
           'flex h-full w-full md:w-80 shrink-0 flex-col border-r border-border bg-muted/10 overflow-hidden',
-          isMobileDetailOpen && 'hidden md:flex'
+          isMobileDetailOpen ? 'hidden md:flex' : 'flex',
+          isMobileView && (isMobileDetailOpen ? 'hidden' : 'flex w-full')
         )}
       >
         {/* Header */}
@@ -85,8 +90,9 @@ export function CompleteAiPagePreview() {
       {/* ── RIGHT MAIN PANEL (Hidden on mobile when viewing AI list) ───────────── */}
       <div
         className={cn(
-          'flex-1 min-w-0 h-full overflow-hidden bg-background',
-          !isMobileDetailOpen && 'hidden md:flex'
+          'flex-1 min-w-0 h-full overflow-hidden bg-background flex flex-col',
+          !isMobileDetailOpen ? 'hidden md:flex' : 'flex',
+          isMobileView && (!isMobileDetailOpen ? 'hidden' : 'flex w-full')
         )}
       >
         <AiChatWindowPreview

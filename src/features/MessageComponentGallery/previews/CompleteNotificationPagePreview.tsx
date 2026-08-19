@@ -12,7 +12,11 @@ import { NotificationDetailPanel, ChatMessageDetail } from '@/features/Message/c
 import { mockNotifications } from '../mocks'
 import { DbNotification } from '@/stores/notification-store'
 
-export function CompleteNotificationPagePreview() {
+interface PagePreviewProps {
+  isMobileView?: boolean
+}
+
+export function CompleteNotificationPagePreview({ isMobileView = false }: PagePreviewProps) {
   const [notifications, setNotifications] = useState<DbNotification[]>(mockNotifications)
   const [selectedNotification, setSelectedNotification] = useState<DbNotification | null>(
     mockNotifications[0] || null
@@ -48,12 +52,13 @@ export function CompleteNotificationPagePreview() {
   )
 
   return (
-    <div className='flex h-full w-full overflow-hidden bg-background select-none'>
+    <div className='flex h-full w-full overflow-hidden bg-background select-none relative'>
       {/* ── LEFT SIDEBAR (Hidden on mobile when detail is open) ─────────────────── */}
       <div
         className={cn(
           'flex h-full w-full md:w-80 shrink-0 flex-col border-r border-border bg-muted/10 overflow-hidden',
-          isMobileDetailOpen && 'hidden md:flex'
+          isMobileDetailOpen ? 'hidden md:flex' : 'flex',
+          isMobileView && (isMobileDetailOpen ? 'hidden' : 'flex w-full')
         )}
       >
         {/* Header */}
@@ -114,8 +119,9 @@ export function CompleteNotificationPagePreview() {
       {/* ── RIGHT MAIN PANEL (Hidden on mobile when viewing list) ─────────────── */}
       <div
         className={cn(
-          'flex-1 min-w-0 h-full overflow-y-auto bg-background',
-          !isMobileDetailOpen && 'hidden md:flex'
+          'flex-1 min-w-0 h-full overflow-y-auto bg-background flex flex-col',
+          !isMobileDetailOpen ? 'hidden md:flex' : 'flex',
+          isMobileView && (!isMobileDetailOpen ? 'hidden' : 'flex w-full')
         )}
       >
         {selectedNotification ? (

@@ -13,7 +13,11 @@ import { UserFileCardsView } from '@/features/Message/components/files/user-file
 import { mockFolders, mockStorageFiles } from '../mocks'
 import { UserFolder } from '@/features/Message/services/user-storage-files.service'
 
-export function CompleteFilesPagePreview() {
+interface PagePreviewProps {
+  isMobileView?: boolean
+}
+
+export function CompleteFilesPagePreview({ isMobileView = false }: PagePreviewProps) {
   const [selectedFolder, setSelectedFolder] = useState<UserFolder>(mockFolders[1] || mockFolders[0])
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({
     Chat: true,
@@ -36,12 +40,13 @@ export function CompleteFilesPagePreview() {
   }
 
   return (
-    <div className='flex h-full w-full overflow-hidden bg-background select-none'>
+    <div className='flex h-full w-full overflow-hidden bg-background select-none relative'>
       {/* ── LEFT SIDEBAR (Hidden on mobile when detail is open) ─────────────────── */}
       <div
         className={cn(
           'flex h-full w-full md:w-80 shrink-0 flex-col border-r border-border bg-muted/10 overflow-hidden',
-          isMobileDetailOpen && 'hidden md:flex'
+          isMobileDetailOpen ? 'hidden md:flex' : 'flex',
+          isMobileView && (isMobileDetailOpen ? 'hidden' : 'flex w-full')
         )}
       >
         {/* Header */}
@@ -113,8 +118,9 @@ export function CompleteFilesPagePreview() {
       {/* ── RIGHT MAIN PANEL (Hidden on mobile when viewing folder list) ───────── */}
       <div
         className={cn(
-          'flex-1 min-w-0 h-full overflow-y-auto bg-background',
-          !isMobileDetailOpen && 'hidden md:flex'
+          'flex-1 min-w-0 h-full overflow-y-auto bg-background flex flex-col',
+          !isMobileDetailOpen ? 'hidden md:flex' : 'flex',
+          isMobileView && (!isMobileDetailOpen ? 'hidden' : 'flex w-full')
         )}
       >
         <UserFileCardsView

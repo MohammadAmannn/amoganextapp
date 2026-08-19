@@ -292,18 +292,6 @@ export function UserFileCardsView({
       {/* 1. Top Header Bar */}
       <div className="flex shrink-0 items-center justify-between border-b border-border/60 bg-card px-4 py-2.5 gap-3">
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-          {onBack && (
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={onBack}
-              className="h-8 w-8 rounded-full md:hidden hover:bg-muted text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
-              title="Close view"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-
           <div className="flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-xl border border-indigo-200/50 bg-indigo-500/10 text-indigo-600 dark:border-indigo-900/40 dark:text-indigo-400">
             <FolderOpen className="h-4 w-4" />
           </div>
@@ -326,6 +314,7 @@ export function UserFileCardsView({
         {/* Action Header Tools on Right */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <HeaderActions
+            onClose={onBack}
             onDownload={() => {
               if (filteredFiles.length > 0) {
                 downloadFile(filteredFiles[0].fileUrl, filteredFiles[0].fileName)

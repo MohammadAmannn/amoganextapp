@@ -10,17 +10,22 @@ import { SidebarSearchBar } from '@/features/Message/components/sidebar/sidebar-
 import { TaskCardItem } from '@/features/Message/components/sidebar/task-card-item'
 import KanbanTemplate from '@/features/kanbantemplate'
 
-export function CompleteTaskPagePreview() {
+interface PagePreviewProps {
+  isMobileView?: boolean
+}
+
+export function CompleteTaskPagePreview({ isMobileView = false }: PagePreviewProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false)
 
   return (
-    <div className='flex h-full w-full overflow-hidden bg-background select-none'>
+    <div className='flex h-full w-full overflow-hidden bg-background select-none relative'>
       {/* ── LEFT SIDEBAR (Hidden on mobile when detail is open) ─────────────────── */}
       <div
         className={cn(
           'flex h-full w-full md:w-80 shrink-0 flex-col border-r border-border bg-muted/10 overflow-hidden',
-          isMobileDetailOpen && 'hidden md:flex'
+          isMobileDetailOpen ? 'hidden md:flex' : 'flex',
+          isMobileView && (isMobileDetailOpen ? 'hidden' : 'flex w-full')
         )}
       >
         {/* Header */}
@@ -75,29 +80,15 @@ export function CompleteTaskPagePreview() {
       <div
         className={cn(
           'flex-1 min-w-0 h-full overflow-y-auto bg-background flex flex-col',
-          !isMobileDetailOpen && 'hidden md:flex'
+          !isMobileDetailOpen ? 'hidden md:flex' : 'flex',
+          isMobileView && (!isMobileDetailOpen ? 'hidden' : 'flex w-full')
         )}
       >
-        {/* Mobile Header Bar with Cross Button */}
-        <div className='flex items-center justify-between border-b border-border bg-card px-4 py-2.5 md:hidden shrink-0'>
-          <div className='flex items-center gap-2 min-w-0'>
-            <button
-              type='button'
-              onClick={() => setIsMobileDetailOpen(false)}
-              className='flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-muted/60 text-foreground hover:bg-muted cursor-pointer shrink-0 transition-colors'
-              title='Close task view'
-              aria-label='Close'
-            >
-              <X className='h-4.5 w-4.5' />
-            </button>
-            <span className='text-sm font-semibold text-foreground truncate'>
-              Sprint Kanban Board
-            </span>
-          </div>
-        </div>
-
         <div className='flex-1 min-h-0 overflow-y-auto'>
-          <KanbanTemplate embedded={true} />
+          <KanbanTemplate
+            embedded={true}
+            onBack={() => setIsMobileDetailOpen(false)}
+          />
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Copy,
   Pencil,
@@ -25,6 +26,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu'
+import { cn } from '@/lib/utils'
 import { Message } from '../types/chat.types'
 
 interface MessageToolbarProps {
@@ -64,9 +66,15 @@ export function MessageToolbar({
   isSender,
   className,
 }: MessageToolbarProps) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
   return (
     <div
-      className={`flex items-center gap-1 rounded-full border border-border/80 bg-card px-2.5 py-1 shadow-md select-none dark:bg-zinc-900 ${className}`}
+      className={cn(
+        'flex items-center gap-1 rounded-full border border-border/80 bg-card px-2.5 py-1 shadow-md select-none dark:bg-zinc-900',
+        className,
+        isDropdownOpen && '!pointer-events-auto !scale-100 !opacity-100'
+      )}
       onClick={(e) => e.stopPropagation()} // Prevent bubble clicks
     >
       {/* Thumb Up reaction toggle */}
@@ -116,7 +124,7 @@ export function MessageToolbar({
       </Button>
 
       {/* Three Dot Menu dropdown */}
-      <DropdownMenu>
+      <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             size='icon'

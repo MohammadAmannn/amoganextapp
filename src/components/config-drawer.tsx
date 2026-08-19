@@ -244,7 +244,7 @@ function ThemeListSelector() {
       />
 
       {/* Search input */}
-      <div className='relative mb-3'>
+      <div className='relative mb-2.5'>
         <Search className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
         <input
           type='text'
@@ -261,13 +261,13 @@ function ThemeListSelector() {
       </div>
 
       {/* Theme count */}
-      <p className='mb-2 text-xs text-muted-foreground'>
-        {filtered.length} theme{filtered.length !== 1 ? 's' : ''}
+      <p className='mb-2 text-xs text-muted-foreground font-medium'>
+        {filtered.length} theme{filtered.length !== 1 ? 's' : ''} available
       </p>
 
       {/* Scrollable theme list */}
       <div
-        className='flex-1 space-y-0.5 overflow-y-auto rounded-lg pr-1'
+        className='flex-1 space-y-1 overflow-y-auto rounded-lg pr-1'
         role='radiogroup'
         aria-label='Select color theme'
       >
@@ -284,21 +284,21 @@ function ThemeListSelector() {
             aria-checked={colorTheme === ct.name}
             aria-label={`Select ${ct.label} theme`}
             className={cn(
-              'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-150',
+              'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-150 cursor-pointer',
               colorTheme === ct.name
                 ? 'bg-primary text-primary-foreground shadow-md'
-                : 'hover:bg-accent'
+                : 'hover:bg-accent/80 hover:text-foreground border border-transparent hover:border-border/40'
             )}
           >
             {/* Color preview dots */}
-            <div className='flex gap-1'>
+            <div className='flex gap-1.5 shrink-0'>
               {ct.colors.map((color, i) => (
                 <span
                   key={i}
                   className={cn(
-                    'size-3.5 rounded-full shadow-sm',
+                    'size-3.5 rounded-full shadow-xs transition-transform hover:scale-110',
                     colorTheme === ct.name
-                      ? 'ring-1 ring-primary-foreground/30'
+                      ? 'ring-1 ring-primary-foreground/40'
                       : 'ring-1 ring-border/50'
                   )}
                   style={{ backgroundColor: color }}
@@ -306,8 +306,21 @@ function ThemeListSelector() {
               ))}
             </div>
 
-            {/* Theme name */}
-            <span className='text-sm font-medium'>{ct.label}</span>
+            {/* Theme name & Tweakcn badge */}
+            <div className='flex items-center gap-1.5 truncate'>
+              <span className='text-sm font-medium truncate'>{ct.label}</span>
+              {ct.category === 'tweakcn' && (
+                <span
+                  className={cn(
+                    'rounded px-1.5 py-0.2 text-[9px] font-semibold tracking-wider uppercase',
+                    colorTheme === ct.name
+                      ? 'bg-primary-foreground/20 text-primary-foreground'
+                      : 'bg-primary/10 text-primary'
+                  )}
+                >
+                </span>
+              )}
+            </div>
 
             {/* Selected indicator */}
             {colorTheme === ct.name && (

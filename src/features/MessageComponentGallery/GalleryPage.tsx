@@ -24,6 +24,10 @@ import {
   FileText,
   Maximize2,
   Minimize2,
+  Palette,
+  MoreHorizontal,
+  CalendarDays,
+  Wand2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -32,6 +36,13 @@ import { AppLogo } from '@/components/layout/app-logo'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { ConfigDrawer } from '@/components/config-drawer'
 import { galleryRegistry, GALLERY_CATEGORIES, GalleryCategory, GalleryEntry } from './registry'
 
 // ─── Viewport config ─────────────────────────────────────────────────────────
@@ -44,6 +55,7 @@ const VIEWPORT_WIDTHS: Record<Viewport, number | null> = {
 
 // ─── Category badge colors (shadcn design tokens) ────────────────────────────
 const CATEGORY_COLORS: Record<string, string> = {
+  Wizards: 'bg-violet-500/10 text-violet-600 border-violet-200/50 dark:border-violet-900/40 dark:text-violet-400',
   Mail: 'bg-indigo-500/10 text-indigo-600 border-indigo-200/50 dark:border-indigo-900/40 dark:text-indigo-400',
   AI: 'bg-amber-500/10 text-amber-600 border-amber-200/50 dark:border-amber-900/40 dark:text-amber-400',
   Chat: 'bg-emerald-500/10 text-emerald-600 border-emerald-200/50 dark:border-emerald-900/40 dark:text-emerald-400',
@@ -51,6 +63,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   Files: 'bg-sky-500/10 text-sky-600 border-sky-200/50 dark:border-sky-900/40 dark:text-sky-400',
   Notifications: 'bg-rose-500/10 text-rose-600 border-rose-200/50 dark:border-rose-900/40 dark:text-rose-400',
   Shared: 'bg-slate-500/10 text-slate-600 border-slate-200/50 dark:border-slate-800 dark:text-slate-400',
+  'Date Picker': 'bg-teal-500/10 text-teal-600 border-teal-200/50 dark:border-teal-900/40 dark:text-teal-400',
+  Calendar: 'bg-blue-500/10 text-blue-600 border-blue-200/50 dark:border-blue-900/40 dark:text-blue-400',
 }
 
 // ─── Category icons & styles matching Message Page CategoryToolbar ────────────
@@ -67,6 +81,12 @@ const CATEGORY_CONFIG: Record<
     activeClass:
       'bg-primary/15 text-primary border-primary/30 font-semibold shadow-2xs',
     badgeClass: 'bg-primary/20 text-primary',
+  },
+  Wizards: {
+    icon: Wand2,
+    activeClass:
+      'bg-violet-500/15 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400 border-violet-300/60 dark:border-violet-800/40 font-semibold shadow-2xs',
+    badgeClass: 'bg-violet-500/20 text-violet-600 dark:text-violet-400',
   },
   Task: {
     icon: Calendar,
@@ -109,6 +129,18 @@ const CATEGORY_CONFIG: Record<
     activeClass:
       'bg-slate-500/15 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-300 dark:border-slate-700 font-semibold shadow-2xs',
     badgeClass: 'bg-slate-500/20 text-slate-700 dark:text-slate-300',
+  },
+  'Date Picker': {
+    icon: CalendarDays,
+    activeClass:
+      'bg-teal-500/15 text-teal-600 dark:bg-teal-950/40 dark:text-teal-400 border-teal-300/60 dark:border-teal-800/40 font-semibold shadow-2xs',
+    badgeClass: 'bg-teal-500/20 text-teal-600 dark:text-teal-400',
+  },
+  Calendar: {
+    icon: Calendar,
+    activeClass:
+      'bg-blue-500/15 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 border-blue-300/60 dark:border-blue-800/40 font-semibold shadow-2xs',
+    badgeClass: 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
   },
 }
 
@@ -342,21 +374,21 @@ export function GalleryPage() {
                     type='button'
                     onClick={() => handleSelectEntry(entry)}
                     className={cn(
-                      'group relative flex w-full cursor-pointer flex-col gap-1 rounded-lg px-3 py-2 text-left transition-all duration-150 select-none border',
+                      'group relative flex w-full cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2 text-left transition-all duration-200 select-none border border-transparent',
                       isSelected
-                        ? 'border-primary/20 bg-primary/10 text-primary shadow-2xs'
-                        : 'border-transparent text-foreground/80 hover:bg-muted/40 hover:text-foreground'
+                        ? 'border-indigo-200/50 bg-indigo-500/10 dark:border-indigo-900/30 dark:bg-indigo-950/20'
+                        : 'bg-background hover:bg-muted/30'
                     )}
                   >
                     {isSelected && (
-                      <div className='absolute top-1.5 bottom-1.5 left-0 w-1 rounded-r-full bg-primary' />
+                      <div className='absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-l-full bg-indigo-600' />
                     )}
 
                     <div className='flex items-center justify-between gap-2 min-w-0'>
                       <span
                         className={cn(
                           'truncate text-sm leading-snug',
-                          isSelected ? 'font-semibold text-primary' : 'font-medium text-foreground'
+                          isSelected ? 'font-semibold text-foreground' : 'font-medium text-foreground/90'
                         )}
                       >
                         {entry.name}
@@ -372,9 +404,75 @@ export function GalleryPage() {
                       </Badge>
                     </div>
 
-                    <p className='line-clamp-1 text-xs text-muted-foreground font-normal'>
+                    <p className='line-clamp-1 text-xs text-muted-foreground font-normal pr-6 sm:pr-0'>
                       {entry.filePath.split('/').pop()}
                     </p>
+
+                    {entry.category === 'Shared' && (
+                      <div className='absolute bottom-1.5 right-2 transition-opacity opacity-100 sm:opacity-0 sm:group-hover:opacity-100'>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type='button'
+                              onClick={(e) => e.stopPropagation()}
+                              className='flex h-6 w-6 cursor-pointer items-center justify-center rounded p-1 text-muted-foreground transition-all hover:bg-muted hover:text-foreground'
+                              title='More actions'
+                            >
+                              <MoreHorizontal className='h-3.5 w-3.5' />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align='end'
+                            className='w-[150px] rounded-lg border border-border bg-background p-1 shadow-md'
+                          >
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleSelectEntry(entry)
+                                setActiveTab('preview')
+                              }}
+                              className='cursor-pointer gap-2 py-1.5 text-xs font-medium'
+                            >
+                              <Eye className='h-3.5 w-3.5 text-indigo-500' />
+                              <span>Preview</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleSelectEntry(entry)
+                                setActiveTab('code')
+                              }}
+                              className='cursor-pointer gap-2 py-1.5 text-xs font-medium'
+                            >
+                              <Code2 className='h-3.5 w-3.5 text-blue-500' />
+                              <span>View Code</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleSelectEntry(entry)
+                                handleCopyCode()
+                              }}
+                              className='cursor-pointer gap-2 py-1.5 text-xs font-medium'
+                            >
+                              <Copy className='h-3.5 w-3.5 text-emerald-500' />
+                              <span>Copy Snippet</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleSelectEntry(entry)
+                                setIsFullscreen(true)
+                              }}
+                              className='cursor-pointer gap-2 py-1.5 text-xs font-medium'
+                            >
+                              <Maximize2 className='h-3.5 w-3.5 text-purple-500' />
+                              <span>Fullscreen</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    )}
                   </button>
                 )
               })
@@ -422,7 +520,7 @@ export function GalleryPage() {
                     <Badge
                       variant='outline'
                       className={cn(
-                        'text-[10px] font-semibold h-4.5 px-1.5 border shrink-0',
+                        'text-[10px] font-semibold h-4.5 px-1.5 border shrink-0 hidden sm:inline-flex',
                         CATEGORY_COLORS[selectedEntry.category] || ''
                       )}
                     >
@@ -430,67 +528,68 @@ export function GalleryPage() {
                     </Badge>
                   </div>
 
-                  {/* Right: Controls (Preview/Code + Fullscreen + Copy Snippet) */}
-                  <div className='flex items-center gap-1.5 shrink-0'>
-                    {/* Fullscreen Toggle Button */}
-                    <button
-                      type='button'
-                      onClick={() => {
-                        setIsFullscreen((prev) => !prev)
-                        toast.info(isFullscreen ? 'Exited Fullscreen View' : 'Full Screen View Enabled')
-                      }}
-                      title={isFullscreen ? 'Exit Fullscreen (Esc)' : 'Open Fullscreen View'}
-                      className={cn(
-                        'flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium transition-all cursor-pointer select-none shadow-2xs hover:bg-background hover:text-foreground',
-                        isFullscreen && 'bg-primary/10 text-primary border-primary/30 font-semibold'
-                      )}
-                    >
-                      {isFullscreen ? (
-                        <>
-                          <Minimize2 className='h-3.5 w-3.5 text-primary' />
-                          <span className='hidden sm:inline'>Exit Fullscreen</span>
-                        </>
-                      ) : (
-                        <>
-                          <Maximize2 className='h-3.5 w-3.5 text-muted-foreground' />
-                          <span className='hidden sm:inline'>Fullscreen</span>
-                        </>
-                      )}
-                    </button>
-
-                    {/* Preview / Code Tab Switcher */}
-                    <div className='flex rounded-md border border-border bg-muted/40 p-0.5 shadow-2xs'>
+                  {/* Right: Controls (Preview/Code/Fullscreen + Viewport + Copy Snippet + Theme) */}
+                  <div className='flex items-center gap-3 sm:gap-4 shrink-0'>
+                    {/* Left Group: Preview / Code / Fullscreen Tab Switcher (Matches Message Page Underline Tab Style) */}
+                    <div className='flex items-center gap-3 sm:gap-3.5 text-xs font-medium px-0.5 whitespace-nowrap shrink-0'>
                       <button
                         type='button'
                         onClick={() => setActiveTab('preview')}
                         className={cn(
-                          'flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-all cursor-pointer select-none',
+                          'pb-1 border-b-2 transition-all cursor-pointer select-none flex items-center gap-1.5 text-xs',
                           activeTab === 'preview'
-                            ? 'bg-background text-foreground shadow-xs font-semibold'
-                            : 'text-muted-foreground hover:text-foreground'
+                            ? 'border-primary text-foreground font-semibold'
+                            : 'border-transparent text-muted-foreground hover:text-foreground'
                         )}
                       >
-                        <Eye className='h-3 w-3' />
-                        <span className='hidden sm:inline'>Preview</span>
+                        <Eye className='h-3.5 w-3.5' />
+                        <span>Preview</span>
                       </button>
+
                       <button
                         type='button'
                         onClick={() => setActiveTab('code')}
                         className={cn(
-                          'flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-all cursor-pointer select-none',
+                          'pb-1 border-b-2 transition-all cursor-pointer select-none flex items-center gap-1.5 text-xs',
                           activeTab === 'code'
-                            ? 'bg-background text-foreground shadow-xs font-semibold'
-                            : 'text-muted-foreground hover:text-foreground'
+                            ? 'border-primary text-foreground font-semibold'
+                            : 'border-transparent text-muted-foreground hover:text-foreground'
                         )}
                       >
-                        <Code2 className='h-3 w-3' />
-                        <span className='hidden sm:inline'>Code</span>
+                        <Code2 className='h-3.5 w-3.5' />
+                        <span>Code</span>
+                      </button>
+
+                      {/* Fullscreen Toggle Button (Left Position beside Preview/Code) */}
+                      <button
+                        type='button'
+                        onClick={() => {
+                          setIsFullscreen((prev) => !prev)
+                          toast.info(isFullscreen ? 'Exited Fullscreen View' : 'Full Screen View Enabled')
+                        }}
+                        title={isFullscreen ? 'Exit Fullscreen (Esc)' : 'Open Fullscreen View'}
+                        className={cn(
+                          'pb-1 border-b-2 border-transparent transition-all cursor-pointer select-none flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground',
+                          isFullscreen && 'text-primary font-semibold border-primary'
+                        )}
+                      >
+                        {isFullscreen ? (
+                          <>
+                            <Minimize2 className='h-3.5 w-3.5 text-primary' />
+                            <span className='hidden sm:inline'>Exit</span>
+                          </>
+                        ) : (
+                          <>
+                            <Maximize2 className='h-3.5 w-3.5' />
+                            <span className='hidden sm:inline'>Fullscreen</span>
+                          </>
+                        )}
                       </button>
                     </div>
 
-                    {/* Responsive Viewport Switcher */}
+                    {/* Responsive Viewport Switcher (Matches Message Page Underline Tab Style) */}
                     {activeTab === 'preview' && (
-                      <div className='hidden sm:flex items-center gap-0.5 rounded-md border border-border bg-muted/40 p-0.5 shadow-2xs'>
+                      <div className='hidden sm:flex items-center gap-2.5 text-xs font-medium px-0.5 shrink-0'>
                         {(['desktop', 'tablet', 'mobile'] as Viewport[]).map((vp) => {
                           const Icon =
                             vp === 'desktop'
@@ -512,13 +611,14 @@ export function GalleryPage() {
                                   : 'Full width'
                               })`}
                               className={cn(
-                                'flex items-center justify-center rounded p-1 transition-all cursor-pointer',
+                                'pb-1 border-b-2 transition-all cursor-pointer select-none flex items-center gap-1 text-xs',
                                 isVpActive
-                                  ? 'bg-background text-foreground shadow-xs'
-                                  : 'text-muted-foreground hover:text-foreground'
+                                  ? 'border-primary text-foreground font-semibold'
+                                  : 'border-transparent text-muted-foreground hover:text-foreground'
                               )}
                             >
-                              <Icon className='h-3 w-3' />
+                              <Icon className='h-3.5 w-3.5' />
+                              <span className='capitalize hidden lg:inline'>{vp}</span>
                             </button>
                           )
                         })}
@@ -546,12 +646,28 @@ export function GalleryPage() {
                         </>
                       )}
                     </Button>
+
+                    {/* Theme Settings Drawer Trigger */}
+                    <ConfigDrawer
+                      trigger={
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          className='h-7 px-2 gap-1 text-xs border-border/80 bg-background cursor-pointer hover:bg-muted text-muted-foreground hover:text-foreground shrink-0'
+                          title='Theme Settings'
+                          aria-label='Open Theme Settings'
+                        >
+                          <Palette className='h-3.5 w-3.5 text-primary' />
+                          <span className='hidden sm:inline text-[11px] sm:text-xs'>Theme</span>
+                        </Button>
+                      }
+                    />
                   </div>
                 </div>
 
-                {/* State selector sub-row if component has multiple states */}
+                {/* State selector sub-row if component has multiple states (Matches Message Page Underline Tab Style) */}
                 {selectedEntry.states.length > 1 && (
-                  <div className='flex items-center gap-1.5 border-t border-border/50 bg-muted/20 px-3 py-1.5 overflow-x-auto scrollbar-none'>
+                  <div className='flex items-center gap-3.5 sm:gap-4 border-t border-border/50 bg-background px-3.5 py-1.5 overflow-x-auto scrollbar-none shrink-0'>
                     <span className='text-[10px] uppercase tracking-wider font-semibold text-muted-foreground shrink-0 mr-0.5'>
                       State:
                     </span>
@@ -562,10 +678,10 @@ export function GalleryPage() {
                         onClick={() => setStateIndex(idx)}
                         title={state.description}
                         className={cn(
-                          'rounded-md px-2 py-0.5 text-xs font-medium transition-all cursor-pointer whitespace-nowrap select-none border shrink-0',
+                          'pb-1 border-b-2 transition-all cursor-pointer whitespace-nowrap select-none text-xs shrink-0',
                           stateIndex === idx
-                            ? 'border-primary/40 bg-primary/10 text-primary font-semibold shadow-2xs'
-                            : 'border-border/50 bg-background text-muted-foreground hover:bg-muted hover:text-foreground'
+                            ? 'border-primary text-foreground font-semibold'
+                            : 'border-transparent text-muted-foreground hover:text-foreground'
                         )}
                       >
                         {state.label}
@@ -603,14 +719,14 @@ export function GalleryPage() {
 
                         {/* Live Component Render inside device frame */}
                         <div className='flex flex-1 h-full w-full max-w-full items-start justify-start p-3 sm:p-4 overflow-auto'>
-                          {selectedEntry.renderPreview(stateIndex)}
+                          {selectedEntry.renderPreview(stateIndex, { viewport, isMobileView: true })}
                         </div>
                       </div>
                     </div>
                   ) : (
                     /* Desktop Full-View: Clean, Borderless, Natural Page Flow */
                     <div className='flex h-full w-full max-w-full flex-col items-start justify-start overflow-auto p-3 sm:p-4'>
-                      {selectedEntry.renderPreview(stateIndex)}
+                      {selectedEntry.renderPreview(stateIndex, { viewport, isMobileView: false })}
                     </div>
                   )
                 ) : (

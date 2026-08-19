@@ -31,6 +31,7 @@ interface ThreeDotMenuProps {
   onFavorite?: () => void
   onArchive?: () => void
   onActionThis?: () => void
+  onOpenChange?: (open: boolean) => void
 }
 
 export function ThreeDotMenu({
@@ -42,9 +43,17 @@ export function ThreeDotMenu({
   onFavorite,
   onArchive,
   onActionThis,
+  onOpenChange,
 }: ThreeDotMenuProps) {
+  const [internalOpen, setInternalOpen] = React.useState(false)
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setInternalOpen(isOpen)
+    if (onOpenChange) onOpenChange(isOpen)
+  }
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={internalOpen} onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>
         <button
           type='button'

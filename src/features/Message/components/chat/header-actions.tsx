@@ -13,6 +13,7 @@ import {
   Archive,
   Trash2,
   ChevronRight,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -34,6 +35,7 @@ interface HeaderActionsProps {
   onFavorite?: () => void
   onArchive?: () => void
   onActionThis?: () => void
+  onClose?: () => void
 }
 
 export function HeaderActions({
@@ -48,6 +50,7 @@ export function HeaderActions({
   onFavorite,
   onArchive,
   onActionThis,
+  onClose,
 }: HeaderActionsProps) {
   return (
     <div className='flex items-center gap-1 shrink-0 select-none'>
@@ -213,6 +216,19 @@ export function HeaderActions({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* Icon 4: Close / Cross Button */}
+      {onClose && (
+        <button
+          type='button'
+          onClick={onClose}
+          className='p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer ml-0.5'
+          title='Close'
+          aria-label='Close'
+        >
+          <X className='h-4.5 w-4.5' />
+        </button>
+      )}
     </div>
   )
 }

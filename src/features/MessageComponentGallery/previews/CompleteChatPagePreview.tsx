@@ -14,7 +14,11 @@ import { mockChatEmails, mockChatMessages, mockCurrentUser } from '../mocks'
 import { Email } from '@/features/Message/types/email.types'
 import { ChatMessage } from '@/features/Message/types/chat.types'
 
-export function CompleteChatPagePreview() {
+interface PagePreviewProps {
+  isMobileView?: boolean
+}
+
+export function CompleteChatPagePreview({ isMobileView = false }: PagePreviewProps) {
   const [chatEmails, setChatEmails] = useState<Email[]>(mockChatEmails)
   const [selectedChatEmail, setSelectedChatEmail] = useState<Email>(mockChatEmails[0])
   const [messages, setMessages] = useState<ChatMessage[]>(mockChatMessages)
@@ -51,12 +55,13 @@ export function CompleteChatPagePreview() {
   )
 
   return (
-    <div className='flex h-full w-full overflow-hidden bg-background select-none'>
+    <div className='flex h-full w-full overflow-hidden bg-background select-none relative'>
       {/* ── LEFT SIDEBAR (Hidden on mobile when detail is open) ─────────────────── */}
       <div
         className={cn(
           'flex h-full w-full md:w-80 shrink-0 flex-col border-r border-border bg-muted/10 overflow-hidden',
-          isMobileDetailOpen && 'hidden md:flex'
+          isMobileDetailOpen ? 'hidden md:flex' : 'flex',
+          isMobileView && (isMobileDetailOpen ? 'hidden' : 'flex w-full')
         )}
       >
         {/* Header */}
@@ -125,8 +130,9 @@ export function CompleteChatPagePreview() {
       {/* ── RIGHT MAIN PANEL (Hidden on mobile when viewing chat list) ──────────── */}
       <div
         className={cn(
-          'flex-1 min-w-0 h-full overflow-hidden bg-background',
-          !isMobileDetailOpen && 'hidden md:flex'
+          'flex-1 min-w-0 h-full overflow-hidden bg-background flex flex-col',
+          !isMobileDetailOpen ? 'hidden md:flex' : 'flex',
+          isMobileView && (!isMobileDetailOpen ? 'hidden' : 'flex w-full')
         )}
       >
         {selectedChatEmail ? (

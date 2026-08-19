@@ -63,17 +63,6 @@ export function NotificationDetailPanel({
       {/* Panel Header */}
       <div className='flex shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3'>
         <div className='flex items-center gap-3 min-w-0'>
-          <Button
-            variant='ghost'
-            size='icon'
-            onClick={onClose}
-            className='h-8 w-8 text-muted-foreground hover:bg-muted hover:text-foreground shrink-0'
-            title='Close notification'
-          >
-            <X className='h-4 w-4' />
-          </Button>
-
-          <div className='h-4 w-px bg-border' />
 
           {messageDetail?.sender ? (
             <div className='flex items-center gap-2.5 min-w-0'>

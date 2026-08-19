@@ -8,6 +8,7 @@ import {
   CornerUpRight,
   MoreVertical,
   ReplyAll,
+  X,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -21,6 +22,7 @@ interface EmailDetailProps {
   onSendReply: (content: string) => void
   onDelete: (id: string) => void
   onArchive: (id: string) => void
+  onBack?: () => void
 }
 
 export function EmailDetail({
@@ -28,6 +30,7 @@ export function EmailDetail({
   onSendReply,
   onDelete,
   onArchive,
+  onBack,
 }: EmailDetailProps) {
   if (!email) {
     return (
@@ -248,6 +251,18 @@ export function EmailDetail({
           <Button variant='ghost' size='icon' className='h-8 w-8 text-muted-foreground hover:text-foreground' title='More Options'>
             <MoreVertical className='h-4 w-4' />
           </Button>
+          {onBack && (
+            <Button
+              variant='ghost'
+              size='icon'
+              onClick={onBack}
+              className='h-8 w-8 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer'
+              title='Close'
+              aria-label='Close'
+            >
+              <X className='h-4.5 w-4.5' />
+            </Button>
+          )}
         </div>
       </div>
 

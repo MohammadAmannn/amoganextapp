@@ -2,17 +2,17 @@
 
 import React from 'react'
 import {
+  Bell,
   Flag,
-  AlertTriangle,
-  FileText,
   MoreVertical,
   Reply,
   Forward,
+  Pin,
+  Star,
+  Heart,
   Archive,
-  Share2,
-  Printer,
-  Download,
   Trash2,
+  ChevronRight,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -27,6 +27,13 @@ interface HeaderActionsProps {
   onDownload?: () => void
   onPrint?: () => void
   onShare?: () => void
+  onReply?: () => void
+  onForward?: () => void
+  onPin?: () => void
+  onStar?: () => void
+  onFavorite?: () => void
+  onArchive?: () => void
+  onActionThis?: () => void
 }
 
 export function HeaderActions({
@@ -34,38 +41,40 @@ export function HeaderActions({
   onDownload,
   onPrint,
   onShare,
+  onReply,
+  onForward,
+  onPin,
+  onStar,
+  onFavorite,
+  onArchive,
+  onActionThis,
 }: HeaderActionsProps) {
   return (
-    <div className='flex items-center gap-1 sm:gap-2 shrink-0 select-none'>
-      {/* Quick Action Icons */}
+    <div className='flex items-center gap-1 shrink-0 select-none'>
+      {/* Icon 1: Act on this Quick Action (Left of Flag) */}
       <button
         type='button'
-        onClick={() => toast.success('Flagged message')}
-        className='p-1.5 rounded-lg hover:bg-muted text-red-500 transition-colors cursor-pointer'
+        onClick={() => {
+          if (onActionThis) onActionThis()
+          else toast.info('Act on this option selected')
+        }}
+        className='p-1.5 rounded-lg hover:bg-muted text-amber-500 hover:text-amber-600 transition-colors cursor-pointer'
+        title='Act on this'
+      >
+        <Bell className='h-4.5 w-4.5' />
+      </button>
+
+      {/* Icon 2: Quick Flag Action */}
+      <button
+        type='button'
+        onClick={() => toast.success('Flagged item')}
+        className='p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer'
         title='Flag'
       >
         <Flag className='h-4.5 w-4.5' />
       </button>
 
-      <button
-        type='button'
-        onClick={() => toast.success('Action alert created')}
-        className='p-1.5 rounded-lg hover:bg-muted text-amber-500 transition-colors cursor-pointer'
-        title='Alert'
-      >
-        <AlertTriangle className='h-4.5 w-4.5' />
-      </button>
-
-      <button
-        type='button'
-        onClick={() => toast.info('Document options opened')}
-        className='p-1.5 rounded-lg hover:bg-muted text-emerald-500 transition-colors cursor-pointer'
-        title='Document'
-      >
-        <FileText className='h-4.5 w-4.5' />
-      </button>
-
-      {/* 3-Dot Menu */}
+      {/* Icon 3: 3-Dot More Menu */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
@@ -78,74 +87,129 @@ export function HeaderActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align='end'
-          className='w-44 border border-border bg-background shadow-md'
+          className='w-48 border border-border/80 bg-background shadow-lg p-1 space-y-0.5'
         >
-          <DropdownMenuItem
-            onClick={() => toast.info('Reply option selected')}
-            className='cursor-pointer text-xs flex items-center gap-2.5 py-2 font-medium'
-          >
-            <Reply className='h-4 w-4 text-muted-foreground' />
-            <span>Reply</span>
-          </DropdownMenuItem>
-
-          <DropdownMenuItem
-            onClick={() => toast.info('Forward option selected')}
-            className='cursor-pointer text-xs flex items-center gap-2.5 py-2 font-medium'
-          >
-            <Forward className='h-4 w-4 text-muted-foreground' />
-            <span>Forward</span>
-          </DropdownMenuItem>
-
-          <DropdownMenuItem
-            onClick={() => toast.success('Archived successfully')}
-            className='cursor-pointer text-xs flex items-center gap-2.5 py-2 font-medium'
-          >
-            <Archive className='h-4 w-4 text-muted-foreground' />
-            <span>Archive</span>
-          </DropdownMenuItem>
-
+          {/* 1. Reply */}
           <DropdownMenuItem
             onClick={() => {
-              if (onShare) onShare()
-              else toast.success('Share link copied to clipboard')
+              if (onReply) onReply()
+              else toast.info('Reply option selected')
             }}
-            className='cursor-pointer text-xs flex items-center gap-2.5 py-2 font-medium'
+            className='cursor-pointer text-xs flex items-center justify-between py-2 px-2.5 font-medium hover:bg-muted/80 rounded-md'
           >
-            <Share2 className='h-4 w-4 text-muted-foreground' />
-            <span>Share</span>
+            <div className='flex items-center gap-2.5'>
+              <Reply className='h-4 w-4 text-blue-500' />
+              <span className='text-foreground'>Reply</span>
+            </div>
           </DropdownMenuItem>
 
+          {/* 2. Forward */}
           <DropdownMenuItem
             onClick={() => {
-              if (onPrint) onPrint()
-              else toast.info('Preparing print document...')
+              if (onForward) onForward()
+              else toast.info('Forward option selected')
             }}
-            className='cursor-pointer text-xs flex items-center gap-2.5 py-2 font-medium'
+            className='cursor-pointer text-xs flex items-center justify-between py-2 px-2.5 font-medium hover:bg-muted/80 rounded-md'
           >
-            <Printer className='h-4 w-4 text-muted-foreground' />
-            <span>Print</span>
+            <div className='flex items-center gap-2.5'>
+              <Forward className='h-4 w-4 text-sky-400' />
+              <span className='text-foreground'>Forward</span>
+            </div>
           </DropdownMenuItem>
 
+          {/* 3. Pin Message */}
           <DropdownMenuItem
             onClick={() => {
-              if (onDownload) onDownload()
-              else toast.success('Download started')
+              if (onPin) onPin()
+              else toast.success('Message pinned')
             }}
-            className='cursor-pointer text-xs flex items-center gap-2.5 py-2 font-medium'
+            className='cursor-pointer text-xs flex items-center justify-between py-2 px-2.5 font-medium hover:bg-muted/80 rounded-md'
           >
-            <Download className='h-4 w-4 text-muted-foreground' />
-            <span>Download</span>
+            <div className='flex items-center gap-2.5'>
+              <Pin className='h-4 w-4 text-purple-500' />
+              <span className='text-foreground'>Pin Message</span>
+            </div>
           </DropdownMenuItem>
 
+          {/* 4. Star */}
+          <DropdownMenuItem
+            onClick={() => {
+              if (onStar) onStar()
+              else toast.success('Starred successfully')
+            }}
+            className='cursor-pointer text-xs flex items-center justify-between py-2 px-2.5 font-medium hover:bg-muted/80 rounded-md'
+          >
+            <div className='flex items-center gap-2.5'>
+              <Star className='h-4 w-4 text-amber-500' />
+              <span className='text-foreground'>Star</span>
+            </div>
+          </DropdownMenuItem>
+
+          {/* 5. Favorite */}
+          <DropdownMenuItem
+            onClick={() => {
+              if (onFavorite) onFavorite()
+              else toast.success('Added to favorites')
+            }}
+            className='cursor-pointer text-xs flex items-center justify-between py-2 px-2.5 font-medium hover:bg-muted/80 rounded-md'
+          >
+            <div className='flex items-center gap-2.5'>
+              <Heart className='h-4 w-4 text-rose-500' />
+              <span className='text-foreground'>Favorite</span>
+            </div>
+          </DropdownMenuItem>
+
+          {/* 6. Flag */}
+          <DropdownMenuItem
+            onClick={() => toast.success('Flagged message')}
+            className='cursor-pointer text-xs flex items-center justify-between py-2 px-2.5 font-medium hover:bg-muted/80 rounded-md'
+          >
+            <div className='flex items-center gap-2.5'>
+              <Flag className='h-4 w-4 text-red-500' />
+              <span className='text-foreground'>Flag</span>
+            </div>
+          </DropdownMenuItem>
+
+          {/* 7. Archive */}
+          <DropdownMenuItem
+            onClick={() => {
+              if (onArchive) onArchive()
+              else toast.success('Archived successfully')
+            }}
+            className='cursor-pointer text-xs flex items-center justify-between py-2 px-2.5 font-medium hover:bg-muted/80 rounded-md'
+          >
+            <div className='flex items-center gap-2.5'>
+              <Archive className='h-4 w-4 text-indigo-500' />
+              <span className='text-foreground'>Archive</span>
+            </div>
+          </DropdownMenuItem>
+
+          {/* 8. Action This */}
+          <DropdownMenuItem
+            onClick={() => {
+              if (onActionThis) onActionThis()
+              else toast.info('Action This selected')
+            }}
+            className='cursor-pointer text-xs flex items-center justify-between py-2 px-2.5 font-medium hover:bg-muted/80 rounded-md'
+          >
+            <div className='flex items-center gap-2.5'>
+              <Bell className='h-4 w-4 text-amber-500' />
+              <span className='text-foreground'>Action This</span>
+            </div>
+          </DropdownMenuItem>
+
+          {/* 9. Delete */}
           <DropdownMenuItem
             onClick={() => {
               if (onDelete) onDelete()
               else toast.success('Item deleted')
             }}
-            className='cursor-pointer text-xs flex items-center gap-2.5 py-2 text-red-500 focus:bg-red-500/10 focus:text-red-500 font-medium'
+            className='cursor-pointer text-xs flex items-center justify-between py-2 px-2.5 font-medium hover:bg-red-500/10 rounded-md text-red-500 focus:text-red-500'
           >
-            <Trash2 className='h-4 w-4 text-red-500' />
-            <span>Delete</span>
+            <div className='flex items-center gap-2.5'>
+              <Trash2 className='h-4 w-4 text-red-500' />
+              <span className='font-semibold text-red-500'>Delete</span>
+            </div>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

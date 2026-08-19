@@ -217,11 +217,10 @@ export function EmailView({ email, onBack, onDelete, onStartChat, onPreviewAttac
           </div>
           
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            <Button variant="ghost" size="sm" onClick={onBack} className="hidden md:flex text-xs hover:bg-muted cursor-pointer shrink-0 h-8">
-              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
-              Back
-            </Button>
-            <HeaderActions onDelete={() => onDelete(email.id)} />
+            <HeaderActions
+              onDelete={() => onDelete(email.id)}
+              onDownload={() => downloadFile("mock-email.pdf", "application/pdf")}
+            />
             <button
               type="button"
               onClick={onBack}

@@ -72,6 +72,12 @@ export const sidebarData: SidebarData = {
           url: '/email-settings',
           icon: Settings,
         },
+
+      {
+        title:"Design System",
+        url:"/message-components",
+        icon:Settings
+      },
         {
           title: 'Tasks',
           url: '/tasks',

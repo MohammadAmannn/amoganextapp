@@ -725,7 +725,7 @@ export function GalleryPage() {
                     </div>
                   ) : (
                     /* Desktop Full-View: Clean, Borderless, Natural Page Flow */
-                    <div className='flex h-full w-full max-w-full flex-col items-start justify-start overflow-auto p-3 sm:p-4'>
+                    <div className='flex h-full w-full max-w-full flex-col items-start justify-start overflow-auto p-0'>
                       {selectedEntry.renderPreview(stateIndex, { viewport, isMobileView: false })}
                     </div>
                   )

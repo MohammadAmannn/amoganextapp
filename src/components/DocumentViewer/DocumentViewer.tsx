@@ -8,6 +8,7 @@ import { DocumentViewerActions } from './DocumentViewerActions'
 import { getFileExtension, useDownloadFile } from './hooks'
 import { Loader2, FileWarning, ExternalLink, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ZrimoViewerWrapper } from './ZrimoViewerWrapper'
 
 const ReactDocViewerWrapper = dynamic(
   () => import('./ReactDocViewerWrapper'),
@@ -122,6 +123,19 @@ export function DocumentViewer({
       )
     }
 
+
+    if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(extension)) {
+      return (
+        <div className="flex-grow flex items-center justify-center w-full h-full bg-muted/10 p-4 min-h-0">
+          <img
+            src={fileUrl}
+            alt={fileName}
+            className="max-w-full max-h-full rounded-lg object-contain shadow-xs"
+          />
+        </div>
+      )
+    }
+
     if (isTextBased) {
       if (textLoading) {
         return (
@@ -153,8 +167,13 @@ export function DocumentViewer({
       )
     }
 
-    if (viewerSupportedExtensions.includes(extension) || fileUrl.startsWith('data:') || fileUrl.startsWith('/uploads/') || fileUrl.startsWith('http')) {
-      const documents = [{ uri: fileUrl, fileName: fileName, fileType: extension }]
+    if (
+      ['pdf', 'docx', 'docm', 'xlsx', 'xlsm', 'pptx', 'pptm', 'csv', 'tsv', 'doc', 'xls', 'ppt'].includes(extension) ||
+      fileUrl.startsWith('data:') ||
+      fileUrl.startsWith('/uploads/') ||
+      fileUrl.startsWith('http')
+    ) {
+      const documents = [{ uri: fileUrl, fileName, fileType: extension }]
       return (
         <div className="doc-viewer-wrapper flex-grow w-full h-full relative bg-background flex flex-col min-h-0">
           <ReactDocViewerWrapper documents={documents} />

@@ -59,6 +59,7 @@ import {
   ProgressLinearPreview,
   ProgressStepIndicatorPreview,
   ProgressCircularPreview,
+  FileUploaderAndViewerPreview,
 } from '../previews'
 
 import {
@@ -408,6 +409,23 @@ export const galleryRegistry: GalleryEntry[] = [
   onToggleExpand={(id, e) => toggleFolder(id)}
   onSelectFolder={(folder) => setSelectedFolder(folder)}
 />`,
+  },
+  {
+    id: 'file-uploader-viewer',
+    name: 'File Uploader & Document Viewer',
+    category: 'Files',
+    description: 'Interactive drag-and-drop file uploader with attachment cards, download action, JSON state export, and system default DocumentViewer file preview modal.',
+    filePath: 'src/features/MessageComponentGallery/previews/FileUploaderAndViewerPreview.tsx',
+    states: [
+      { label: 'Interactive Uploader', description: 'Drag & drop uploader with attachment list, @zrimo/viewer document preview, and JSON export' },
+    ],
+    renderPreview: (si) => <FileUploaderAndViewerPreview stateIndex={si} />,
+    usageCode: (si) => `// File Uploader & Document Viewer Component
+import { FileUploaderAndViewer } from '@/components/DocumentViewer'
+
+export default function FileUploaderPage() {
+  return <FileUploaderAndViewer stateIndex={${si}} />
+}`,
   },
 
   // ───────────────────────── MAIL SECTION ───────────────────────────────────

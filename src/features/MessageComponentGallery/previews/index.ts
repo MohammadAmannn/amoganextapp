@@ -12,4 +12,6 @@ export * from './EmailDetailPreview'
 export * from './DatePickerAndCalendarPreviews'
 export * from './QuestionnaireAndWizardPreviews'
 export * from './ProgressPreviews'
+export * from './FileUploaderAndViewerPreview'
+
 

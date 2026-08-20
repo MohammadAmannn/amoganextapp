@@ -1,134 +1,170 @@
-# UI Component File Mapping Guide (`ui.md`)
+# UI & Design System Architecture Guide (`ui.md`)
 
-This document provides a complete guide for developers (from beginner to expert) detailing which file controls which exact UI component across the **Message Feature** and **Chat Template Feature**.
-
----
-
-## 1. Message Feature (`src/features/Message/`)
-
-### Main Architecture
-- **Root Page / Controller**: [`src/features/Message/index.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/index.tsx)
-  - Controls overall page header ("Messages"), top desktop tab navigation bar (`Inbox`, `Send`, `Folder`, `Contact`, `Groups`), mobile top tab bar + 3-dot dropdown menu, and active tab content routing.
+This document is the authoritative design system and component UI reference for the **Message Page**, **Design System Gallery**, **Document Viewer**, and **Chat Template** modules. It defines exact styling tokens, tab underlines, card layouts, font hierarchies, icon button specs, mobile responsive flows, and file mappings to guarantee 100% visual and structural consistency across the application.
 
 ---
 
-### UI Subdirectories Breakdown
+## 1. Core Visual Design Tokens & Typography
 
-#### A. Chat Components (`src/features/Message/components/chat/`)
-| UI Component / Screen | File Path | Description |
-| :--- | :--- | :--- |
-| **Main Chat Window** | [`chat/chat-view.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/chat/chat-view.tsx) | Renders the 1-on-1 / Group conversation interface (header with avatar & actions, scrollable message list, reply bubbles, attachment preview bar, text input area, send button). |
-| **Realtime Chat View** | [`chat/realtime-chat-view.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/chat/realtime-chat-view.tsx) | Live chat wrapper integrating Supabase Realtime messaging state. |
-| **Header Actions** | [`chat/header-actions.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/chat/header-actions.tsx) | Top-right header control bar containing the Search toggle, Options button, and 3-dot dropdown menu. |
-| **File Upload Progress Bar** | [`chat/file-upload-progress.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/chat/file-upload-progress.tsx) | Reusable animated black progress bar indicator shown when uploading attachments in chat or email. |
+### HSL Color Tokens
+- **Background & Card**: `bg-background` (`hsl(var(--background))`), `bg-card` (`hsl(var(--card))`), `bg-muted/10` to `bg-muted/30`.
+- **Borders & Dividers**: `border-border` (`hsl(var(--border))`), `border-border/60`, `border-border/80`.
+- **Text & Foreground**: `text-foreground` (primary headings & titles), `text-muted-foreground` (subtitles & timestamps).
+- **Primary Brand Accent**: `bg-primary`, `text-primary`, `border-primary`.
 
-#### B. Email Components (`src/features/Message/components/emails/`)
-| UI Component / Screen | File Path | Description |
-| :--- | :--- | :--- |
-| **Message / Email Sidebar List** | [`emails/email-list.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/emails/email-list.tsx) | Left sidebar list containing search bar, Inbox/Done mode toggles, email message cards, direct contact cards, and shortcut cards for AI Chat, Calendar, Tasks/Kanban, and Files. |
-| **Email Reader View** | [`emails/email-view.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/emails/email-view.tsx) | Full screen reading view when an email message is selected from the inbox. |
-| **Email Content Detail** | [`emails/email-detail.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/emails/email-detail.tsx) | Displays sender details, timestamp, email body text, attachment links, and quick reply action triggers. |
-| **Email Reply Editor** | [`emails/email-editor.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/emails/email-editor.tsx) | Rich text editor area for typing and formatting email replies. |
-| **New Email Composer** | [`emails/new-email.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/emails/new-email.tsx) | Full compose screen for drafting new emails with recipient inputs, subject, body, attachment manager, and upload progress bar. |
-
-#### C. Management Tabs (`src/features/Message/components/tabs/`)
-| UI Component / Screen | File Path | Description |
-| :--- | :--- | :--- |
-| **Email Accounts Manager (Folder Tab)** | [`src/features/email-settings/components/accounts-tab.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/email-settings/components/accounts-tab.tsx) | Mounted inside the `Folder` tab. Manages connected email accounts, incoming IMAP/POP3 & SMTP server configurations, SSL/TLS toggles, and account credentials. |
-| **Contact Manager Tab** | [`tabs/contact-manager-tab.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/tabs/contact-manager-tab.tsx) | Mounted in `Contact` tab. Displays contacts in Email Account Manager row card layout with **Chat Icon** (left of toggle), active status switch, edit/delete buttons, **"Add New Contact"** button at bottom, and popup dialog modals. |
-| **Group Manager Tab** | [`tabs/group-manager-tab.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/tabs/group-manager-tab.tsx) | Mounted in `Groups` tab. Displays group channels in Email Account Manager row card layout with **Chat Icon** (left of toggle), active status switch, edit/delete buttons, **"Add New Group"** button at bottom, and popup dialog modals. |
-
-#### D. Embedded Side Panels (`src/features/Message/components/panels/`)
-| UI Component / Screen | File Path | Description |
-| :--- | :--- | :--- |
-| **AI Assistant Chat Panel** | [`panels/ai-chat-panel.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/panels/ai-chat-panel.tsx) | AI Assistant chat interface supporting web search integration, code execution, image viewing, and attachment progress bar. |
-| **Document / PDF Viewer Panel** | [`panels/doc-viewer-panel.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/panels/doc-viewer-panel.tsx) | Document & PDF reader panel featuring dynamic rendering, download triggers, and navigation controls. |
+### Typography Standard
+- **Font Family**: Modern sans-serif (`font-sans antialiased`).
+- **Font Sizes**:
+  - `text-[9px]` / `text-[10px]`: Micro badges, uppercase labels, type tags (`FILE`, `DOC`, `XLS`, `PDF`).
+  - `text-[11px]`: Secondary card subtitles, metadata, file sizes.
+  - `text-xs`: Standard body text, tab labels, form field labels, button text.
+  - `text-sm`: Component titles, card headers, user names, input text.
+  - `text-base` / `text-lg`: Section titles, page headers.
+- **Font Weights**:
+  - `font-normal`: Body descriptions.
+  - `font-medium`: Tab text, timestamps, subtitle metadata.
+  - `font-semibold` / `font-bold`: Card titles, active tabs, header text.
 
 ---
 
-## 2. Chat Template Feature (`src/features/chattemplate/`)
+## 2. Tab Navigation & Active Underline Standard
 
-### Architecture Overview
-The `chattemplate` feature is a standalone, full-featured messaging system module divided by domain modules (`chat`, `contacts`, `groups`, `files`).
+### A. Underline Tab Style (SubTabsBar, Gallery Stage Switcher)
+All tab bars across the Message page, Email view, and Design System stage inspector enforce the **Underline Tab Pattern**:
+- **Container**: `flex items-center gap-3 sm:gap-4 text-xs font-medium px-0.5 whitespace-nowrap overflow-x-auto shrink-0 select-none`.
+- **Active Tab Style**:
+  ```tsx
+  'pb-1 border-b-2 border-primary text-foreground font-semibold cursor-pointer transition-all'
+  ```
+- **Inactive Tab Style**:
+  ```tsx
+  'pb-1 border-b-2 border-transparent text-muted-foreground hover:text-foreground cursor-pointer transition-all'
+  ```
 
----
-
-### UI Component Mapping
-
-#### A. Main Chat Module (`src/features/chattemplate/chat/components/`)
-| UI Component / Screen | File Path | Description |
-| :--- | :--- | :--- |
-| **Chat Layout** | [`chat/components/chat-layout.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/chat/components/chat-layout.tsx) | Main split-view container assembling `ChatSidebar`, `ChatWindow`, and `ChatProfileDrawer`. |
-| **Chat Sidebar** | [`chat/components/chat-sidebar.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/chat/components/chat-sidebar.tsx) | Conversation list panel featuring search bar, direct message cards, group channel cards, unread badges, and user status indicators. |
-| **Active Chat Window** | [`chat/components/chat-window.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/chat/components/chat-window.tsx) | Primary conversation screen displaying active chat header (avatar, status, search, options), message history stream, and message input toolbar. |
-| **Message Toolbar (Input Bar)** | [`chat/components/message-toolbar.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/chat/components/message-toolbar.tsx) | Input dock containing text input area, file attachment button, emoji picker trigger, voice note recorder, location pin share, and send button. |
-| **Message Bubble** | [`chat/components/message-bubble.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/chat/components/message-bubble.tsx) | Individual message bubble renderer supporting text formatting, timestamps, delivery checkmarks, voice note player, and attachment rendering. |
-| **Message Action Menu** | [`chat/components/message-actions.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/chat/components/message-actions.tsx) | Floating action bar on message hover providing Reply, Emoji Reaction, Copy, Edit, and Delete options. |
-| **Emoji Picker** | [`chat/components/emoji-picker.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/chat/components/emoji-picker.tsx) | Categorized emoji selector popover. |
-| **Location Share Picker** | [`chat/components/locationpicker.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/chat/components/locationpicker.tsx) | Interactive location selection modal for sharing GPS coordinates / map pin in chat. |
-| **Reply Bar Preview** | [`chat/components/reply-preview.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/chat/components/reply-preview.tsx) | Quoted message banner shown above the input box when replying to a message. |
-| **Typing Indicator** | [`chat/components/typing-indicator.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/chat/components/typing-indicator.tsx) | Animated indicator dots showing when a user is typing a response. |
-| **Chat Welcome Screen** | [`chat/components/chat-welcome.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/chat/components/chat-welcome.tsx) | Placeholder welcome screen displayed when no conversation is actively selected. |
-| **Profile Drawer / Right Sidebar** | [`chat/components/chat-profile-drawer.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/chat/components/chat-profile-drawer.tsx) | Right-hand slide-out info panel displaying user/group profile info, shared media gallery, shared links & files tabs, group member list, and notification settings. |
-
-#### B. Contacts Module (`src/features/chattemplate/contacts/components/`)
-| UI Component / Screen | File Path | Description |
-| :--- | :--- | :--- |
-| **Contact List Directory** | [`contacts/components/contact-list.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/contacts/components/contact-list.tsx) | Full contacts directory grid displaying contact cards, search bar, active status badges, nickname edit modal, and delete confirmation dialog. |
-| **Add New Contact Form** | [`contacts/components/new-contact-form.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/contacts/components/new-contact-form.tsx) | Standalone form card for adding new contacts by email and display nickname. |
-
-#### C. Groups Module (`src/features/chattemplate/groups/components/`)
-| UI Component / Screen | File Path | Description |
-| :--- | :--- | :--- |
-| **Group List Directory** | [`groups/components/group-list.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/groups/components/group-list.tsx) | Group channel directory grid showing group cards, member rosters, group email, edit group dialog modal, and delete group confirm modal. |
-| **Add New Group Form** | [`groups/components/new-group-form.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/groups/components/new-group-form.tsx) | Standalone form card for creating new group channels with searchable contact selector chips. |
-| **Create Group Dialog** | [`groups/components/create-group-dialog.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/groups/components/create-group-dialog.tsx) | Quick pop-up modal dialog for creating a group conversation. |
-
-#### D. Files & Media Renderers (`src/features/chattemplate/files/components/`)
-| UI Component / Screen | File Path | Description |
-| :--- | :--- | :--- |
-| **File Attachment Card** | [`files/components/file-card.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/files/components/file-card.tsx) | Renders document attachment cards (PDF, DOCX, ZIP) with file size, icon, and download button. |
-| **Image Viewer** | [`files/components/image-viewer.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/files/components/image-viewer.tsx) | Lightbox modal viewer for high-resolution image attachments. |
-| **Voice Message Player** | [`files/components/voice-message-player.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/files/components/voice-message-player.tsx) | Custom audio player for voice notes with play/pause, duration counter, and playback speed toggles. |
-| **Audio Waveform Visualizer** | [`files/components/audio-visualizer.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/files/components/audio-visualizer.tsx) | Dynamic audio waveform visualizer for voice notes and audio clips. |
-| **Video Player** | [`files/components/video-player.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/files/components/video-player.tsx) | Embedded media player for video attachments. |
-| **Attachment Router** | [`files/components/attachment-renderer.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/chattemplate/files/components/attachment-renderer.tsx) | Router component selecting appropriate file renderer based on mime type. |
+### B. Category Toolbar Pills & HSL Token Mapping
+Category toolbar pills use multi-line wrap with category-specific HSL badge colors:
+- **Container**: `flex flex-wrap items-center gap-1.5 p-2.5 bg-muted/10 border-b border-border/60`.
+- **Category HSL Colors**:
+  - **Mail**: `bg-indigo-500/10 text-indigo-600 border-indigo-200/50 dark:border-indigo-900/40 dark:text-indigo-400`
+  - **AI**: `bg-amber-500/10 text-amber-600 border-amber-200/50 dark:border-amber-900/40 dark:text-amber-400`
+  - **Chat**: `bg-emerald-500/10 text-emerald-600 border-emerald-200/50 dark:border-emerald-900/40 dark:text-emerald-400`
+  - **Task**: `bg-purple-500/10 text-purple-600 border-purple-200/50 dark:border-purple-900/40 dark:text-purple-400`
+  - **Files**: `bg-sky-500/10 text-sky-600 border-sky-200/50 dark:border-sky-900/40 dark:text-sky-400`
+  - **Notifications**: `bg-rose-500/10 text-rose-600 border-rose-200/50 dark:border-rose-900/40 dark:text-rose-400`
+  - **Shared**: `bg-slate-500/10 text-slate-600 border-slate-200/50 dark:border-slate-800 dark:text-slate-400`
+  - **Date Picker**: `bg-teal-500/10 text-teal-600 border-teal-200/50 dark:border-teal-900/40 dark:text-teal-400`
+  - **Calendar**: `bg-blue-500/10 text-blue-600 border-blue-200/50 dark:border-blue-900/40 dark:text-blue-400`
+  - **Wizards**: `bg-violet-500/10 text-violet-600 border-violet-200/50 dark:border-violet-900/40 dark:text-violet-400`
 
 ---
 
-## 3. Quick Reference: File Re-Exporter (`src/features/Message/components/index.ts`)
-To import any `Message` component cleanly without worrying about relative paths, use:
+## 3. Attachment Cards UI & "Attach Files" Standard
+
+### A. Attachment Cards Group Container
+Used across Email View, Chat View, Message Page, Vouchers, and Design System:
+- **Outer Box**: `border border-border rounded-xl overflow-hidden bg-background w-full shadow-2xs`.
+- **Card Rows**: `group flex items-center justify-between p-3 border-b border-border/80 last:border-b-0 w-full transition-colors hover:bg-muted/20`.
+
+### B. Left Type Badge & Info Specs
+- **Type Box**: `bg-muted/80 w-10 h-10 flex items-center justify-center rounded-lg border border-border/60 shrink-0`.
+- **Type Label**: `<span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{att.type}</span>` (e.g. `FILE`, `DOC`, `XLS`, `PDF`).
+- **Filename**: `<p className="text-xs font-semibold text-foreground hover:underline truncate">{att.name}</p>`.
+- **File Size**: `<p className="text-[10px] text-muted-foreground">{att.size}</p>`.
+
+### C. Right Action Buttons Specs
+- **Download Button**:
+  ```tsx
+  <button
+    type="button"
+    onClick={() => handleDownload(att)}
+    className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+    title="Download file"
+  >
+    <Download className="h-4 w-4" />
+  </button>
+  ```
+- **Eye Icon (Preview Button)**:
+  ```tsx
+  <button
+    type="button"
+    onClick={() => handleOpenPreview(att)}
+    className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+    title="View file"
+  >
+    <Eye className="h-4 w-4" />
+  </button>
+  ```
+
+### D. "Attach Files" Trigger Button
+Full-width button placed below the attachment cards group:
 ```tsx
-import { 
-  ChatView, 
-  RealtimeChatView, 
-  EmailList, 
-  EmailView, 
-  NewEmail, 
-  ContactManagerTab, 
-  GroupManagerTab, 
-  AiChatPanel, 
-  DocViewerPanel,
-  FileUploadProgress 
-} from '@/features/Message/components'
+<button
+  type="button"
+  onClick={() => fileInputRef.current?.click()}
+  className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-border bg-background py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-all cursor-pointer shadow-2xs"
+>
+  <Paperclip className="h-4 w-4 text-muted-foreground" />
+  <span>Attach Files</span>
+</button>
 ```
-src/features/Message/components/
-├── chat/
-│   ├── chat-view.tsx             # Main chat window (Static/mock messages & inputs)
-│   ├── realtime-chat-view.tsx    # Supabase Realtime live chat integration
-│   ├── header-actions.tsx        # Top-right header actions (Search, 3-dot dropdown menu)
-│   └── file-upload-progress.tsx  # Universal animated black file upload progress bar
-├── emails/
-│   ├── email-list.tsx            # Left sidebar list (inbox emails, contacts, shortcuts)
-│   ├── email-view.tsx            # Email reader view
-│   ├── email-detail.tsx          # Email detail view
-│   ├── email-editor.tsx          # Email reply editor
-│   └── new-email.tsx             # New email composer screen
-├── tabs/
-│   ├── contact-manager-tab.tsx   # Contact Manager tab (Link tab style UI + Add Contact popup)
-│   └── group-manager-tab.tsx     # Group Manager tab (Link tab style UI + Add Group popup)
-├── panels/
-│   ├── ai-chat-panel.tsx         # AI Assistant chat panel
-│   └── doc-viewer-panel.tsx      # Document & PDF viewer panel
-└── index.ts                      # Universal re-exporter for clean component imports
- 
+
+---
+
+## 4. Document Viewer (`SafeDocumentPreview`) Architecture
+
+All document and PDF viewing across Message page, Email view, Chat, Vouchers, and Design System strictly uses **`SafeDocumentPreview`** (`@/components/dynamic-form/SafeDocumentPreview`).
+
+### A. Right Window Inline Canvas Container
+- `w-full h-full flex-1 flex flex-col bg-background border-0 p-0 m-0 overflow-hidden`.
+
+### B. Header Bar Architecture (`DocumentViewerHeader`)
+- **Container**: `h-12 bg-card px-4 py-2.5 border-b border-border/80 flex items-center justify-between shrink-0 select-none w-full gap-3 shadow-2xs`.
+- **Left Group**:
+  - **Close Cross (`X`) Button**: `<Button size="icon" variant="ghost" onClick={onClose} className="h-8 w-8 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground"><X className="h-4.5 w-4.5" /></Button>`.
+  - **Avatar Circle**: `<div className="h-9 w-9 rounded-full bg-[#EAE5FF] text-[#7C5CFC] dark:bg-purple-950/60 dark:text-purple-300 flex items-center justify-center font-bold text-xs shrink-0 border border-[#DDD5FF]">M1</div>`.
+  - **File Title**: `<h2 className="text-xs sm:text-sm text-foreground font-bold truncate">{fileName}</h2>`.
+- **Right Group**: Notification Bell, Flag, 3-Dot options menu.
+
+### C. Sub-Toolbar Controls Bar
+- **Container**: `flex flex-none items-center justify-between border-b border-border bg-muted/10 px-4 py-1.5 select-none gap-2 z-10 flex-wrap`.
+- **Zoom Controls**: `-` (Minus), `+` (Plus), Percentage readout (e.g. `105%`), `<->` (fit width), `Square` (reset view).
+- **Download Action**: Right aligned `<button onClick={handleDownload}><Download className="size-3.5" /></button>`.
+
+---
+
+## 5. Mobile Responsiveness & Overlay Close (`X`) Flow
+
+### A. Mobile Breakpoint Standard
+- **Breakpoint**: `md` (`768px`).
+
+### B. Mobile Screen Overlay Transition (`< md`)
+- **ListComponent State**: On mobile screens, the left sidebar occupies full width.
+- **Detail / Preview Transition**: Selecting a card or clicking the Eye icon toggles `isMobileDetailOpen` to `true`.
+- **Full-Screen Stage Overlay**:
+  ```tsx
+  'fixed inset-0 z-50 flex flex-col w-full h-full bg-background md:relative md:inset-auto md:z-auto'
+  ```
+
+### C. Mobile Close Cross (`X`) Button Standard
+- Upper-left of Stage Control Bar on mobile screens (`md:hidden`):
+  ```tsx
+  <button
+    type="button"
+    onClick={() => setIsMobileDetailOpen(false)}
+    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/60 text-foreground hover:bg-muted cursor-pointer transition-colors md:hidden"
+    title="Close & Back to List"
+  >
+    <X className="h-4.5 w-4.5" />
+  </button>
+  ```
+
+---
+
+## 6. Complete File & UI Component Mapping
+
+### A. Core Document Viewer Components
+| Component Name | File Path | Description |
+| :--- | :--- | :--- |
+| **Safe Document Preview** | [`SafeDocumentPreview.tsx`](file:///e:/morrai/shadcn-admin-main/src/components/dynamic-form/SafeDocumentPreview.tsx) | App-wide standard for rendering PDFs, images, text, and documents with zoom controls and header actions. |
+| **Attachment Card Uploader** | [`attachment-card-uploader.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/Message/components/shared/attachment-card-uploader.tsx) | Standard attachment list cards layout (`FILE`, `DOC`, `XLS`, `PDF`) with download, eye icon preview, and full-width "Attach Files" button. |
+| **Gallery File Uploader & Viewer** | [`FileUploaderAndViewerPreview.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/MessageComponentGallery/previews/FileUploaderAndViewerPreview.tsx) | Design system template component integrating `AttachmentCardUploader` card standard and `SafeDocumentPreview`. |

@@ -185,6 +185,15 @@ export function UserFileCardsView({
     if (folder) {
       if (folder.category) {
         result = result.filter((f) => f.category === folder.category)
+      } else if (folder.path && folder.path !== 'Chat' && folder.path !== 'Files') {
+        const folderPathLower = folder.path.toLowerCase()
+        const userPart = folder.name.toLowerCase()
+        result = result.filter(
+          (f) =>
+            f.folderPath.toLowerCase().includes(folderPathLower) ||
+            f.folderPath.toLowerCase().includes(userPart) ||
+            (f.senderName && f.senderName.toLowerCase().includes(userPart))
+        )
       } else if (folder.id !== 'all' && folder.section) {
         result = result.filter(
           (f) => f.section.toLowerCase() === folder.section.toLowerCase()
@@ -247,7 +256,7 @@ export function UserFileCardsView({
     return filteredFiles.slice((safePage - 1) * pageSize, safePage * pageSize)
   }, [filteredFiles, safePage, pageSize])
 
-  if (!folder || !folder.category) {
+  if (!folder) {
     return (
       <div className="flex h-full min-h-0 w-full flex-1 flex-col items-center justify-center p-6 text-center bg-background">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-indigo-200/50 bg-indigo-500/10 text-indigo-600 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-400 mb-4 shadow-sm">

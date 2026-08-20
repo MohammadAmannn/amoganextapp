@@ -38,7 +38,7 @@ const DEFAULT_SAMPLE_ATTACHMENTS: AttachedFileItem[] = [
     size: '3.6 MB',
     type: 'FILE',
     extension: 'csv',
-    url: 'data:text/csv;charset=utf-8,id,name,balance\n1,Account A,3600000',
+    url: 'data:text/csv;charset=utf-8,id,name,balance,department,status\n101,John Doe,75000,Finance,Active\n102,Jane Smith,88000,Operations,Active\n103,Alex Wong,62000,Sales,Pending',
     timestamp: 'Just now',
   },
   {
@@ -47,7 +47,7 @@ const DEFAULT_SAMPLE_ATTACHMENTS: AttachedFileItem[] = [
     size: '1002.7 KB',
     type: 'DOC',
     extension: 'docx',
-    url: 'https://calibre-ebook.com/downloads/demos/demo.docx',
+    url: 'data:text/plain;charset=utf-8,Sample Word Document Content:\n\n1. Executive Summary\nThis document outlines the project scope, financial projections, and deliverables.\n\n2. Key Objectives\n- Streamline message workflows\n- Integrate document viewer for PDF, DOCX, XLSX, and CSV files\n- Maintain UI/UX consistency across app templates.',
     timestamp: '2 mins ago',
   },
   {
@@ -56,7 +56,7 @@ const DEFAULT_SAMPLE_ATTACHMENTS: AttachedFileItem[] = [
     size: '16.5 KB',
     type: 'XLS',
     extension: 'xlsx',
-    url: 'https://raw.githubusercontent.com/sheetjs/sheetjs/master/test_files/pivot_table_test.xlsx',
+    url: 'data:text/csv;charset=utf-8,Quarter,Revenue,Expenses,Net Profit\nQ1,$120000,$45000,$75000\nQ2,$145000,$50000,$95000\nQ3,$160000,$55000,$105000\nQ4,$190000,$60000,$130000',
     timestamp: '10 mins ago',
   },
   {
@@ -290,7 +290,7 @@ export function FileUploaderAndViewerPreview({ stateIndex = 0 }: { stateIndex?: 
                   </div>
                 </div>
 
-                {/* Right: Download & Eye Buttons */}
+                {/* Right: Download, Eye & Clear Buttons */}
                 <div className="flex items-center space-x-1 shrink-0">
                   <button
                     type="button"
@@ -307,6 +307,17 @@ export function FileUploaderAndViewerPreview({ stateIndex = 0 }: { stateIndex?: 
                     title="View file"
                   >
                     <Eye className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleRemove(att.id, att.name)
+                    }}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    title="Clear attachment"
+                  >
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
               </div>

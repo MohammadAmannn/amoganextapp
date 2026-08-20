@@ -60,6 +60,26 @@ import {
   ProgressStepIndicatorPreview,
   ProgressCircularPreview,
   FileUploaderAndViewerPreview,
+  FileUploadFormPreview,
+  CompleteKanbanBoardPreview,
+  CompleteVouchersPagePreview,
+  AnalyticsPreview,
+  StatsPreview,
+  AreaChartPreview,
+  BarChartPreview,
+  LineChartPreview,
+  PieChartPreview,
+  RadarChartPreview,
+  RadialChartPreview,
+  TooltipChartPreview,
+  MapPreview,
+  DataCardsPreview,
+  IntegrationCardPreview,
+  CreditCardPreview,
+  EcommerceProductCardPreview,
+  AssignTaskCardPreview,
+  AppointmentCardPreview,
+  StatisticsCardPreview,
 } from '../previews'
 
 import {
@@ -89,6 +109,13 @@ import {
 export type GalleryCategory =
   | 'All'
   | 'Wizards'
+  | 'Vouchers'
+  | 'Kanban Board'
+  | 'Data Cards'
+  | 'Analytics'
+  | 'Stats'
+  | 'Charts'
+  | 'Maps'
   | 'Task'
   | 'Mail'
   | 'Notifications'
@@ -425,6 +452,302 @@ import { FileUploaderAndViewer } from '@/components/DocumentViewer'
 
 export default function FileUploaderPage() {
   return <FileUploaderAndViewer stateIndex={${si}} />
+}`,
+  },
+  {
+    id: 'file-upload-form',
+    name: 'File Upload Form',
+    category: 'Files',
+    description: 'Full-featured file upload form with template selector, subject input, folder & sub-folder dropdowns, rich body editor, attachment cards, upload progress bar, and submit action.',
+    filePath: 'src/features/Message/components/files/file-upload-form.tsx',
+    states: [
+      { label: 'File Upload Form', description: 'Interactive upload form matching the Message page file section upload modal' },
+    ],
+    renderPreview: (si) => <FileUploadFormPreview stateIndex={si} />,
+    usageCode: (si) => `// File Upload Form Component
+import { FileUploadForm } from '@/features/Message/components/files/file-upload-form'
+
+export default function UploadPage() {
+  return (
+    <FileUploadForm
+      userEmail="user@amoga.app"
+      onClose={() => console.log('Close')}
+      onUploadSuccess={() => console.log('Success')}
+    />
+  )
+}`,
+  },
+
+  // ───────────────────────── KANBAN BOARD SECTION ─────────────────────────
+
+  {
+    id: 'complete-kanban-board',
+    name: 'Complete Kanban Board Template',
+    category: 'Kanban Board',
+    description: 'Full interactive Kanban Board template featuring draggable task columns (To Do, In Progress, Under Review, Completed), priority badges, assignee avatars, progress tracking, column actions, and task modals.',
+    filePath: 'src/features/kanbantemplate/index.tsx',
+    states: [
+      { label: 'Kanban Board Template', description: 'Full responsive draggable Kanban Board template ready to reuse' },
+    ],
+    renderPreview: (si) => <CompleteKanbanBoardPreview stateIndex={si} />,
+    usageCode: () => `// Complete Kanban Board Component
+import KanbanTemplate from '@/features/kanbantemplate'
+
+export default function KanbanPage() {
+  return <KanbanTemplate embedded={true} />
+}`,
+  },
+
+  // ───────────────────────── VOUCHERS SECTION ───────────────────────────────
+
+  {
+    id: 'complete-vouchers-page',
+    name: 'Voucher Form (AI OCR & Print)',
+    category: 'Vouchers',
+    description: 'Complete interactive 3-step Voucher creation form (Upload Document, Edit Fields, Voucher Preview) featuring OCR document parser (PDF, PNG, JPG, DOCX), structured field editor (ReviewPanel), and document print preview.',
+    filePath: 'src/features/vouchers/components/invoice-maker.tsx',
+    states: [
+      { label: 'Voucher Creation Form', description: 'Interactive 3-step voucher wizard with AI OCR document parser and review panel' },
+    ],
+    renderPreview: (si) => <CompleteVouchersPagePreview stateIndex={si} />,
+    usageCode: () => `// Standalone Voucher Creation Form Component
+import { InvoiceMaker } from '@/features/vouchers/components/invoice-maker'
+
+export default function NewVoucherPage() {
+  return <InvoiceMaker />
+}`,
+  },
+
+  // ───────────────────────── ANALYTICS SECTION ──────────────────────────────
+
+  {
+    id: 'complete-analytics-dashboard',
+    name: 'Analytics Dashboard',
+    category: 'Analytics',
+    description: 'Complete analytics dashboard component featuring weekly traffic overview line chart, click metric cards (+12.4%), unique visitors, bounce rate, average session duration, top referrers, and device distribution lists.',
+    filePath: 'src/features/dashboard/components/analytics.tsx',
+    states: [
+      { label: 'Analytics Dashboard', description: 'Full responsive analytics overview with charts, metrics, and referrer lists' },
+    ],
+    renderPreview: (si) => <AnalyticsPreview stateIndex={si} />,
+    usageCode: () => `// Analytics Dashboard Component
+import { Analytics } from '@/features/dashboard/components/analytics'
+
+export default function AnalyticsPage() {
+  return <Analytics />
+}`,
+  },
+
+  // ───────────────────────── STATS SECTION ──────────────────────────────────
+
+  {
+    id: 'complete-stats-blocks',
+    name: 'Stats Blocks Collection',
+    category: 'Stats',
+    description: 'Complete collection of 15 beautifully styled metric & stats blocks: Trending indicators, border cards, badges, status indicators, circular progress rings, area sparklines, and usage breakdown bars.',
+    filePath: 'src/features/dashboard/components/stats.tsx',
+    states: [
+      { label: 'All Stats Blocks (15)', description: 'Complete collection of 15 metric & stats cards' },
+    ],
+    renderPreview: () => <StatsPreview />,
+    usageCode: () => `// Stats Component
+import { Stats } from '@/features/dashboard/components/stats'
+
+export default function StatsPage() {
+  return <Stats />
+}`,
+  },
+
+  // ───────────────────────── DATA CARDS SECTION ─────────────────────────────
+
+  {
+    id: 'card-19-integration',
+    name: 'Card 19 - Integration Card',
+    category: 'Data Cards',
+    description: 'App integration card featuring Slack integration status, toggle switch, connection badge, description, and settings link.',
+    filePath: 'src/features/MessageComponentGallery/previews/DataCardsPreview.tsx',
+    states: [
+      { label: 'Integration Card', description: 'App integration card with toggle switch and status badge' },
+    ],
+    renderPreview: () => <IntegrationCardPreview />,
+    usageCode: () => `import { IntegrationCardPreview } from '@/features/MessageComponentGallery/previews'\n\nexport default function CardPage() {\n  return <IntegrationCardPreview />\n}`,
+  },
+
+  {
+    id: 'card-18-credit-card',
+    name: 'Card 18 - Credit Card',
+    category: 'Data Cards',
+    description: 'Sleek credit card component featuring EMV chip, contactless wave icon, card number, cardholder name, expiration date, and Visa logo.',
+    filePath: 'src/features/MessageComponentGallery/previews/DataCardsPreview.tsx',
+    states: [
+      { label: 'Credit Card', description: 'Dark gradient credit card with EMV chip and details' },
+    ],
+    renderPreview: () => <CreditCardPreview />,
+    usageCode: () => `import { CreditCardPreview } from '@/features/MessageComponentGallery/previews'\n\nexport default function CardPage() {\n  return <CreditCardPreview />\n}`,
+  },
+
+  {
+    id: 'card-17-ecommerce-variant',
+    name: 'Card 17 - Ecommerce Product Variant Card',
+    category: 'Data Cards',
+    description: 'Product card featuring product image, rating stars, price discount tag, interactive color swatches, size selector buttons, and Add to Cart button.',
+    filePath: 'src/features/MessageComponentGallery/previews/DataCardsPreview.tsx',
+    states: [
+      { label: 'Ecommerce Variant Card', description: 'Product variant card with color & size selectors' },
+    ],
+    renderPreview: () => <EcommerceProductCardPreview />,
+    usageCode: () => `import { EcommerceProductCardPreview } from '@/features/MessageComponentGallery/previews'\n\nexport default function CardPage() {\n  return <EcommerceProductCardPreview />\n}`,
+  },
+
+  {
+    id: 'card-11-assign-task',
+    name: 'Card 11 - Assign Task Card',
+    category: 'Data Cards',
+    description: 'Task assignment card featuring priority badge, task description, assignee selector avatar, due date indicator, and Assign Task confirm button.',
+    filePath: 'src/features/MessageComponentGallery/previews/DataCardsPreview.tsx',
+    states: [
+      { label: 'Assign Task Card', description: 'Task assignment card with priority badge and assignee selector' },
+    ],
+    renderPreview: () => <AssignTaskCardPreview />,
+    usageCode: () => `import { AssignTaskCardPreview } from '@/features/MessageComponentGallery/previews'\n\nexport default function CardPage() {\n  return <AssignTaskCardPreview />\n}`,
+  },
+
+  {
+    id: 'card-10-appointment',
+    name: 'Card 10 - Appointment Card',
+    category: 'Data Cards',
+    description: 'Medical & Meeting appointment card featuring practitioner avatar, confirmation status badge, scheduled date & time, location room, and reschedule/join actions.',
+    filePath: 'src/features/MessageComponentGallery/previews/DataCardsPreview.tsx',
+    states: [
+      { label: 'Appointment Card', description: 'Appointment card with date, time, location, and action buttons' },
+    ],
+    renderPreview: () => <AppointmentCardPreview />,
+    usageCode: () => `import { AppointmentCardPreview } from '@/features/MessageComponentGallery/previews'\n\nexport default function CardPage() {\n  return <AppointmentCardPreview />\n}`,
+  },
+
+  {
+    id: 'card-06-statistics',
+    name: 'Card 06 - Statistics Card',
+    category: 'Data Cards',
+    description: 'Revenue & Metric statistics card featuring primary metric value ($128,450.00), growth percentage badge (+18.4%), mini sparkline visualization, and target achievement ratio.',
+    filePath: 'src/features/MessageComponentGallery/previews/DataCardsPreview.tsx',
+    states: [
+      { label: 'Statistics Card', description: 'Metric stat card with percent growth badge and sparkline' },
+    ],
+    renderPreview: () => <StatisticsCardPreview />,
+    usageCode: () => `import { StatisticsCardPreview } from '@/features/MessageComponentGallery/previews'\n\nexport default function CardPage() {\n  return <StatisticsCardPreview />\n}`,
+  },
+
+  // ───────────────────────── CHARTS SECTION ─────────────────────────────────
+
+  {
+    id: 'area-chart-card',
+    name: 'Area Chart Card',
+    category: 'Charts',
+    description: 'Responsive Area Chart component featuring dual gradient filled paths, time range selectors (30d / 7d), interactive tooltip tooltips, and total desktop/mobile visitor metrics.',
+    filePath: 'src/features/charttemplate/components/AreaChartCard.tsx',
+    states: [
+      { label: 'Area Chart', description: 'Gradient area chart with time range selector' },
+    ],
+    renderPreview: () => <AreaChartPreview />,
+    usageCode: () => `import { AreaChartCard } from '@/features/charttemplate/components/AreaChartCard'\n\nexport default function ChartPage() {\n  return <AreaChartCard />\n}`,
+  },
+
+  {
+    id: 'bar-chart-card',
+    name: 'Bar Chart Card',
+    category: 'Charts',
+    description: 'Stacked Bar Chart component displaying multi-series data bars (Desktop vs Mobile) with date axis formatting, legend indicators, and responsive card wrapper.',
+    filePath: 'src/features/charttemplate/components/BarChartCard.tsx',
+    states: [
+      { label: 'Bar Chart', description: 'Stacked bar chart with dual series breakdown' },
+    ],
+    renderPreview: () => <BarChartPreview />,
+    usageCode: () => `import { BarChartCard } from '@/features/charttemplate/components/BarChartCard'\n\nexport default function ChartPage() {\n  return <BarChartCard />\n}`,
+  },
+
+  {
+    id: 'line-chart-card',
+    name: 'Line Chart Card',
+    category: 'Charts',
+    description: 'Smooth curved Line Chart component featuring multi-line metrics, active dot highlights, custom tooltip content, and responsive container scaling.',
+    filePath: 'src/features/charttemplate/components/LineChartCard.tsx',
+    states: [
+      { label: 'Line Chart', description: 'Curved multi-line trend chart' },
+    ],
+    renderPreview: () => <LineChartPreview />,
+    usageCode: () => `import { LineChartCard } from '@/features/charttemplate/components/LineChartCard'\n\nexport default function ChartPage() {\n  return <LineChartCard />\n}`,
+  },
+
+  {
+    id: 'pie-chart-card',
+    name: 'Pie & Donut Chart Card',
+    category: 'Charts',
+    description: 'Donut Pie Chart component displaying category distributions, central summary label, colored segment keys, and total percentage breakdown.',
+    filePath: 'src/features/charttemplate/components/PieChartCard.tsx',
+    states: [
+      { label: 'Pie & Donut Chart', description: 'Donut chart with category legend keys' },
+    ],
+    renderPreview: () => <PieChartPreview />,
+    usageCode: () => `import { PieChartCard } from '@/features/charttemplate/components/PieChartCard'\n\nexport default function ChartPage() {\n  return <PieChartCard />\n}`,
+  },
+
+  {
+    id: 'radar-chart-card',
+    name: 'Radar Chart Card',
+    category: 'Charts',
+    description: 'Polygonal Radar Chart component comparing multi-axis performance metrics across desktop and mobile platforms with custom grid colors.',
+    filePath: 'src/features/charttemplate/components/RadarChartCard.tsx',
+    states: [
+      { label: 'Radar Chart', description: 'Multi-axis radar polygon chart' },
+    ],
+    renderPreview: () => <RadarChartPreview />,
+    usageCode: () => `import { RadarChartCard } from '@/features/charttemplate/components/RadarChartCard'\n\nexport default function ChartPage() {\n  return <RadarChartCard />\n}`,
+  },
+
+  {
+    id: 'radial-chart-card',
+    name: 'Radial Bar Chart Card',
+    category: 'Charts',
+    description: 'Concentric Radial Bar Chart displaying percentage completion rings with central metric text and subtle background tracks.',
+    filePath: 'src/features/charttemplate/components/RadialChartCard.tsx',
+    states: [
+      { label: 'Radial Chart', description: 'Circular radial progress rings' },
+    ],
+    renderPreview: () => <RadialChartPreview />,
+    usageCode: () => `import { RadialChartCard } from '@/features/charttemplate/components/RadialChartCard'\n\nexport default function ChartPage() {\n  return <RadialChartCard />\n}`,
+  },
+
+  {
+    id: 'tooltip-chart-card',
+    name: 'Tooltip & Formatted Chart Card',
+    category: 'Charts',
+    description: 'Advanced Interactive Chart featuring custom popover tooltips, currency formatters, date range toggles, and detail data inspection.',
+    filePath: 'src/features/charttemplate/components/TooltipChartCard.tsx',
+    states: [
+      { label: 'Tooltip Chart', description: 'Interactive chart with popover detail inspector' },
+    ],
+    renderPreview: () => <TooltipChartPreview />,
+    usageCode: () => `import { TooltipChartCard } from '@/features/charttemplate/components/TooltipChartCard'\n\nexport default function ChartPage() {\n  return <TooltipChartCard />\n}`,
+  },
+
+  // ───────────────────────── MAPS SECTION ───────────────────────────────────
+
+  {
+    id: 'complete-map-template',
+    name: 'Interactive Map Template',
+    category: 'Maps',
+    description: 'Full interactive Leaflet/MapLibre map component with location search bar (`MapSearchBar`), custom pin markers, popup detail cards (`MapPopup`), explore location panels, and zoom controls.',
+    filePath: 'src/features/map/index.tsx',
+    states: [
+      { label: 'Interactive Map', description: 'Full responsive map view with search bar and location markers' },
+    ],
+    renderPreview: (si) => <MapPreview stateIndex={si} />,
+    usageCode: () => `// Complete Map Template Component
+import MapPage from '@/features/map'
+
+export default function MapScreen() {
+  return <MapPage />
 }`,
   },
 
@@ -1551,6 +1874,13 @@ export default function QuestionnairePage() {
 export const GALLERY_CATEGORIES: GalleryCategory[] = [
   'All',
   'Wizards',
+  'Vouchers',
+  'Kanban Board',
+  'Data Cards',
+  'Analytics',
+  'Stats',
+  'Charts',
+  'Maps',
   'Task',
   'Mail',
   'Notifications',

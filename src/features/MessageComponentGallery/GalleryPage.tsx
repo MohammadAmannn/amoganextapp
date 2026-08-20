@@ -28,6 +28,13 @@ import {
   MoreHorizontal,
   CalendarDays,
   Wand2,
+  Kanban,
+  Ticket,
+  BarChart3,
+  TrendingUp,
+  PieChart,
+  MapPin,
+  CreditCard,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -56,6 +63,13 @@ const VIEWPORT_WIDTHS: Record<Viewport, number | null> = {
 // ─── Category badge colors (shadcn design tokens) ────────────────────────────
 const CATEGORY_COLORS: Record<string, string> = {
   Wizards: 'bg-violet-500/10 text-violet-600 border-violet-200/50 dark:border-violet-900/40 dark:text-violet-400',
+  Vouchers: 'bg-indigo-500/10 text-indigo-600 border-indigo-200/50 dark:border-indigo-900/40 dark:text-indigo-400',
+  'Kanban Board': 'bg-emerald-500/10 text-emerald-600 border-emerald-200/50 dark:border-emerald-900/40 dark:text-emerald-400',
+  'Data Cards': 'bg-teal-500/10 text-teal-600 border-teal-200/50 dark:border-teal-900/40 dark:text-teal-400',
+  Analytics: 'bg-blue-500/10 text-blue-600 border-blue-200/50 dark:border-blue-900/40 dark:text-blue-400',
+  Stats: 'bg-purple-500/10 text-purple-600 border-purple-200/50 dark:border-purple-900/40 dark:text-purple-400',
+  Charts: 'bg-amber-500/10 text-amber-600 border-amber-200/50 dark:border-amber-900/40 dark:text-amber-400',
+  Maps: 'bg-emerald-500/10 text-emerald-600 border-emerald-200/50 dark:border-emerald-900/40 dark:text-emerald-400',
   Mail: 'bg-indigo-500/10 text-indigo-600 border-indigo-200/50 dark:border-indigo-900/40 dark:text-indigo-400',
   AI: 'bg-amber-500/10 text-amber-600 border-amber-200/50 dark:border-amber-900/40 dark:text-amber-400',
   Chat: 'bg-emerald-500/10 text-emerald-600 border-emerald-200/50 dark:border-emerald-900/40 dark:text-emerald-400',
@@ -87,6 +101,48 @@ const CATEGORY_CONFIG: Record<
     activeClass:
       'bg-violet-500/15 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400 border-violet-300/60 dark:border-violet-800/40 font-semibold shadow-2xs',
     badgeClass: 'bg-violet-500/20 text-violet-600 dark:text-violet-400',
+  },
+  Vouchers: {
+    icon: Ticket,
+    activeClass:
+      'bg-indigo-500/15 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 border-indigo-300/60 dark:border-indigo-800/40 font-semibold shadow-2xs',
+    badgeClass: 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400',
+  },
+  'Kanban Board': {
+    icon: Kanban,
+    activeClass:
+      'bg-emerald-500/15 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-300/60 dark:border-emerald-800/40 font-semibold shadow-2xs',
+    badgeClass: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
+  },
+  'Data Cards': {
+    icon: CreditCard,
+    activeClass:
+      'bg-teal-500/15 text-teal-600 dark:bg-teal-950/40 dark:text-teal-400 border-teal-300/60 dark:border-teal-800/40 font-semibold shadow-2xs',
+    badgeClass: 'bg-teal-500/20 text-teal-600 dark:text-teal-400',
+  },
+  Analytics: {
+    icon: BarChart3,
+    activeClass:
+      'bg-blue-500/15 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 border-blue-300/60 dark:border-blue-800/40 font-semibold shadow-2xs',
+    badgeClass: 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
+  },
+  Stats: {
+    icon: TrendingUp,
+    activeClass:
+      'bg-purple-500/15 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400 border-purple-300/60 dark:border-purple-800/40 font-semibold shadow-2xs',
+    badgeClass: 'bg-purple-500/20 text-purple-600 dark:text-purple-400',
+  },
+  Charts: {
+    icon: PieChart,
+    activeClass:
+      'bg-amber-500/15 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border-amber-300/60 dark:border-amber-800/40 font-semibold shadow-2xs',
+    badgeClass: 'bg-amber-500/20 text-amber-600 dark:text-amber-400',
+  },
+  Maps: {
+    icon: MapPin,
+    activeClass:
+      'bg-emerald-500/15 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-300/60 dark:border-emerald-800/40 font-semibold shadow-2xs',
+    badgeClass: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
   },
   Task: {
     icon: Calendar,

@@ -10,6 +10,7 @@ import { SubTabsBar } from '@/features/Message/components/sidebar/sub-tabs-bar'
 import { SidebarSearchBar } from '@/features/Message/components/sidebar/sidebar-search-bar'
 import { FolderTreeItem } from '@/features/Message/components/sidebar/folder-tree-item'
 import { UserFileCardsView } from '@/features/Message/components/files/user-file-cards-view'
+import { FileUploadForm } from '@/features/Message/components/files/file-upload-form'
 import { mockFolders, mockStorageFiles } from '../mocks'
 import { UserFolder } from '@/features/Message/services/user-storage-files.service'
 
@@ -26,6 +27,7 @@ export function CompleteFilesPagePreview({ isMobileView = false }: PagePreviewPr
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState('file')
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false)
+  const [isUploadingFile, setIsUploadingFile] = useState(false)
 
   const toggleFolder = (folderId: string) => {
     setExpandedFolders((prev) => ({
@@ -36,6 +38,7 @@ export function CompleteFilesPagePreview({ isMobileView = false }: PagePreviewPr
 
   const handleSelectFolder = (folder: UserFolder) => {
     setSelectedFolder(folder)
+    setIsUploadingFile(false)
     setIsMobileDetailOpen(true)
   }
 
@@ -87,7 +90,10 @@ export function CompleteFilesPagePreview({ isMobileView = false }: PagePreviewPr
             setSearchQuery={setSearchQuery}
             categoryFilter='vouchers'
             sectionMode='mail'
-            onUploadFileClick={() => toast.info('Upload File Dialog (preview only)')}
+            onUploadFileClick={() => {
+              setIsUploadingFile(true)
+              setIsMobileDetailOpen(true)
+            }}
           />
         </div>
 
@@ -106,7 +112,7 @@ export function CompleteFilesPagePreview({ isMobileView = false }: PagePreviewPr
             <FolderTreeItem
               key={folder.id}
               folder={folder}
-              isFolderActive={selectedFolder?.id === folder.id}
+              isFolderActive={selectedFolder?.id === folder.id && !isUploadingFile}
               isExpanded={!!expandedFolders[folder.id]}
               onToggleExpand={(id) => toggleFolder(id)}
               onSelectFolder={handleSelectFolder}
@@ -123,12 +129,23 @@ export function CompleteFilesPagePreview({ isMobileView = false }: PagePreviewPr
           isMobileView && (!isMobileDetailOpen ? 'hidden' : 'flex w-full')
         )}
       >
-        <UserFileCardsView
-          folder={selectedFolder}
-          files={mockStorageFiles}
-          onSelectFileForPreview={(file) => toast.info(`Previewing: ${file.fileName}`)}
-          onBack={() => setIsMobileDetailOpen(false)}
-        />
+        {isUploadingFile ? (
+          <FileUploadForm
+            userEmail="user@amoga.app"
+            onClose={() => setIsUploadingFile(false)}
+            onUploadSuccess={() => {
+              setIsUploadingFile(false)
+              toast.success('File uploaded successfully!')
+            }}
+          />
+        ) : (
+          <UserFileCardsView
+            folder={selectedFolder}
+            files={mockStorageFiles}
+            onSelectFileForPreview={(file) => toast.info(`Previewing: ${file.fileName}`)}
+            onBack={() => setIsMobileDetailOpen(false)}
+          />
+        )}
       </div>
     </div>
   )

@@ -185,21 +185,28 @@ export function SafeDocumentPreview({
             />
           </div>
         ) : fileUrl && fileUrl !== 'null' && fileUrl !== 'undefined' && fileUrl.trim() !== '' ? (
-          <div
-            className="w-full h-full min-h-[300px] flex-1 flex flex-col transition-all duration-200 overflow-auto"
-            style={{
-              transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
-              transformOrigin: 'top center',
-            }}
-          >
-            <DocumentViewer
-              key={`${cleanName}-${fileUrl}`}
-              fileUrl={fileUrl}
-              fileName={cleanName}
-              allowDownload={true}
-              allowPrint={true}
-              hideHeader={true}
-            />
+          <div className="w-full h-full min-h-0 flex-1 flex flex-col overflow-auto bg-background">
+            <div
+              className="w-full h-full flex-1 flex flex-col transition-transform duration-200"
+              style={
+                zoom !== 100
+                  ? {
+                      zoom: `${zoom}%`,
+                      transform: `scale(${zoom / 100})`,
+                      transformOrigin: 'top center',
+                    }
+                  : undefined
+              }
+            >
+              <DocumentViewer
+                key={`${cleanName}-${fileUrl}`}
+                fileUrl={fileUrl}
+                fileName={cleanName}
+                allowDownload={true}
+                allowPrint={true}
+                hideHeader={true}
+              />
+            </div>
           </div>
         ) : editedJson ? (
           <div className="w-full h-full min-h-0 overflow-auto">

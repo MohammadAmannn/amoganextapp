@@ -13,5 +13,13 @@ export * from './DatePickerAndCalendarPreviews'
 export * from './QuestionnaireAndWizardPreviews'
 export * from './ProgressPreviews'
 export * from './FileUploaderAndViewerPreview'
+export * from './FileUploadFormPreview'
+export * from './CompleteKanbanBoardPreview'
+export * from './CompleteVouchersPagePreview'
+export * from './AnalyticsPreview'
+export * from './StatsPreview'
+export * from './ChartsPreviews'
+export * from './MapPreview'
+export * from './DataCardsPreview'
 
 

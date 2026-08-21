@@ -35,6 +35,8 @@ import {
   PieChart,
   MapPin,
   CreditCard,
+  FileEditIcon,
+  FileEdit
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -79,6 +81,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Shared: 'bg-slate-500/10 text-slate-600 border-slate-200/50 dark:border-slate-800 dark:text-slate-400',
   'Date Picker': 'bg-teal-500/10 text-teal-600 border-teal-200/50 dark:border-teal-900/40 dark:text-teal-400',
   Calendar: 'bg-blue-500/10 text-blue-600 border-blue-200/50 dark:border-blue-900/40 dark:text-blue-400',
+  'Rich Editor': 'bg-pink-500/10 text-pink-600 border-pink-200/50 dark:border-pink-900/40 dark:text-pink-400',
 }
 
 // ─── Category icons & styles matching Message Page CategoryToolbar ────────────
@@ -198,6 +201,13 @@ const CATEGORY_CONFIG: Record<
       'bg-blue-500/15 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 border-blue-300/60 dark:border-blue-800/40 font-semibold shadow-2xs',
     badgeClass: 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
   },
+    'Rich Editor': {
+    icon: FileEdit,
+    activeClass:
+      'bg-pink-500/15 text-pink-600 dark:bg-pink-950/40 dark:text-pink-400 border-pink-300/60 dark:border-pink-800/40 font-semibold shadow-2xs',
+    badgeClass: 'bg-pink-500/20 text-pink-600 dark:text-pink-400',
+  },
+
 }
 
 // ─── Count per category ───────────────────────────────────────────────────────

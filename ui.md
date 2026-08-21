@@ -1,6 +1,6 @@
 # UI & Design System Architecture Guide (`ui.md`)
 
-This document is the authoritative design system and component UI reference for the **Message Page**, **Design System Gallery**, **Document Viewer**, **Chat Template**, **Kanban Board**, **Vouchers**, **Analytics**, **Stats**, **Data Cards**, **Charts**, and **Maps** modules. It defines exact styling tokens, tab underlines, card layouts, font hierarchies, icon button specs, mobile responsive flows, and file mappings to guarantee 100% visual and structural consistency across the application.
+This document is the authoritative design system and component UI reference for the **Message Page**, **Design System Gallery**, **Document Viewer**, **Chat Template**, **Kanban Board**, **Vouchers**, **Analytics**, **Stats**, **Data Cards**, **Rich Editor**, **Charts**, and **Maps** modules. It defines exact styling tokens, tab underlines, card layouts, font hierarchies, icon button specs, mobile responsive flows, and file mappings to guarantee 100% visual and structural consistency across the application.
 
 ---
 
@@ -28,6 +28,7 @@ This document is the authoritative design system and component UI reference for 
 Category toolbar pills use multi-line wrap with category-specific HSL badge colors:
 - **Container**: `flex flex-wrap items-center gap-1.5 p-2.5 bg-muted/10 border-b border-border/60`.
 - **Category HSL Colors**:
+  - **Rich Editor**: `bg-pink-500/10 text-pink-600 border-pink-200/50 dark:border-pink-900/40 dark:text-pink-400`
   - **Data Cards**: `bg-teal-500/10 text-teal-600 border-teal-200/50 dark:border-teal-900/40 dark:text-teal-400`
   - **Analytics**: `bg-blue-500/10 text-blue-600 border-blue-200/50 dark:border-blue-900/40 dark:text-blue-400`
   - **Stats**: `bg-purple-500/10 text-purple-600 border-purple-200/50 dark:border-purple-900/40 dark:text-purple-400`
@@ -36,18 +37,13 @@ Category toolbar pills use multi-line wrap with category-specific HSL badge colo
 
 ---
 
-## 3. Data Cards Category & Component Architecture
+## 3. Rich Editor Category Architecture
 
-### A. Data Cards Category (Selected 6 Card Components)
-- **Category**: `Data Cards`
-- **File**: [`src/features/MessageComponentGallery/previews/DataCardsPreview.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/MessageComponentGallery/previews/DataCardsPreview.tsx)
-- **Selected Cards**:
-  1. **Card 19 - Integration Card**: `card-19-integration` (Slack toggle switch, connection status badge, and configure settings link).
-  2. **Card 18 - Credit Card**: `card-18-credit-card` (Dark gradient VISA card with EMV chip, contactless wave icon, card number, and expiry date).
-  3. **Card 17 - Ecommerce Product Variant Card**: `card-17-ecommerce-variant` (Product variant card with rating stars, price discount tag, color swatches, size selectors, and Add to Cart button).
-  4. **Card 11 - Assign Task Card**: `card-11-assign-task` (Task assignment card with high priority badge, assignee avatar, due date, and Assign button).
-  5. **Card 10 - Appointment Card**: `card-10-appointment` (Medical/Meeting appointment card with practitioner avatar, confirmed status, date, time, location room, and reschedule/telehealth buttons).
-  6. **Card 06 - Statistics Card**: `card-06-statistics` (Revenue metric card with +18.4% growth badge, sparkline bar visualization, and target achievement ratio).
+### A. Rich Editor Category
+- **Category**: `Rich Editor`
+- **Component ID**: `minimal-tiptap-editor`
+- **File**: [`src/features/MessageComponentGallery/previews/RicheEditorPreview.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/MessageComponentGallery/previews/RicheEditorPreview.tsx)
+- **Features**: Full Next Tiptap WYSIWYG rich text editor with toolbar formatting (Headings H1-H6, Bold, Italic, Underline, Strikethrough, Code inline, Color highlight, Bulleted/Numbered lists, Blockquotes, Code blocks, and Hyperlink bubble menus).
 
 ---
 
@@ -55,6 +51,7 @@ Category toolbar pills use multi-line wrap with category-specific HSL badge colo
 
 | Component Name | File Path | Description |
 | :--- | :--- | :--- |
+| **Minimal Tiptap Editor** | [`RicheEditorPreview.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/MessageComponentGallery/previews/RicheEditorPreview.tsx) | Complete Next Tiptap WYSIWYG editor matching `next-tiptap.vercel.app`. |
 | **Card 19 - Integration Card** | [`DataCardsPreview.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/MessageComponentGallery/previews/DataCardsPreview.tsx) | Slack app integration card with toggle switch. |
 | **Card 18 - Credit Card** | [`DataCardsPreview.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/MessageComponentGallery/previews/DataCardsPreview.tsx) | Dark gradient credit card component with EMV chip. |
 | **Card 17 - Ecommerce Variant Card** | [`DataCardsPreview.tsx`](file:///e:/morrai/shadcn-admin-main/src/features/MessageComponentGallery/previews/DataCardsPreview.tsx) | Product card with interactive color & size selectors. |

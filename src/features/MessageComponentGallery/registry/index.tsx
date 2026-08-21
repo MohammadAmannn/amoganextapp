@@ -80,6 +80,7 @@ import {
   AssignTaskCardPreview,
   AppointmentCardPreview,
   StatisticsCardPreview,
+  RichEditorPreview
 } from '../previews'
 
 import {
@@ -125,6 +126,7 @@ export type GalleryCategory =
   | 'Shared'
   | 'Date Picker'
   | 'Calendar'
+  | 'Rich Editor'
 
 export interface ComponentState {
   label: string
@@ -1869,6 +1871,24 @@ export default function QuestionnairePage() {
   </div>
 </div>`,
   },
+
+  // ───────────────────────── RICH EDITOR SECTION ────────────────────────────
+
+  {
+    id: 'minimal-tiptap-editor',
+    name: 'Minimal Tiptap Editor',
+    category: 'Rich Editor',
+    description: 'Feature-rich WYSIWYG rich text editor with toolbar for formatting, headings, lists, code blocks, and bubble link menus.',
+    filePath: 'src/components/ui/minimal-tiptap/minimal-tiptap.tsx',
+    states: [
+      { label: 'Rich Text Editor', description: 'Interactive Minimal Tiptap WYSIWYG editor' },
+    ],
+    renderPreview: () => <RichEditorPreview />,
+    usageCode: () => `import { MinimalTiptapEditor } from '@/components/ui/minimal-tiptap'\n\nexport default function EditorPage() {\n  const [value, setValue] = useState('')\n  return <MinimalTiptapEditor value={value} onChange={setValue} />\n}`,
+  },
+
+
+
 ]
 
 export const GALLERY_CATEGORIES: GalleryCategory[] = [
@@ -1890,4 +1910,5 @@ export const GALLERY_CATEGORIES: GalleryCategory[] = [
   'Shared',
   'Date Picker',
   'Calendar',
+  'Rich Editor'
 ]

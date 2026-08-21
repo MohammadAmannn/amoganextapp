@@ -21,5 +21,4 @@ export * from './StatsPreview'
 export * from './ChartsPreviews'
 export * from './MapPreview'
 export * from './DataCardsPreview'
-
-
+export * from './RicheEditorPreview'

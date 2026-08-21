@@ -2,7 +2,7 @@ import "./styles/index.css"
 
 import type { Content, Editor } from "@tiptap/react"
 import type { UseMinimalTiptapEditorProps } from "./hooks/use-minimal-tiptap"
-import { EditorContent, EditorContext } from "@tiptap/react"
+import { EditorContent, EditorContext, useEditorState } from "@tiptap/react"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { SectionOne } from "./components/section/one"
@@ -25,48 +25,60 @@ export interface MinimalTiptapProps extends Omit<
   editorContentClassName?: string
 }
 
-const Toolbar = ({ editor }: { editor: Editor }) => (
-  <div className="border-border flex h-12 shrink-0 overflow-x-auto border-b p-2">
-    <div className="flex w-max items-center gap-px">
-      <SectionOne editor={editor} activeLevels={[1, 2, 3, 4, 5, 6]} />
+const Toolbar = ({ editor }: { editor: Editor }) => {
+  const { isEditable } = useEditorState({
+    editor,
+    selector: (ctx) => ({ isEditable: ctx.editor?.isEditable ?? true }),
+  })
 
-      <Separator orientation="vertical" className="mx-2" />
+  return (
+    <div
+      className={cn(
+        "border-border flex h-12 shrink-0 overflow-x-auto border-b p-2 transition-opacity duration-150",
+        !isEditable && "pointer-events-none select-none opacity-40"
+      )}
+    >
+      <div className="flex w-max items-center gap-px">
+        <SectionOne editor={editor} activeLevels={[1, 2, 3, 4, 5, 6]} />
 
-      <SectionTwo
-        editor={editor}
-        activeActions={[
-          "bold",
-          "italic",
-          "underline",
-          "strikethrough",
-          "code",
-          "clearFormatting",
-        ]}
-        mainActionCount={3}
-      />
+        <Separator orientation="vertical" className="mx-2" />
 
-      <Separator orientation="vertical" className="mx-2" />
+        <SectionTwo
+          editor={editor}
+          activeActions={[
+            "bold",
+            "italic",
+            "underline",
+            "strikethrough",
+            "code",
+            "clearFormatting",
+          ]}
+          mainActionCount={3}
+        />
 
-      <SectionThree editor={editor} />
+        <Separator orientation="vertical" className="mx-2" />
 
-      <Separator orientation="vertical" className="mx-2" />
+        <SectionThree editor={editor} />
 
-      <SectionFour
-        editor={editor}
-        activeActions={["orderedList", "bulletList"]}
-        mainActionCount={0}
-      />
+        <Separator orientation="vertical" className="mx-2" />
 
-      <Separator orientation="vertical" className="mx-2" />
+        <SectionFour
+          editor={editor}
+          activeActions={["orderedList", "bulletList"]}
+          mainActionCount={0}
+        />
 
-      <SectionFive
-        editor={editor}
-        activeActions={["codeBlock", "blockquote", "horizontalRule"]}
-        mainActionCount={0}
-      />
+        <Separator orientation="vertical" className="mx-2" />
+
+        <SectionFive
+          editor={editor}
+          activeActions={["codeBlock", "blockquote", "horizontalRule"]}
+          mainActionCount={0}
+        />
+      </div>
     </div>
-  </div>
-)
+  )
+}
 
 export const MinimalTiptapEditor = ({
   value,

@@ -268,6 +268,12 @@ export const useMinimalTiptapEditor = ({
     ...props,
   })
 
+  React.useEffect(() => {
+    if (editor && props.editable !== undefined && editor.isEditable !== props.editable) {
+      editor.setEditable(props.editable)
+    }
+  }, [editor, props.editable])
+
   return editor
 }
 

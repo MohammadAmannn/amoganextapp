@@ -381,7 +381,7 @@ export function RichEditorPreview() {
                 <span className="h-4 w-1 rounded-full bg-[#6366f1]" />
                 <span>Content</span>
               </div>
-              <div className="rounded-2xl border border-border bg-background shadow-xs overflow-hidden">
+              <div className="rounded-2xl border border-border bg-background shadow-xs">
                 <MinimalTiptapEditor
                   value={content}
                   onChange={setContent}

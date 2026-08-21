@@ -34,7 +34,7 @@ const Toolbar = ({ editor }: { editor: Editor }) => {
   return (
     <div
       className={cn(
-        "border-border flex h-12 shrink-0 overflow-x-auto border-b p-2 transition-opacity duration-150",
+        "sticky top-0 z-20 border-border flex h-12 shrink-0 overflow-x-auto border-b p-2 bg-background/95 backdrop-blur-md rounded-t-2xl transition-opacity duration-150 scrollbar-none touch-pan-x",
         !isEditable && "pointer-events-none select-none opacity-40"
       )}
     >

@@ -80,7 +80,8 @@ import {
   AssignTaskCardPreview,
   AppointmentCardPreview,
   StatisticsCardPreview,
-  RichEditorPreview
+  NewVouncher,
+  RichEditorPreview,
 } from '../previews'
 
 import {
@@ -519,6 +520,25 @@ export default function NewVoucherPage() {
   return <InvoiceMaker />
 }`,
   },
+
+//----new vouncher scan 
+  {
+    id: 'new-voucher-scan',
+    name: 'New Voucher Scan',
+    category: 'Vouchers',
+    description: 'Voucher document processing workflow featuring the file metadata upload form on Step 1 with auto OCR extraction.',
+    filePath: 'src/features/MessageComponentGallery/previews/NewVouncher.tsx',
+    states: [
+      { label: 'Step 1: File Upload Form', description: 'Document upload with metadata fields' },
+      { label: 'Step 2: Edit Fields', description: 'Review auto-parsed voucher fields' },
+      { label: 'Step 3: Voucher Preview', description: 'Voucher preview and print' },
+    ],
+    renderPreview: (stateIndex) => <NewVouncher stateIndex={stateIndex} />,
+    usageCode: () => `import { NewVouncher } from '@/features/MessageComponentGallery/previews'\n\nexport default function Page() {\n  return <NewVouncher />\n}`,
+  },
+
+
+  
 
   // ───────────────────────── ANALYTICS SECTION ──────────────────────────────
 
@@ -1873,12 +1893,11 @@ export default function QuestionnairePage() {
   },
 
   // ───────────────────────── RICH EDITOR SECTION ────────────────────────────
-
   {
     id: 'minimal-tiptap-editor',
     name: 'Minimal Tiptap Editor',
     category: 'Rich Editor',
-    description: 'Feature-rich WYSIWYG rich text editor with toolbar for formatting, headings, lists, code blocks, and bubble link menus.',
+    description: 'Feature-rich WYSIWYG rich text editor with toolbar for formatting, headings, lists, code blocks, and full post reader preview.',
     filePath: 'src/components/ui/minimal-tiptap/minimal-tiptap.tsx',
     states: [
       { label: 'Rich Text Editor', description: 'Interactive Minimal Tiptap WYSIWYG editor' },
@@ -1886,9 +1905,6 @@ export default function QuestionnairePage() {
     renderPreview: () => <RichEditorPreview />,
     usageCode: () => `import { MinimalTiptapEditor } from '@/components/ui/minimal-tiptap'\n\nexport default function EditorPage() {\n  const [value, setValue] = useState('')\n  return <MinimalTiptapEditor value={value} onChange={setValue} />\n}`,
   },
-
-
-
 ]
 
 export const GALLERY_CATEGORIES: GalleryCategory[] = [
@@ -1910,5 +1926,5 @@ export const GALLERY_CATEGORIES: GalleryCategory[] = [
   'Shared',
   'Date Picker',
   'Calendar',
-  'Rich Editor'
+  'Rich Editor',
 ]

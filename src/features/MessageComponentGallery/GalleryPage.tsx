@@ -148,7 +148,7 @@ const CATEGORY_CONFIG: Record<
     badgeClass: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
   },
   Task: {
-    icon: Calendar,
+    icon: Check,
     activeClass:
       'bg-purple-500/15 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400 border-purple-300/60 dark:border-purple-800/40 font-semibold shadow-2xs',
     badgeClass: 'bg-purple-500/20 text-purple-600 dark:text-purple-400',
@@ -201,13 +201,12 @@ const CATEGORY_CONFIG: Record<
       'bg-blue-500/15 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 border-blue-300/60 dark:border-blue-800/40 font-semibold shadow-2xs',
     badgeClass: 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
   },
-    'Rich Editor': {
+  'Rich Editor': {
     icon: FileEdit,
     activeClass:
       'bg-pink-500/15 text-pink-600 dark:bg-pink-950/40 dark:text-pink-400 border-pink-300/60 dark:border-pink-800/40 font-semibold shadow-2xs',
     badgeClass: 'bg-pink-500/20 text-pink-600 dark:text-pink-400',
   },
-
 }
 
 // ─── Count per category ───────────────────────────────────────────────────────
@@ -359,8 +358,8 @@ export function GalleryPage() {
             </div>
           </div>
 
-          {/* Category Tabs (Multi-line Wrap — All Visible with Real Icons) */}
-          <div className='p-2.5 border-b border-border/60 bg-muted/10'>
+          {/* Category Tabs (Scrollable compact section — fully responsive across mobile & desktop) */}
+          <div className='max-h-[120px] sm:max-h-[145px] overflow-y-auto overscroll-contain scrollbar-thin p-2 sm:p-2.5 border-b border-border/60 bg-muted/10'>
             <div className='flex flex-wrap items-center gap-1.5'>
               {GALLERY_CATEGORIES.map((cat) => {
                 const count = getCategoryCount(cat)
@@ -732,29 +731,7 @@ export function GalleryPage() {
                 </div>
 
                 {/* State selector sub-row if component has multiple states (Matches Message Page Underline Tab Style) */}
-                {selectedEntry.states.length > 1 && (
-                  <div className='flex items-center gap-3.5 sm:gap-4 border-t border-border/50 bg-background px-3.5 py-1.5 overflow-x-auto scrollbar-none shrink-0'>
-                    <span className='text-[10px] uppercase tracking-wider font-semibold text-muted-foreground shrink-0 mr-0.5'>
-                      State:
-                    </span>
-                    {selectedEntry.states.map((state, idx) => (
-                      <button
-                        key={idx}
-                        type='button'
-                        onClick={() => setStateIndex(idx)}
-                        title={state.description}
-                        className={cn(
-                          'pb-1 border-b-2 transition-all cursor-pointer whitespace-nowrap select-none text-xs shrink-0',
-                          stateIndex === idx
-                            ? 'border-primary text-foreground font-semibold'
-                            : 'border-transparent text-muted-foreground hover:text-foreground'
-                        )}
-                      >
-                        {state.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+               
               </div>
 
               {/* Content Canvas */}

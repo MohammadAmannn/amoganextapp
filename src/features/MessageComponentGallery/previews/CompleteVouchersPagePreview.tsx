@@ -16,7 +16,7 @@ export function CompleteVouchersPagePreview({ stateIndex = 0 }: { stateIndex?: n
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold text-foreground">New Voucher</p>
+            <p className="truncate text-sm font-bold text-foreground">Voucher Form</p>
             <p className="truncate text-xs text-muted-foreground">
               Create, review and print digital vouchers.
             </p>

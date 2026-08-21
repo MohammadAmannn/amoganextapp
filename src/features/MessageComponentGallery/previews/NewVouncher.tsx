@@ -41,7 +41,7 @@ export function NewVouncher({ stateIndex = 0 }: { stateIndex?: number }) {
             <ScanLine className="h-4.5 w-4.5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold text-foreground">New Voucher Scan</p>
+            <p className="truncate text-sm font-bold text-foreground">New Voucher</p>
             <p className="truncate text-xs text-muted-foreground">
               Upload documents with custom metadata, auto-parse OCR and generate voucher preview.
             </p>
@@ -50,65 +50,35 @@ export function NewVouncher({ stateIndex = 0 }: { stateIndex?: number }) {
         <HeaderActions />
       </div>
 
-      {/* ─── 3-Step Stepper Navigation ──────────────────────────────────── */}
-      <div className="flex border-b border-border bg-muted/20 px-6 py-2.5 gap-6 text-xs font-semibold select-none overflow-x-auto">
-        {/* Step 1: Upload Document */}
-        <button
-          onClick={() => setCurrentTab('upload')}
-          className={`flex items-center gap-2 pb-1 transition-colors cursor-pointer border-b-2 ${
-            currentTab === 'upload'
-              ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] text-white">
-            1
-          </span>
-          <span>Upload Document</span>
-        </button>
-
-        {/* Step 2: Edit Fields */}
-        <button
-          onClick={() => setCurrentTab('review')}
-          className={`flex items-center gap-2 pb-1 transition-colors cursor-pointer border-b-2 ${
-            currentTab === 'review'
-              ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <span
-            className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
-              currentTab === 'review' || currentTab === 'preview'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-muted text-muted-foreground'
+      {/* ─── Step Navigation Bar matching Voucher Form ──────────────────── */}
+      <nav className="sticky top-0 z-10 flex border-b border-border bg-background/95 backdrop-blur px-4 sm:px-8 select-none" aria-label="Voucher steps">
+        {([
+          ['upload', '1', 'Upload Document'],
+          ['review', '2', 'Edit Fields'],
+          ['preview', '3', 'Voucher Preview'],
+        ] as const).map(([key, number, label]) => (
+          <button
+            key={key}
+            onClick={() => setCurrentTab(key)}
+            className={`relative flex flex-1 items-center justify-center gap-2 border-b-2 px-3 py-3.5 text-xs font-bold transition cursor-pointer ${
+              currentTab === key
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
             }`}
           >
-            2
-          </span>
-          <span>Edit Fields</span>
-        </button>
-
-        {/* Step 3: Voucher Preview */}
-        <button
-          onClick={() => setCurrentTab('preview')}
-          className={`flex items-center gap-2 pb-1 transition-colors cursor-pointer border-b-2 ${
-            currentTab === 'preview'
-              ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <span
-            className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
-              currentTab === 'preview'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-muted text-muted-foreground'
-            }`}
-          >
-            3
-          </span>
-          <span>Voucher Preview</span>
-        </button>
-      </div>
+            <span
+              className={`flex size-5 items-center justify-center rounded-full text-[10px] font-black ${
+                currentTab === key
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground'
+              }`}
+            >
+              {number}
+            </span>
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
 
       {/* ─── Step Content Panels ────────────────────────────────────────── */}
       <div className="relative h-full min-h-0 w-full flex-1 overflow-y-auto bg-background">

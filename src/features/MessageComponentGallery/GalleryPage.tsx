@@ -82,6 +82,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Date Picker': 'bg-teal-500/10 text-teal-600 border-teal-200/50 dark:border-teal-900/40 dark:text-teal-400',
   Calendar: 'bg-blue-500/10 text-blue-600 border-blue-200/50 dark:border-blue-900/40 dark:text-blue-400',
   'Rich Editor': 'bg-pink-500/10 text-pink-600 border-pink-200/50 dark:border-pink-900/40 dark:text-pink-400',
+  Theme: 'bg-violet-500/10 text-violet-600 border-violet-200/50 dark:border-violet-900/40 dark:text-violet-400',
 }
 
 // ─── Category icons & styles matching Message Page CategoryToolbar ────────────
@@ -206,6 +207,12 @@ const CATEGORY_CONFIG: Record<
     activeClass:
       'bg-pink-500/15 text-pink-600 dark:bg-pink-950/40 dark:text-pink-400 border-pink-300/60 dark:border-pink-800/40 font-semibold shadow-2xs',
     badgeClass: 'bg-pink-500/20 text-pink-600 dark:text-pink-400',
+  },
+  Theme: {
+    icon: Palette,
+    activeClass:
+      'bg-violet-500/15 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400 border-violet-300/60 dark:border-violet-800/40 font-semibold shadow-2xs',
+    badgeClass: 'bg-violet-500/20 text-violet-600 dark:text-violet-400',
   },
 }
 
@@ -465,7 +472,7 @@ export function GalleryPage() {
                           CATEGORY_COLORS[entry.category] || ''
                         )}
                       >
-                        {entry.category}
+{entry.badge || entry.category}
                       </Badge>
                     </div>
 

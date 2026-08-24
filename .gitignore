@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 formm/
+amogads/
 
 # Editor directories and files
 .vscode/*

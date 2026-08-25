@@ -2050,32 +2050,36 @@ export const colorThemes: ColorThemeDefinition[] = [
   },
 ]
 
-export const DEFAULT_COLOR_THEME = 'zinc'
+export const DEFAULT_COLOR_THEME = 'default'
 
 type ColorThemeProviderState = {
   colorTheme: string
   setColorTheme: (name: string) => void
   resetColorTheme: () => void
-  currentTheme: ColorThemeDefinition
+  currentTheme: ColorThemeDefinition | null
 }
 
 const ColorThemeContext = createContext<ColorThemeProviderState>({
   colorTheme: DEFAULT_COLOR_THEME,
   setColorTheme: () => null,
   resetColorTheme: () => null,
-  currentTheme: colorThemes[0],
+  currentTheme: null,
 })
 
 function applyColorTokens(themeName: string, isDark: boolean) {
-  const theme = colorThemes.find((t) => t.name === themeName)
-  if (!theme) return
-
   const root = document.documentElement
 
-  // Clear previous theme overrides so stale vars don't leak between themes
+  // Clear previous theme overrides so central tokens take effect
   for (const prop of ALL_THEME_VARS) {
     root.style.removeProperty(prop)
   }
+
+  if (!themeName || themeName === 'default' || themeName === 'zinc') {
+    return
+  }
+
+  const theme = colorThemes.find((t) => t.name === themeName)
+  if (!theme) return
 
   const tokens = isDark ? theme.tokens.dark : theme.tokens.light
   for (const [prop, value] of Object.entries(tokens)) {

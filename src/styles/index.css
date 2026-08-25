@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 @plugin '@tailwindcss/typography';
-@import './theme.css';
+@import '@amogads/ui/theme.css';
 
 /* Scan AmogaDS design system components for Tailwind v4 utility classes */
 @source "../../node_modules/@amogads/ui/dist";

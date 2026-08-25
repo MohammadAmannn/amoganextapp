@@ -69,7 +69,6 @@ export async function POST(request: NextRequest) {
       model: openrouter.chat('google/gemini-2.5-flash'),
       system: INVOICE_PARSE_PROMPT,
       prompt: `Extract structured invoice data from this raw OCR text:\n\n${rawText}`,
-      maxTokens: 2048,
     })
 
     // Strip markdown code fences if present

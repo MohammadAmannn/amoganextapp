@@ -1,7 +1,7 @@
 'use client'
 
-import VouchersFeature from '@/features/vouchers'
+import { VouchersPage } from '@amogads/ui/pages'
 
-export default function VouchersPage() {
-  return <VouchersFeature />
+export default function Page() {
+  return <VouchersPage />
 }

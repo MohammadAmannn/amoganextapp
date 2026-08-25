@@ -44,15 +44,10 @@ export const sidebarData: SidebarData = {
         },
         {
           title: 'Design System',
-          url: '/message-components',
+          url: '/',
           icon: Settings,
         },
-        {
-          title: 'Inbox',
-          url: '/inbox',
-          badge: '4',
-          icon: Mail,
-        },
+      
         {
           title: 'Vouchers',
           url: '/vouchers',

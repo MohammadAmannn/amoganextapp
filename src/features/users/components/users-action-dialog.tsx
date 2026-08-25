@@ -105,7 +105,7 @@ export function UsersActionDialog({
   onOpenChange,
 }: UserActionDialogProps) {
   const isEdit = !!currentRow
-  const form = useForm<UserForm>({
+  const form: any = useForm<UserForm>({
     resolver: zodResolver(formSchema),
     defaultValues: isEdit
       ? {
@@ -152,14 +152,14 @@ export function UsersActionDialog({
           </DialogDescription>
         </DialogHeader>
         <div className='h-105 w-[calc(100%+0.75rem)] overflow-y-auto py-1 pe-3'>
-          <Form {...form}>
+          <Form {...(form as any)}>
             <form
               id='user-form'
               onSubmit={form.handleSubmit(onSubmit)}
               className='space-y-4 px-0.5'
             >
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name='firstName'
                 render={({ field }) => (
                   <FormItem className='grid grid-cols-6 items-center space-y-0 gap-x-4 gap-y-1'>
@@ -179,7 +179,7 @@ export function UsersActionDialog({
                 )}
               />
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name='lastName'
                 render={({ field }) => (
                   <FormItem className='grid grid-cols-6 items-center space-y-0 gap-x-4 gap-y-1'>
@@ -199,7 +199,7 @@ export function UsersActionDialog({
                 )}
               />
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name='username'
                 render={({ field }) => (
                   <FormItem className='grid grid-cols-6 items-center space-y-0 gap-x-4 gap-y-1'>
@@ -218,7 +218,7 @@ export function UsersActionDialog({
                 )}
               />
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name='email'
                 render={({ field }) => (
                   <FormItem className='grid grid-cols-6 items-center space-y-0 gap-x-4 gap-y-1'>
@@ -235,7 +235,7 @@ export function UsersActionDialog({
                 )}
               />
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name='phoneNumber'
                 render={({ field }) => (
                   <FormItem className='grid grid-cols-6 items-center space-y-0 gap-x-4 gap-y-1'>
@@ -254,7 +254,7 @@ export function UsersActionDialog({
                 )}
               />
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name='role'
                 render={({ field }) => (
                   <FormItem className='grid grid-cols-6 items-center space-y-0 gap-x-4 gap-y-1'>
@@ -274,7 +274,7 @@ export function UsersActionDialog({
                 )}
               />
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name='password'
                 render={({ field }) => (
                   <FormItem className='grid grid-cols-6 items-center space-y-0 gap-x-4 gap-y-1'>
@@ -293,7 +293,7 @@ export function UsersActionDialog({
                 )}
               />
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name='confirmPassword'
                 render={({ field }) => (
                   <FormItem className='grid grid-cols-6 items-center space-y-0 gap-x-4 gap-y-1'>

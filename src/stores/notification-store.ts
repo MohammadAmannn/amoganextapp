@@ -116,62 +116,87 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   },
 
   subscribeToNotifications: (userId: string) => {
-    // Prevent duplicate subscriptions
-    if (activeChannel) {
-      return
-    }
+    try {
+      if (!userId) return
 
-    const supabase = createClient()
-    activeChannel = supabase
-      .channel(`notifications-user-${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload: any) => {
-          const { eventType, new: newRecord, old: oldRecord } = payload
+      const supabase = createClient()
 
-          if (eventType === 'INSERT') {
-            const inserted = newRecord as DbNotification
-            set((state) => {
-              // Add only if not already present
-              if (state.notifications.some((n) => n.id === inserted.id)) {
-                return {}
-              }
-              const updated = [inserted, ...state.notifications]
-              const unreadCount = updated.filter((n) => !n.read).length
-              return { notifications: updated, unreadCount }
-            })
-          } else if (eventType === 'UPDATE') {
-            const updatedRecord = newRecord as DbNotification
-            set((state) => {
-              const updated = state.notifications.map((n) =>
-                n.id === updatedRecord.id ? updatedRecord : n
-              )
-              const unreadCount = updated.filter((n) => !n.read).length
-              return { notifications: updated, unreadCount }
-            })
-          } else if (eventType === 'DELETE') {
-            const deletedId = oldRecord.id
-            set((state) => {
-              const updated = state.notifications.filter((n) => n.id !== deletedId)
-              const unreadCount = updated.filter((n) => !n.read).length
-              return { notifications: updated, unreadCount }
-            })
+      if (activeChannel && activeUserId === userId) {
+        return
+      }
+
+      if (activeChannel) {
+        try {
+          supabase.removeChannel(activeChannel)
+        } catch (_) {}
+        activeChannel = null
+        activeUserId = null
+      }
+
+      const channelTopic = `notifications-user-${userId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+      const channel = supabase.channel(channelTopic)
+
+      channel
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload: any) => {
+            const { eventType, new: newRecord, old: oldRecord } = payload
+
+            if (eventType === 'INSERT') {
+              const inserted = newRecord as DbNotification
+              set((state) => {
+                if (state.notifications.some((n) => n.id === inserted.id)) {
+                  return {}
+                }
+                const updated = [inserted, ...state.notifications]
+                const unreadCount = updated.filter((n) => !n.read).length
+                return { notifications: updated, unreadCount }
+              })
+            } else if (eventType === 'UPDATE') {
+              const updatedRecord = newRecord as DbNotification
+              set((state) => {
+                const updated = state.notifications.map((n) =>
+                  n.id === updatedRecord.id ? updatedRecord : n
+                )
+                const unreadCount = updated.filter((n) => !n.read).length
+                return { notifications: updated, unreadCount }
+              })
+            } else if (eventType === 'DELETE') {
+              const deletedId = oldRecord?.id
+              if (!deletedId) return
+              set((state) => {
+                const updated = state.notifications.filter((n) => n.id !== deletedId)
+                const unreadCount = updated.filter((n) => !n.read).length
+                return { notifications: updated, unreadCount }
+              })
+            }
           }
-        }
-      )
-      .subscribe()
+        )
+        .subscribe()
+
+      activeChannel = channel
+      activeUserId = userId
+    } catch (err) {
+      console.warn('[NotificationStore] Realtime subscription error:', err)
+    }
   },
 
   unsubscribe: () => {
-    if (activeChannel) {
-      activeChannel.unsubscribe()
-      activeChannel = null
+    try {
+      if (activeChannel) {
+        const supabase = createClient()
+        supabase.removeChannel(activeChannel)
+        activeChannel = null
+        activeUserId = null
+      }
+    } catch (err) {
+      console.warn('[NotificationStore] Unsubscribe error:', err)
     }
   },
 }))

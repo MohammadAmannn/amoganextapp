@@ -1,7 +1,7 @@
 'use client'
 
-import { ChatTemplate } from '@/features/chattemplate'
+import { ChatTemplatePage } from '@amogads/ui/pages'
 
-export default function ChatTemplatePage() {
-  return <ChatTemplate />
+export default function Page() {
+  return <ChatTemplatePage />
 }

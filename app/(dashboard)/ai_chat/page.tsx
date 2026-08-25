@@ -1,7 +1,7 @@
 'use client'
 
-import { AiChat } from '@/features/ai-chat/index'
+import { AiChatPage } from '@amogads/ui/pages'
 
-export default function AiChatPage() {
-  return <AiChat />
+export default function Page() {
+  return <AiChatPage />
 }

@@ -46,7 +46,7 @@ export function UsersInviteDialog({
   open,
   onOpenChange,
 }: UserInviteDialogProps) {
-  const form = useForm<UserInviteForm>({
+  const form: any = useForm<UserInviteForm>({
     resolver: zodResolver(formSchema),
     defaultValues: { email: '', role: '', desc: '' },
   })
@@ -75,14 +75,14 @@ export function UsersInviteDialog({
             invitation. Assign a role to define their access level.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
+        <Form {...(form as any)}>
           <form
             id='user-invite-form'
             onSubmit={form.handleSubmit(onSubmit)}
             className='space-y-4'
           >
             <FormField
-              control={form.control}
+              control={form.control as any}
               name='email'
               render={({ field }) => (
                 <FormItem>
@@ -99,7 +99,7 @@ export function UsersInviteDialog({
               )}
             />
             <FormField
-              control={form.control}
+              control={form.control as any}
               name='role'
               render={({ field }) => (
                 <FormItem>
@@ -118,7 +118,7 @@ export function UsersInviteDialog({
               )}
             />
             <FormField
-              control={form.control}
+              control={form.control as any}
               name='desc'
               render={({ field }) => (
                 <FormItem className=''>

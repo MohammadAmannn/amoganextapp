@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "format:check": "prettier --check .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "build:amogads": "cd amogads && npm run build:package",
+    "sync:amogads": "cd amogads && npm run build:package && powershell -Command \"Remove-Item -Recurse -Force '../node_modules/@amogads/ui'; New-Item -ItemType Directory -Path '../node_modules/@amogads/ui'; Copy-Item -Recurse -Force 'dist' '../node_modules/@amogads/ui/dist'; Copy-Item -Recurse -Force 'src' '../node_modules/@amogads/ui/src'; Copy-Item -Force 'package.json' '../node_modules/@amogads/ui/package.json'; Get-ChildItem -Path '.' -Filter '*.d.ts' | ForEach-Object { Copy-Item -Force $_.FullName '../node_modules/@amogads/ui/' }; Get-ChildItem -Path '.' -Filter '*.js' -Exclude 'tsup.config.ts' | ForEach-Object { Copy-Item -Force $_.FullName '../node_modules/@amogads/ui/' }\""
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.85",

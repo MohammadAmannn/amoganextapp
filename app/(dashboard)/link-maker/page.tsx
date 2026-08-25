@@ -1,6 +1,7 @@
-import LinkMakerFeature from '@/features/link-maker'
+'use client'
 
-export default function LinkMakerPage() {
-  return <LinkMakerFeature />
+import { LinkMakerPage } from '@amogads/ui/pages'
+
+export default function Page() {
+  return <LinkMakerPage />
 }
-

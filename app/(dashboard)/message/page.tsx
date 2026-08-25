@@ -1,8 +1,7 @@
-"use client"
+'use client'
 
-import MessageFeature from "@/features/Message";
+import { MessagePage } from '@amogads/ui/pages'
 
-export default function MessagePage() {
-    return <MessageFeature />
+export default function Page() {
+  return <MessagePage />
 }
-

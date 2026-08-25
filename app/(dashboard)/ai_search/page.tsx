@@ -1,6 +1,7 @@
-import AiSearch from '@/features/ai-search'
+'use client'
 
+import { AiSearchPage } from '@amogads/ui/pages'
 
-export default function AiSearchPage() {
-  return <AiSearch />
+export default function Page() {
+  return <AiSearchPage />
 }

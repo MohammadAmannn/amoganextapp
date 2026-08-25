@@ -172,21 +172,23 @@ export async function initPushNotifications(userId: string) {
     })
 
     // 3. Register Action Types for Android Notification Quick Reply
-    PushNotifications.registerActionTypes({
-      types: [
-        {
-          id: 'CHAT_MESSAGE',
-          actions: [
-            {
-              id: 'reply',
-              title: 'Reply',
-              input: true,
-              placeholder: 'Type a reply...',
-            },
-          ],
-        },
-      ],
-    }).catch((err) => console.warn('[PushNotificationService] registerActionTypes warning:', err))
+    if (typeof (PushNotifications as any).registerActionTypes === 'function') {
+      ;(PushNotifications as any).registerActionTypes({
+        types: [
+          {
+            id: 'CHAT_MESSAGE',
+            actions: [
+              {
+                id: 'reply',
+                title: 'Reply',
+                input: true,
+                placeholder: 'Type a reply...',
+              },
+            ],
+          },
+        ],
+      }).catch((err: any) => console.warn('[PushNotificationService] registerActionTypes warning:', err))
+    }
 
     // 4. Register device with FCM
     await PushNotifications.register()

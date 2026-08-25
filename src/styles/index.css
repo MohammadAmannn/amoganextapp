@@ -3,6 +3,11 @@
 @plugin '@tailwindcss/typography';
 @import './theme.css';
 
+/* Scan AmogaDS design system components for Tailwind v4 utility classes */
+@source "../../node_modules/@amogads/ui/dist";
+@source "../node_modules/@amogads/ui/dist";
+@source "./node_modules/@amogads/ui/dist";
+
 @custom-variant dark (&:is(.dark, .dark *));
 
 @layer base {

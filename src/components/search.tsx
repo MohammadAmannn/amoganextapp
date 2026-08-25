@@ -3,7 +3,7 @@
 import { SearchIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSearch } from '@/context/search-provider'
-import { Button } from './ui/button'
+import { Button } from '@/components/ui/button'
 
 export function Search({
   className = '',
@@ -11,9 +11,13 @@ export function Search({
   iconOnly = true,
   ...props
 }: React.ComponentProps<'button'> & { placeholder?: string; iconOnly?: boolean }) {
-  const { setOpen } = useSearch()
+  const search = useSearch()
 
-  const openSearch = () => setOpen(true)
+  const openSearch = () => {
+    if (search?.setOpen) {
+      search.setOpen(true)
+    }
+  }
 
   return (
     <Button

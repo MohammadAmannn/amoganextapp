@@ -10,6 +10,7 @@ import { ThemeProvider } from '@/context/theme-provider'
 import { ColorThemeProvider } from '@/context/color-theme-provider'
 import { FontProvider } from '@/context/font-provider'
 import { DirectionProvider } from '@/context/direction-provider'
+import { SearchProvider } from '@/context/search-provider'
 import { NavigationProgress } from '@/components/navigation-progress'
 import { useAuthStore } from '@/stores/auth-store'
 import { handleServerError } from '@/lib/handle-server-error'
@@ -306,9 +307,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <ColorThemeProvider>
               <FontProvider>
                 <DirectionProvider>
-                  <NavigationProgress />
-                  {children}
-                  <Toaster duration={5000} />
+                  <SearchProvider>
+                    <NavigationProgress />
+                    {children}
+                    <Toaster duration={5000} />
+                  </SearchProvider>
                 </DirectionProvider>
               </FontProvider>
             </ColorThemeProvider>

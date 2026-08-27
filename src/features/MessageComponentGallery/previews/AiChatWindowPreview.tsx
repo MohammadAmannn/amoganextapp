@@ -184,7 +184,7 @@ export function ActionButton({ onAction }: { onAction: () => Promise<void> }) {
             <button
               type='button'
               onClick={onClose}
-              className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-muted/60 text-foreground hover:bg-muted transition-colors ml-1'
+              className='p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors ml-1 cursor-pointer'
               title='Close'
               aria-label='Close'
             >

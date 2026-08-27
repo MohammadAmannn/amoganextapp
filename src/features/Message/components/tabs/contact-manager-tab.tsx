@@ -165,10 +165,10 @@ export function MsgContactTab({ contacts, onRefresh, onSelectContact, onClose }:
             size='icon'
             variant='ghost'
             onClick={onClose}
-            className='h-8 w-8 rounded-lg md:hidden border border-border bg-muted/60 text-foreground hover:bg-muted shrink-0 cursor-pointer'
+            className='h-8 w-8 rounded-lg md:hidden text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 cursor-pointer'
             title='Close view'
           >
-            <X className='h-4 w-4' />
+            <X className='h-4.5 w-4.5' />
           </Button>
         )}
       </CardHeader>

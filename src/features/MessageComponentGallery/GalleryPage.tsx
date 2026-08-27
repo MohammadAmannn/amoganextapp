@@ -725,15 +725,15 @@ export function GalleryPage() {
                       }
                     />
 
-                    {/* Mobile Close Button (Cross shifted to the right side) */}
+                    {/* Mobile Close Button (Borderless) */}
                     <button
                       type='button'
                       onClick={() => setIsMobileDetailOpen(false)}
-                      className='flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/60 text-foreground hover:bg-muted cursor-pointer transition-colors md:hidden'
+                      className='flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer transition-colors md:hidden'
                       title='Close & Back to List'
                       aria-label='Close detail view'
                     >
-                      <X className='h-4 w-4' />
+                      <X className='h-4.5 w-4.5' />
                     </button>
                   </div>
                 </div>

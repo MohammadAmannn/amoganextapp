@@ -56,7 +56,7 @@ export function ChatHeader({
           <button
             type='button'
             onClick={onBack}
-            className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-muted/60 text-foreground transition-colors hover:bg-muted md:hidden ml-1'
+            className='p-1.5 rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted md:hidden ml-1 cursor-pointer'
             title='Close'
             aria-label='Close chat'
           >

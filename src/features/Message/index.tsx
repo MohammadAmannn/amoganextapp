@@ -884,10 +884,10 @@ export default function MessageFeature() {
         {selectedEmail && !selectedEmail.isChat && (
           <button
             onClick={() => setSelectedEmail(null)}
-            className='absolute top-3 left-4 z-50 shrink-0 rounded-full border bg-background p-1.5 text-muted-foreground transition-colors hover:bg-muted md:hidden'
+            className='absolute top-3 right-4 z-50 shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden cursor-pointer'
             title='Close email'
           >
-            <X className='h-4 w-4' />
+            <X className='h-4.5 w-4.5' />
           </button>
         )}
 

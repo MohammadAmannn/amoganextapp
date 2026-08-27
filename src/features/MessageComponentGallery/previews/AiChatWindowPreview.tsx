@@ -163,18 +163,6 @@ export function ActionButton({ onAction }: { onAction: () => Promise<void> }) {
       {/* ── TOP HEADER (Exact match to real AiChatPanel) ───────────────────────── */}
       <div className='flex shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3 select-none'>
         <div className='flex items-center gap-3 min-w-0'>
-          {onClose && (
-            <button
-              type='button'
-              onClick={onClose}
-              className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-muted/60 text-foreground hover:bg-muted transition-colors'
-              title='Close'
-              aria-label='Close'
-            >
-              <X className='h-4.5 w-4.5' />
-            </button>
-          )}
-
           <div className='flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-xl border border-indigo-200/40 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-600 dark:border-indigo-800/40 dark:text-indigo-400'>
             <Bot className='h-4 w-4' />
           </div>
@@ -192,6 +180,17 @@ export function ActionButton({ onAction }: { onAction: () => Promise<void> }) {
 
         <div className='flex items-center gap-1 shrink-0'>
           <HeaderActions onDelete={handleNewChat} />
+          {onClose && (
+            <button
+              type='button'
+              onClick={onClose}
+              className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-muted/60 text-foreground hover:bg-muted transition-colors ml-1'
+              title='Close'
+              aria-label='Close'
+            >
+              <X className='h-4.5 w-4.5' />
+            </button>
+          )}
         </div>
       </div>
 

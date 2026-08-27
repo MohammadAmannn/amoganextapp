@@ -33,7 +33,7 @@ import { FileUploadProgress } from './file-upload-progress'
 
 export type { ChatMessage, ChatAttachment, ChatLocation, ChatViewProps, MessageActionType }
 
-const LocationMap = dynamic(() => import('@/components/ui/leaflet-map'), {
+const LocationMap = dynamic<any>(() => import('@/components/ui/leaflet-map'), {
   ssr: false,
 })
 

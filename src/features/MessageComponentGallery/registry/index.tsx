@@ -1193,49 +1193,48 @@ export default function MapScreen() {
     name: 'Chat Header',
     category: 'Chat',
     badge: 'Chat Header',
-    description: 'Conversation header bar with avatar, live presence status (online, offline, away, busy), group member count, and action button slots (audio, video, search, menu).',
+    description: 'Conversation header bar with user avatar, status/presence, and exact HeaderActions (Act on this bell, Quick Flag, and 3-dot dropdown menu).',
     filePath: 'src/design-system/components/chat/chat-header.tsx',
     states: [
-      { label: 'Online Direct Contact', description: 'Single user active now' },
-      { label: 'Group Channel', description: 'Group header with member count' },
-      { label: 'Away / Busy', description: 'Status badge variations' },
+      { label: 'Direct Chat Header', description: 'User avatar, name, status, and exact HeaderActions' },
+      { label: 'Group Channel Header', description: 'Group header with member count and HeaderActions' },
     ],
     renderPreview: (si) => (
       <div className='w-full max-w-lg rounded-xl overflow-hidden border border-border bg-background shadow-xs'>
         <DsChatHeader
-          title={si === 1 ? 'Design System Core Team' : 'Aman'}
-          subtitle={si === 1 ? undefined : si === 2 ? 'In a meeting • Do not disturb' : 'Active now'}
-          status={si === 2 ? 'busy' : 'online'}
+          title={si === 1 ? 'Design System Core Team' : 'Mohammed Aman'}
+          subtitle={si === 1 ? '8 members' : 'Last seen today at 04:58 PM'}
+          status='online'
           isGroup={si === 1}
           memberCount={si === 1 ? 8 : undefined}
-          actions={
-            <div className="flex items-center gap-1">
-              <DsButton variant="ghost" size="icon" className="h-8 w-8" onClick={() => toast.info('Audio call')}>
-                <Phone className="h-4 w-4 text-muted-foreground" />
-              </DsButton>
-              <DsButton variant="ghost" size="icon" className="h-8 w-8" onClick={() => toast.info('Video call')}>
-                <Video className="h-4 w-4 text-muted-foreground" />
-              </DsButton>
-              <DsButton variant="ghost" size="icon" className="h-8 w-8" onClick={() => toast.info('More options')}>
-                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-              </DsButton>
-            </div>
-          }
+          onNotificationClick={() => toast.info('Act on this clicked')}
+          onFlagClick={() => toast.info('Flagged message')}
+          onReply={() => toast.info('Reply clicked')}
+          onForward={() => toast.info('Forward clicked')}
+          onPin={() => toast.info('Pinned message')}
+          onStar={() => toast.info('Starred message')}
+          onFavorite={() => toast.info('Added to favorites')}
+          onArchive={() => toast.info('Archived conversation')}
+          onActionThis={() => toast.info('Action this task')}
+          onDelete={() => toast.error('Delete clicked')}
         />
       </div>
     ),
     usageCode: (si) => `<ChatHeader
-  title="${si === 1 ? 'Design System Core Team' : 'Aman'}"
-  subtitle="${si === 1 ? '8 members' : 'Active now'}"
-  status="${si === 2 ? 'busy' : 'online'}"
+  title="${si === 1 ? 'Design System Core Team' : 'Mohammed Aman'}"
+  subtitle="${si === 1 ? '8 members' : 'Last seen today at 04:58 PM'}"
+  status="online"
   isGroup={${si === 1}}
   memberCount={${si === 1 ? 8 : 'undefined'}}
-  actions={
-    <>
-      <Button variant="ghost" size="icon"><Phone className="h-4 w-4" /></Button>
-      <Button variant="ghost" size="icon"><Video className="h-4 w-4" /></Button>
-    </>
-  }
+  onNotificationClick={() => handleActionThis()}
+  onFlagClick={() => handleFlag()}
+  onReply={() => handleReply()}
+  onForward={() => handleForward()}
+  onPin={() => handlePin()}
+  onStar={() => handleStar()}
+  onFavorite={() => handleFavorite()}
+  onArchive={() => handleArchive()}
+  onDelete={() => handleDelete()}
 />`,
   },
 
@@ -1787,26 +1786,41 @@ export default function MapScreen() {
     name: 'AI Chat Header',
     category: 'AI',
     badge: 'AI Header',
-    description: 'Top header bar for AI Assistant conversations with title, model badge, and optional back navigation trigger.',
+    description: 'Top header bar for AI Assistant conversations with title, sparkle icon, powered by AI subtitle, and exact HeaderActions (Bell, Flag, and 3-dot dropdown menu).',
     filePath: 'src/design-system/components/ai-chat/ai-chat-header.tsx',
     states: [
-      { label: 'Default Header', description: 'With Gemini 2.5 model badge' },
+      { label: 'AI Assistant Header', description: 'With Bot avatar, sparkles, subtitle, and HeaderActions' },
     ],
     renderPreview: () => (
       <div className='w-full max-w-xl bg-background border border-border/80 rounded-2xl overflow-hidden shadow-xs'>
         <DsAiChatHeader
           title="AI Assistant"
-          subtitle="Multi-model intelligence workspace"
-          modelName="Gemini 2.5 Flash"
-          onBack={() => toast.info('Back clicked')}
+          subtitle="Powered by AI · Ask anything"
+          onNotificationClick={() => toast.info('Act on this clicked')}
+          onFlagClick={() => toast.info('Flagged message')}
+          onReply={() => toast.info('Reply clicked')}
+          onForward={() => toast.info('Forward clicked')}
+          onPin={() => toast.info('Pinned message')}
+          onStar={() => toast.info('Starred message')}
+          onFavorite={() => toast.info('Added to favorites')}
+          onArchive={() => toast.info('Archived conversation')}
+          onActionThis={() => toast.info('Action this task')}
+          onDelete={() => toast.error('Delete clicked')}
         />
       </div>
     ),
     usageCode: () => `<AiChatHeader
   title="AI Assistant"
-  subtitle="Multi-model intelligence workspace"
-  modelName="Gemini 2.5 Flash"
-  onBack={() => handleBack()}
+  subtitle="Powered by AI · Ask anything"
+  onNotificationClick={() => handleActionThis()}
+  onFlagClick={() => handleFlag()}
+  onReply={() => handleReply()}
+  onForward={() => handleForward()}
+  onPin={() => handlePin()}
+  onStar={() => handleStar()}
+  onFavorite={() => handleFavorite()}
+  onArchive={() => handleArchive()}
+  onDelete={() => handleDelete()}
 />`,
   },
 

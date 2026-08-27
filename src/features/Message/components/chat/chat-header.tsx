@@ -23,18 +23,6 @@ export function ChatHeader({
   return (
     <div className='flex flex-none shrink-0 items-center justify-between border-b border-border bg-muted/10 p-3 sm:p-4 select-none'>
       <div className='flex min-w-0 items-center gap-2 sm:gap-3'>
-        {onBack && (
-          <button
-            type='button'
-            onClick={onBack}
-            className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden'
-            title='Close'
-            aria-label='Close chat'
-          >
-            <X className='h-4.5 w-4.5' />
-          </button>
-        )}
-
         <div
           onClick={onShowProfile}
           className='flex cursor-pointer items-center gap-2.5 sm:gap-3 transition-opacity select-none hover:opacity-85 min-w-0'
@@ -64,6 +52,17 @@ export function ChatHeader({
 
       <div className='flex items-center gap-1 shrink-0'>
         <HeaderActions onDelete={onBack} />
+        {onBack && (
+          <button
+            type='button'
+            onClick={onBack}
+            className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-muted/60 text-foreground transition-colors hover:bg-muted md:hidden ml-1'
+            title='Close'
+            aria-label='Close chat'
+          >
+            <X className='h-4.5 w-4.5' />
+          </button>
+        )}
       </div>
     </div>
   )

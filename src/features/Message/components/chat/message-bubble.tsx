@@ -20,7 +20,7 @@ import { VoiceMessagePlayer } from '@/features/chattemplate/files/components/voi
 import { downloadFileFromUrl } from '@/utils/download'
 import { ChatMessage, ChatAttachment, ChatLocation, MessageActionType } from '../../types/chat.types'
 
-const LocationMap = dynamic(() => import('@/components/ui/leaflet-map'), {
+const LocationMap = dynamic<any>(() => import('@/components/ui/leaflet-map'), {
   ssr: false,
 })
 

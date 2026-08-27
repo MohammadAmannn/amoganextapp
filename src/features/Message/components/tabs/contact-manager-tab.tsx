@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react'
 import { Contact } from '@/features/chattemplate/contacts/types/contact.types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -146,18 +148,7 @@ export function MsgContactTab({ contacts, onRefresh, onSelectContact, onClose }:
   return (
     <Card className='w-full max-w-3xl mx-auto border-border/80 bg-card/60 backdrop-blur-md shadow-md rounded-2xl'>
       <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-4'>
-        <div className='flex items-center gap-3 min-w-0'>
-          {onClose && (
-            <Button
-              size='icon'
-              variant='ghost'
-              onClick={onClose}
-              className='h-8 w-8 rounded-full md:hidden hover:bg-muted text-muted-foreground hover:text-foreground shrink-0 cursor-pointer'
-              title='Close view'
-            >
-              <X className='h-4 w-4' />
-            </Button>
-          )}
+        <div className='flex items-center gap-3 min-w-0 flex-1'>
           <div className='space-y-1 min-w-0'>
             <CardTitle className='text-xl flex items-center gap-2'>
               <Users className='h-5 w-5 text-indigo-500 shrink-0' />
@@ -168,6 +159,18 @@ export function MsgContactTab({ contacts, onRefresh, onSelectContact, onClose }:
             </CardDescription>
           </div>
         </div>
+
+        {onClose && (
+          <Button
+            size='icon'
+            variant='ghost'
+            onClick={onClose}
+            className='h-8 w-8 rounded-lg md:hidden border border-border bg-muted/60 text-foreground hover:bg-muted shrink-0 cursor-pointer'
+            title='Close view'
+          >
+            <X className='h-4 w-4' />
+          </Button>
+        )}
       </CardHeader>
 
       <CardContent className='space-y-4'>

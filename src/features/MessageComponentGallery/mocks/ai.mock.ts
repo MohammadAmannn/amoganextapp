@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * Mock data for Message Component Gallery
  * AI Chat & Assistant mocks

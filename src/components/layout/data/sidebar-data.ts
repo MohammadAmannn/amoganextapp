@@ -44,7 +44,7 @@ export const sidebarData: SidebarData = {
         },
         {
           title: 'Design System',
-          url: '/',
+          url: '/design-system',
           icon: Settings,
         },
       

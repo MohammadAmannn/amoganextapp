@@ -573,18 +573,8 @@ export function GalleryPage() {
               <div className='flex shrink-0 flex-col border-b border-border bg-background select-none'>
                 {/* Main Header Row */}
                 <div className='flex h-12 items-center justify-between px-3 sm:px-4 gap-2 min-w-0'>
-                  {/* Left: Cross button (on mobile) + Component Name & Badge */}
+                  {/* Left: Component Name & Badge */}
                   <div className='flex items-center gap-2 min-w-0'>
-                    <button
-                      type='button'
-                      onClick={() => setIsMobileDetailOpen(false)}
-                      className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/60 text-foreground hover:bg-muted cursor-pointer transition-colors md:hidden'
-                      title='Close & Back to List'
-                      aria-label='Close detail view'
-                    >
-                      <X className='h-4.5 w-4.5' />
-                    </button>
-
                     <span className='text-sm font-semibold text-foreground truncate'>
                       {selectedEntry.name}
                     </span>
@@ -734,6 +724,17 @@ export function GalleryPage() {
                         </Button>
                       }
                     />
+
+                    {/* Mobile Close Button (Cross shifted to the right side) */}
+                    <button
+                      type='button'
+                      onClick={() => setIsMobileDetailOpen(false)}
+                      className='flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/60 text-foreground hover:bg-muted cursor-pointer transition-colors md:hidden'
+                      title='Close & Back to List'
+                      aria-label='Close detail view'
+                    >
+                      <X className='h-4 w-4' />
+                    </button>
                   </div>
                 </div>
 

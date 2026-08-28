@@ -2,6 +2,9 @@
 
 import React, { useState } from 'react'
 import { ProfileTab } from './components/profile-tab'
+import { FilesTab } from './components/files-tab'
+import { ChatTab } from './components/chat-tab'
+import { AiTab } from './components/ai-tab'
 import { LinksTab } from './components/accounts-tab'
 import { ThemesTab } from './components/themes-tab'
 import { PhonePreview } from './components/phone-preview'
@@ -24,7 +27,7 @@ export default function EmailSettingsFeature() {
 
   return (
     <div className='flex h-full flex-col w-full overflow-hidden bg-background text-foreground'>
-      <AppHeader title='Email Settings' />
+      <AppHeader title='App Settings' />
 
       <Main fixed className='flex flex-grow flex-1 min-h-0 overflow-hidden p-3 sm:p-4 md:p-6'>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 w-full h-full overflow-hidden">
@@ -42,46 +45,34 @@ export default function EmailSettingsFeature() {
                     Profile
                   </TabsTrigger>
                   <TabsTrigger
+                    value="files"
+                    className="h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none text-xs whitespace-nowrap"
+                  >
+                    Files
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="chat"
+                    className="h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none text-xs whitespace-nowrap"
+                  >
+                    Chat
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="ai"
+                    className="h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none text-xs whitespace-nowrap"
+                  >
+                    AI API
+                  </TabsTrigger>
+                  <TabsTrigger
                     value="links"
                     className="h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none text-xs whitespace-nowrap"
                   >
-                    Links
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="inbox"
-                    className="h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none text-xs whitespace-nowrap"
-                  >
-                    Inbox
+                    Email
                   </TabsTrigger>
                   <TabsTrigger
                     value="theme"
                     className="h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none text-xs whitespace-nowrap"
                   >
                     Theme
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="campaign"
-                    className="h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none text-xs whitespace-nowrap"
-                  >
-                    Campaign
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="history"
-                    className="h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none text-xs whitespace-nowrap"
-                  >
-                    History
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="analytics"
-                    className="h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none text-xs font-semibold whitespace-nowrap"
-                  >
-                    Analytics
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="logs"
-                    className="h-auto rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pt-0 pb-2 shadow-none hover:bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none dark:data-[state=active]:border-x-transparent dark:data-[state=active]:border-t-transparent dark:data-[state=active]:border-b-primary dark:data-[state=active]:bg-transparent dark:data-[state=active]:shadow-none text-xs whitespace-nowrap"
-                  >
-                    Logs
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -90,36 +81,20 @@ export default function EmailSettingsFeature() {
                 <TabsContent value="profile" className="mt-0 focus-visible:outline-none">
                   <ProfileTab />
                 </TabsContent>
+                <TabsContent value="files" className="mt-0 focus-visible:outline-none">
+                  <FilesTab />
+                </TabsContent>
+                <TabsContent value="chat" className="mt-0 focus-visible:outline-none">
+                  <ChatTab />
+                </TabsContent>
+                <TabsContent value="ai" className="mt-0 focus-visible:outline-none">
+                  <AiTab />
+                </TabsContent>
                 <TabsContent value="links" className="mt-0 focus-visible:outline-none">
                   <LinksTab />
                 </TabsContent>
-                <TabsContent value="inbox" className="mt-0 focus-visible:outline-none">
-                  <div className="border border-muted rounded-xl bg-card/60 backdrop-blur-md p-6">
-                    <ComingSoon />
-                  </div>
-                </TabsContent>
                 <TabsContent value="theme" className="mt-0 focus-visible:outline-none">
                   <ThemesTab />
-                </TabsContent>
-                <TabsContent value="campaign" className="mt-0 focus-visible:outline-none">
-                  <div className="border border-muted rounded-xl bg-card/60 backdrop-blur-md p-6">
-                    <ComingSoon />
-                  </div>
-                </TabsContent>
-                <TabsContent value="history" className="mt-0 focus-visible:outline-none">
-                  <div className="border border-muted rounded-xl bg-card/60 backdrop-blur-md p-6">
-                    <ComingSoon />
-                  </div>
-                </TabsContent>
-                <TabsContent value="analytics" className="mt-0 focus-visible:outline-none">
-                  <div className="border border-muted rounded-xl bg-card/60 backdrop-blur-md p-6">
-                    <ComingSoon />
-                  </div>
-                </TabsContent>
-                <TabsContent value="logs" className="mt-0 focus-visible:outline-none">
-                  <div className="border border-muted rounded-xl bg-card/60 backdrop-blur-md p-6">
-                    <ComingSoon />
-                  </div>
                 </TabsContent>
               </div>
             </Tabs>

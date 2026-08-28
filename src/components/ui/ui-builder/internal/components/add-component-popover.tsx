@@ -1,3 +1,5 @@
+'use client'
+
 import React, { type ReactNode, useCallback, useMemo, memo, Suspense, useState, useEffect, useRef } from "react";
 
 import {

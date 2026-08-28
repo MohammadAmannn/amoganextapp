@@ -1,3 +1,5 @@
+'use client'
+
 import * as React from "react"
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react"
 import type { ElementDimensions } from "../hooks/use-drag-resize"

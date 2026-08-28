@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client'
+import { createClient, getStorageSupabaseClient, getStorageSupabaseUrl } from '@/lib/supabase/client'
 import {
   normalizeContactEmail,
   getChatFileCategory,
@@ -44,7 +44,7 @@ export async function getUserStorageFilesAndFolders(userEmail?: string | null): 
   files: StorageFileItem[]
   folders: UserFolder[]
 }> {
-  const supabase = createClient()
+  const supabase = getStorageSupabaseClient()
   const normalizedEmail = normalizeContactEmail(userEmail) || 'user@domain.com'
   const displayEmail = normalizedEmail.toLowerCase()
 
@@ -52,7 +52,7 @@ export async function getUserStorageFilesAndFolders(userEmail?: string | null): 
 
   // Helper to construct public Supabase Storage URL
   const getPublicStorageUrl = (path: string): string => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+    const supabaseUrl = getStorageSupabaseUrl()
     return `${supabaseUrl}/storage/v1/object/public/chat-files/${path}`
   }
 

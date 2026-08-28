@@ -29,8 +29,47 @@ export interface ProfileConfig {
   avatarUrl?: string
 }
 
+export interface SupabaseAccount {
+  id: string
+  name: string
+  supabaseUrl: string
+  supabaseAnonKey: string
+  bucketName: string
+  isEnabled: boolean
+  defaultFolder?: string
+}
+
+export interface SupabaseStorageConfig {
+  supabaseUrl: string
+  supabaseAnonKey: string
+  bucketName?: string
+  isCustomEnabled: boolean
+  lastTestedAt?: string
+  status?: 'connected' | 'error' | 'untested'
+}
+
+export interface AiAccount {
+  id: string
+  name: string
+  model: string
+  apiKey: string
+  isEnabled: boolean
+}
+
+export interface ChatAccount {
+  id: string
+  name: string
+  supabaseUrl: string
+  supabaseAnonKey: string
+  isEnabled: boolean
+}
+
 export interface EmailSettingsConfig {
   profile: ProfileConfig
   accounts: EmailAccount[]
+  storageAccounts?: SupabaseAccount[]
+  chatAccounts?: ChatAccount[]
+  aiAccounts?: AiAccount[]
   theme: ThemeConfig
+  storage?: SupabaseStorageConfig
 }

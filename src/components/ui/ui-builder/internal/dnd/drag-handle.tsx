@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useMemo } from 'react';
 import { GripVertical } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';

@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useMemo, useState } from "react";
 import { Plus, Trash, Copy } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";

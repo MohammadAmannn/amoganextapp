@@ -1,3 +1,5 @@
+'use client'
+
 import * as React from "react"
 import { useContainerSize } from "../hooks/use-container-size"
 

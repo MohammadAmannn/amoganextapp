@@ -1,3 +1,5 @@
+'use client'
+
 import { CONFIG, type ConfigItem, type StateType } from "@/components/ui/ui-builder/internal/form-fields/classname-control/config";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";

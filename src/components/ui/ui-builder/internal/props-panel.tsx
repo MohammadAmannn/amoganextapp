@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useCallback, useMemo } from "react";
 import { z } from "zod";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";

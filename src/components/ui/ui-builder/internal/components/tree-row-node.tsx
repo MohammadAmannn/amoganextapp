@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useCallback, useState, memo, useMemo } from "react";
 import type { NodeAttrs } from "he-tree-react";
 import isDeepEqual from "fast-deep-equal";

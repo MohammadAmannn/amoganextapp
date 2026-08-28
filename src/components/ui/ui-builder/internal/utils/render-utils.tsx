@@ -1,3 +1,5 @@
+'use client'
+
 import React, { memo, Suspense, useMemo, useRef, Fragment } from "react";
 import isDeepEqual from "fast-deep-equal";
 

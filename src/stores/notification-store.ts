@@ -25,6 +25,7 @@ interface NotificationState {
 }
 
 let activeChannel: RealtimeChannel | null = null
+let activeUserId: string | null = null
 
 export const useNotificationStore = create<NotificationState>((set, get) => ({
   notifications: [],

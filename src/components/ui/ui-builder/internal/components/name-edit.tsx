@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Check, X as XIcon } from "lucide-react"

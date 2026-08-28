@@ -18,6 +18,8 @@ import {
   Copy,
   Share2,
   MoreHorizontal,
+  Phone,
+  Video,
 } from 'lucide-react'
 
 import {
@@ -38,13 +40,14 @@ import {
   AiToolSelector as DsAiToolSelector,
   AiPromptSuggestions as DsAiPromptSuggestions,
   AiChatHeader as DsAiChatHeader,
+  UserFileCardsView as DsUserFileCardsView,
+  FileCardItem as DsFileCardItem,
+  FolderTreeItem as DsFolderTreeItem,
+  FileUploadForm as DsFileUploadForm,
   Button as DsButton,
 } from '@amogads/ui'
-import { Phone, Video } from 'lucide-react'
 
 // ─── Existing Message Page Components (unchanged) ────────────────────────────
-import { ChatCardItem } from '@/features/Message/components/sidebar/chat-card-item'
-import { ChatHeader } from '@/features/Message/components/chat/chat-header'
 import { ChatView } from '@/features/Message/components/chat/chat-view'
 import { MessageBubble } from '@/features/Message/components/chat/message-bubble'
 import { MessageInput } from '@/features/Message/components/chat/message-input'
@@ -57,7 +60,6 @@ import { EmailListSkeleton } from '@/features/Message/components/sidebar/email-l
 import { AiCardItem } from '@/features/Message/components/sidebar/ai-card-item'
 import { TaskCardItem } from '@/features/Message/components/sidebar/task-card-item'
 import { NotificationCardItem } from '@/features/Message/components/sidebar/notification-card-item'
-import { FolderTreeItem } from '@/features/Message/components/sidebar/folder-tree-item'
 import { SidebarHeader } from '@/features/Message/components/sidebar/sidebar-header'
 import { CategoryToolbar } from '@/features/Message/components/sidebar/category-toolbar'
 import { SubTabsBar } from '@/features/Message/components/sidebar/sub-tabs-bar'
@@ -130,6 +132,7 @@ import {
   mockNotifications,
   mockFolders,
   mockAiMessages,
+  mockStorageFiles,
 } from '../mocks'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -173,7 +176,7 @@ export interface GalleryEntry {
 }
 
 // ─── Shared no-op helpers ─────────────────────────────────────────────────────
-const noop = () => {}
+const noop = () => { }
 
 function FloatingChatToolbarPill({ isCardClicked }: { isCardClicked?: boolean }) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
@@ -410,107 +413,240 @@ export const galleryRegistry: GalleryEntry[] = [
 
   // ───────────────────────── FILES SECTION ───────────────────────────────────
 
-  {
-    id: 'complete-files-page',
-    name: 'Complete Files Page (Storage Explorer)',
-    category: 'Files',
-    badge: 'Files Page',
-    description: 'Full-view layout for Storage Files: Left sidebar showing the 3-level folder tree (Root -> User -> Subfolders) + Right area rendering the categorized file cards grid (PDF, Images, Word, Spreadsheets) with search, filter, and upload triggers.',
-    filePath: 'src/features/Message/components/files/user-file-cards-view.tsx',
-    states: [
-      { label: 'Interactive Storage Explorer', description: 'Dual-pane storage and file explorer view' },
-    ],
-    renderPreview: (_si, opts) => <CompleteFilesPagePreview isMobileView={opts?.isMobileView} />,
-    usageCode: (_si) => `<div className="flex h-full w-full">
-  <div className="w-80 border-r">
-    <SidebarHeader />
-    <CategoryToolbar categoryFilter="vouchers" />
-    <SubTabsBar categoryFilter="vouchers" />
-    <SidebarSearchBar categoryFilter="vouchers" onUploadFileClick={openUpload} />
-    {folders.map(folder => (
-      <FolderTreeItem key={folder.id} folder={folder} isFolderActive={selectedFolder.id === folder.id} onSelectFolder={setSelectedFolder} />
-    ))}
-  </div>
+  // ───────────────────────── FILES & DOCUMENTS SECTION ──────────────────────
 
-  <div className="flex-1 overflow-y-auto">
-    <UserFileCardsView folder={selectedFolder} files={storageFiles} onSelectFileForPreview={previewFile} />
-  </div>
-</div>`,
+  {
+    id: 'file-manager-view',
+    name: 'File Manager View',
+    category: 'Files',
+    badge: 'File Explorer',
+    description: 'Complete cloud storage explorer and file manager featuring folder headers, stats badges, search filtering, category pills (All, PDFs, Docs, Spreadsheets, Images, Videos, Archives), sorting, Grid/Table view switch, multi-select bulk actions, and pagination.',
+    filePath: 'src/design-system/components/files/user-file-cards-view.tsx',
+    states: [
+      { label: 'Grid View Mode', description: 'Responsive file cards grid with media thumbnails and category tags' },
+      { label: 'Table View Mode', description: 'Compact list view with sortable columns, file size, and timestamps' },
+      { label: 'Empty Folder State', description: 'Folder empty fallback state with upload call to action' },
+    ],
+    renderPreview: (si) => (
+      <div className='w-full max-w-4xl h-[600px] flex flex-col rounded-2xl overflow-hidden border border-border/80 bg-background shadow-md'>
+        <DsUserFileCardsView
+          folder={
+            si === 2
+              ? { id: 'empty-folder', name: 'Archived Documents', path: 'Files/user/Archived', fileCount: 0, level: 2 }
+              : { id: 'finance-folder', name: 'Finance & Invoices', path: 'Files/user/Finance', fileCount: (mockStorageFiles || []).length, level: 1 }
+          }
+          files={si === 2 ? [] : ((mockStorageFiles || []) as any)}
+          onSelectFileForPreview={(file) => { toast.info(`Previewing ${file.fileName}`) }}
+          onDownloadFile={(file) => { toast.success(`Downloading ${file.fileName}`) }}
+          onDeleteFile={(file) => { toast.error(`Deleted ${file.fileName}`) }}
+          onCopyLink={(file) => { toast.info(`Copied link for ${file.fileName}`) }}
+          onUploadClick={() => { toast.info('Open upload modal') }}
+        />
+      </div>
+    ),
+    usageCode: (si) => `import { UserFileCardsView } from '@amogads/ui'
+
+export default function FileManagerDemo() {
+  return (
+    <UserFileCardsView
+      folder={{ id: 'finance', name: 'Finance & Invoices', path: 'Files/user/Finance', fileCount: 12, level: 1 }}
+      files={storageFiles}
+      onSelectFileForPreview={(file) => handlePreview(file)}
+      onDownloadFile={(file) => handleDownload(file)}
+      onDeleteFile={(file) => handleDelete(file)}
+      onUploadClick={() => setUploadOpen(true)}
+    />
+  )
+}`,
   },
 
   {
-    id: 'folder-tree-item',
-    name: 'Folder Tree Item',
+    id: 'file-card-item',
+    name: 'File Card Item',
     category: 'Files',
-    badge: 'Folder Tree',
-    description: 'Collapsible folder tree node. Supports 3-level nesting (root → user email → category), file count badge, active/expanded states.',
-    filePath: 'src/features/Message/components/sidebar/folder-tree-item.tsx',
+    badge: 'File Card',
+    description: 'Individual file card component with category-tailored themes (PDF red, Doc blue, XLS emerald, Image amber, Video purple, Zip orange), rich media/icon preview, size & date meta, quick preview/download, and 3-dot dropdown actions.',
+    filePath: 'src/design-system/components/files/file-card-item.tsx',
     states: [
-      { label: 'Root Level (L0)', description: 'Top-level folder' },
-      { label: 'User Level (L1)', description: 'User email folder' },
-      { label: 'Category Level (L2)', description: 'Sub-category folder' },
-      { label: 'Active', description: 'Currently selected folder' },
+      { label: 'PDF Document Card', description: 'PDF file card with red theme and document icon' },
+      { label: 'Image Preview Card', description: 'Image file card with visual thumbnail preview' },
+      { label: 'Spreadsheet / CSV Card', description: 'Excel / CSV file card with emerald green theme' },
+      { label: 'Video Media Card', description: 'Video file card with purple theme' },
+      { label: 'Table Row View', description: 'Clean tabular row format for dense file listings' },
     ],
     renderPreview: (si) => {
-      const folder = mockFolders[si === 3 ? 2 : Math.min(si, 2)]
+      const sampleFiles = [
+        {
+          id: 'pdf-sample',
+          fileName: 'Quarterly_Financial_Report_2026.pdf',
+          fileUrl: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=600&auto=format&fit=crop&q=60',
+          fileSize: 2450000,
+          updatedAt: new Date().toISOString(),
+          category: 'Pdf',
+          section: 'Finance',
+          folderPath: 'Finance/PDF',
+        },
+        {
+          id: 'img-sample',
+          fileName: 'Product_Hero_Mockup.png',
+          fileUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=60',
+          fileSize: 4850000,
+          updatedAt: new Date().toISOString(),
+          category: 'Images',
+          section: 'Design',
+          folderPath: 'Design/Assets',
+        },
+        {
+          id: 'xls-sample',
+          fileName: 'Monthly_Payroll_Accounts.xlsx',
+          fileUrl: '',
+          fileSize: 850000,
+          updatedAt: new Date().toISOString(),
+          category: 'Xls',
+          section: 'HR',
+          folderPath: 'HR/Spreadsheets',
+        },
+        {
+          id: 'video-sample',
+          fileName: 'Product_Demo_Walkthrough.mp4',
+          fileUrl: '',
+          fileSize: 38500000,
+          updatedAt: new Date().toISOString(),
+          category: 'Videos',
+          section: 'Marketing',
+          folderPath: 'Marketing/Videos',
+        },
+      ]
+
+      const activeFile = sampleFiles[Math.min(si, 3)]
+
+      if (si === 4) {
+        return (
+          <div className='w-full max-w-2xl overflow-hidden rounded-2xl border border-border/80 bg-card p-2 shadow-sm'>
+            <table className='w-full text-left text-xs border-collapse'>
+              <tbody>
+                {sampleFiles.map((f) => (
+                  <DsFileCardItem
+                    key={f.id}
+                    file={f as any}
+                    viewMode='table'
+                    onPreview={(file) => { toast.info(`Preview: ${file.fileName}`) }}
+                    onDownload={(file) => { toast.success(`Download: ${file.fileName}`) }}
+                    onDelete={(file) => { toast.error(`Delete: ${file.fileName}`) }}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      }
+
       return (
-        <div className='w-72 p-2 space-y-1'>
-          <FolderTreeItem
-            folder={folder}
-            isFolderActive={si === 3}
-            isExpanded={si === 1}
-            onToggleExpand={noop}
-            onSelectFolder={() => toast.info(`Selected: ${folder.name} (preview only)`)}
+        <div className='w-72'>
+          <DsFileCardItem
+            file={activeFile as any}
+            viewMode='grid'
+            onPreview={(file) => { toast.info(`Preview: ${file.fileName}`) }}
+            onDownload={(file) => { toast.success(`Download: ${file.fileName}`) }}
+            onDelete={(file) => { toast.error(`Delete: ${file.fileName}`) }}
+            onCopyLink={(file) => { toast.info(`Copied link for ${file.fileName}`) }}
           />
         </div>
       )
     },
-    usageCode: (si) => `<FolderTreeItem
-  folder={userFolder}
-  isFolderActive={${si === 3}}
-  isExpanded={${si === 1}}
-  onToggleExpand={(id, e) => toggleFolder(id)}
-  onSelectFolder={(folder) => setSelectedFolder(folder)}
-/>`,
-  },
-  {
-    id: 'file-uploader-viewer',
-    name: 'File Uploader & Document Viewer',
-    category: 'Files',
-    badge: 'Doc Viewer',
-    description: 'Interactive drag-and-drop file uploader with attachment cards, download action, JSON state export, and system default DocumentViewer file preview modal.',
-    filePath: 'src/features/MessageComponentGallery/previews/FileUploaderAndViewerPreview.tsx',
-    states: [
-      { label: 'Interactive Uploader', description: 'Drag & drop uploader with attachment list, @zrimo/viewer document preview, and JSON export' },
-    ],
-    renderPreview: (si) => <FileUploaderAndViewerPreview stateIndex={si} />,
-    usageCode: (si) => `// File Uploader & Document Viewer Component
-import { FileUploaderAndViewer } from '@/components/DocumentViewer'
+    usageCode: (si) => `import { FileCardItem } from '@amogads/ui'
 
-export default function FileUploaderPage() {
-  return <FileUploaderAndViewer stateIndex={${si}} />
+export default function FileCardDemo() {
+  return (
+    <FileCardItem
+      file={{
+        id: 'file-1',
+        fileName: 'Quarterly_Report.pdf',
+        fileUrl: '/docs/report.pdf',
+        fileSize: 2450000,
+        category: 'Pdf',
+        folderPath: 'Finance/Reports'
+      }}
+      viewMode="${si === 4 ? 'table' : 'grid'}"
+      onPreview={(file) => console.log('Preview', file)}
+      onDownload={(file) => console.log('Download', file)}
+    />
+  )
 }`,
   },
+
   {
     id: 'file-upload-form',
-    name: 'File Upload Form',
+    name: 'File Upload & Document Composer',
     category: 'Files',
-    badge: 'Upload Form',
-    description: 'Full-featured file upload form with template selector, subject input, folder & sub-folder dropdowns, rich body editor, attachment cards, upload progress bar, and submit action.',
+    badge: 'Upload Composer',
+    description: 'Document composer and uploader with template selector, subject/title input, destination space dropdowns, rich text formatting toolbar, multi-file dropzone, live upload progress bars, and remarks.',
     filePath: 'src/features/Message/components/files/file-upload-form.tsx',
     states: [
-      { label: 'File Upload Form', description: 'Interactive upload form matching the Message page file section upload modal' },
+      { label: 'File Upload Form', description: 'Interactive upload form directly from the Message page file section' },
     ],
-    renderPreview: (si) => <FileUploadFormPreview stateIndex={si} />,
-    usageCode: (si) => `// File Upload Form Component
-import { FileUploadForm } from '@/features/Message/components/files/file-upload-form'
+    renderPreview: (si) => (
+      <div className='w-full max-w-4xl h-[650px] flex flex-col rounded-2xl overflow-hidden border border-border/80 bg-background shadow-md'>
+        <FileUploadFormPreview stateIndex={si} />
+      </div>
+    ),
+    usageCode: () => `import { FileUploadForm } from '@/features/Message/components/files/file-upload-form'
 
-export default function UploadPage() {
+export default function UploadDemo() {
   return (
     <FileUploadForm
       userEmail="user@amoga.app"
       onClose={() => console.log('Close')}
-      onUploadSuccess={() => console.log('Success')}
+      onUploadSuccess={(files) => console.log('Uploaded files:', files)}
+      onPreviewAttachment={(att) => console.log('Preview attachment:', att)}
+    />
+  )
+}`,
+  },
+
+  {
+    id: 'folder-tree-item',
+    name: 'Folder Tree Navigation',
+    category: 'Files',
+    badge: 'Folder Tree',
+    description: 'Hierarchical collapsible folder tree node for file navigation sidebar with 3-level nesting (root, user workspace, category subfolder), file count badge, and active selection indicator.',
+    filePath: 'src/design-system/components/files/folder-tree-item.tsx',
+    states: [
+      { label: 'Root Folder (L0)', description: 'Root directory folder with top level styling' },
+      { label: 'User Space Folder (L1)', description: 'User workspace folder (expanded)' },
+      { label: 'Category Subfolder (L2)', description: 'Nested category subfolder (Pdf, Images, etc.)' },
+      { label: 'Active Selected State', description: 'Highlighted active folder node with left bar indicator' },
+    ],
+    renderPreview: (si) => {
+      const sampleFolders = [
+        { id: 'Chat', name: 'Chat Storage', path: 'Chat', section: 'Chat', fileCount: 48, level: 0 },
+        { id: 'user-email', name: 'mohammed@amoga.app', path: 'Chat/mohammed', section: 'Chat', fileCount: 32, level: 1 },
+        { id: 'pdf-sub', name: 'PDF Documents', path: 'Chat/mohammed/Pdf', section: 'Chat', fileCount: 14, level: 2 },
+        { id: 'active-folder', name: 'Financial Reports', path: 'Chat/mohammed/Finance', section: 'Chat', fileCount: 8, level: 1 },
+      ]
+      const folder = sampleFolders[Math.min(si, 3)]
+      return (
+        <div className='w-80 p-3 bg-muted/10 rounded-2xl border border-border/80 shadow-xs'>
+          <DsFolderTreeItem
+            folder={folder}
+            isFolderActive={si === 3}
+            isExpanded={si === 1}
+            onToggleExpand={(id) => { toast.info(`Toggle folder: ${id}`) }}
+            onSelectFolder={(f) => { toast.info(`Selected folder: ${f.name}`) }}
+          />
+        </div>
+      )
+    },
+    usageCode: (si) => `import { FolderTreeItem } from '@amogads/ui'
+
+export default function FolderTreeDemo() {
+  return (
+    <FolderTreeItem
+      folder={{ id: '1', name: 'Finance', path: 'Files/Finance', fileCount: 12, level: ${Math.min(si, 2)} }}
+      isFolderActive={${si === 3}}
+      isExpanded={${si === 1}}
+      onToggleExpand={(id) => toggle(id)}
+      onSelectFolder={(f) => select(f)}
     />
   )
 }`,
@@ -558,7 +694,7 @@ export default function NewVoucherPage() {
 }`,
   },
 
-//----new vouncher scan 
+  //----new vouncher scan 
   {
     id: 'new-voucher-scan',
     name: 'New Voucher Scan',
@@ -577,14 +713,14 @@ export default function NewVoucherPage() {
 
   //----New Vounhcer 
 
-   {
+  {
     id: 'new-vouncher',
     name: 'New Voucher ',
     category: 'Vouchers',
     badge: 'New Voucher',
     description: 'Voucher document processing workflow featuring the file metadata upload form on Step 1 with auto OCR extraction.',
     filePath: 'src/features/MessageComponentGallery/previews/NewVouncher.tsx',
-    states: [ 
+    states: [
       { label: 'Step 1: File Upload Form', description: 'Document upload with metadata fields' },
       { label: 'Step 2: Edit Fields', description: 'Review auto-parsed voucher fields' },
       { label: 'Step 3: Voucher Preview', description: 'Voucher preview and print' },
@@ -594,7 +730,7 @@ export default function NewVoucherPage() {
   },
 
 
-  
+
 
   // ───────────────────────── ANALYTICS SECTION ──────────────────────────────
 
@@ -1038,7 +1174,7 @@ export default function MapScreen() {
           onTabChange={(t) => toast.info(`Tab: ${t}`)}
           sectionLabel="CHATS"
           sectionCount={2}
-          onSearchChange={() => {}}
+          onSearchChange={() => { }}
         >
           <DsChatCardItem
             id="1"
@@ -1152,7 +1288,7 @@ export default function MapScreen() {
       <div className='w-full max-w-2xl p-4 bg-background border border-border rounded-2xl shadow-xs'>
         <DsChatInput
           value={si === 1 ? 'Sounds great! Will review the changes.' : ''}
-          onChange={() => {}}
+          onChange={() => { }}
           onSend={() => toast.info('Message sent')}
           placeholder="Message"
           showAttachments={true}
@@ -1162,10 +1298,10 @@ export default function MapScreen() {
           replyMessage={
             si === 2
               ? {
-                  senderName: 'Aman',
-                  content: 'images (1).jpg',
-                  onClear: () => toast.info('Cleared reply'),
-                }
+                senderName: 'Aman',
+                content: 'images (1).jpg',
+                onClear: () => toast.info('Cleared reply'),
+              }
               : undefined
           }
           onAttachmentClick={() => toast.info('Attachment picker opened')}
@@ -1492,14 +1628,14 @@ export default function MapScreen() {
             si === 1
               ? []
               : [
-                  {
-                    id: '1',
-                    name: 'Aman',
-                    email: 'amanmicropay@gmail.com',
-                    initials: 'AM',
-                    isEnabled: true,
-                  },
-                ]
+                {
+                  id: '1',
+                  name: 'Aman',
+                  email: 'amanmicropay@gmail.com',
+                  initials: 'AM',
+                  isEnabled: true,
+                },
+              ]
           }
           onChatClick={(c) => toast.info(`Starting chat with ${c.name}`)}
           onEditClick={(c) => toast.info(`Editing ${c.name}`)}
@@ -1537,21 +1673,21 @@ export default function MapScreen() {
             si === 1
               ? []
               : [
-                  {
-                    id: 'g1',
-                    name: 'jj',
-                    membersCount: 3,
-                    ownerEmail: 'itsaman00786@gmail.com',
-                    isEnabled: true,
-                  },
-                  {
-                    id: 'g2',
-                    name: 'demo',
-                    membersCount: 3,
-                    ownerEmail: 'itsaman00786@gmail.com',
-                    isEnabled: true,
-                  },
-                ]
+                {
+                  id: 'g1',
+                  name: 'jj',
+                  membersCount: 3,
+                  ownerEmail: 'itsaman00786@gmail.com',
+                  isEnabled: true,
+                },
+                {
+                  id: 'g2',
+                  name: 'demo',
+                  membersCount: 3,
+                  ownerEmail: 'itsaman00786@gmail.com',
+                  isEnabled: true,
+                },
+              ]
           }
           onChatClick={(g) => toast.info(`Opening group ${g.name}`)}
           onEditClick={(g) => toast.info(`Editing group ${g.name}`)}
@@ -1590,7 +1726,7 @@ export default function MapScreen() {
       <div className='w-full max-w-2xl p-4 bg-background border border-border/80 rounded-3xl shadow-sm'>
         <DsAiChatInput
           value={si === 1 ? 'Explain the new features of React 19.' : ''}
-          onChange={() => {}}
+          onChange={() => { }}
           onSend={() => toast.info('Prompt submitted')}
           placeholder="Ask a question about your data..."
           model="google/gemini-2.5-flash"

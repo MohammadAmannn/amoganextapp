@@ -1,3 +1,5 @@
+'use client'
+
 import * as React from "react"
 import type { ShouldShowProps } from "../../types"
 import type { Editor } from "@tiptap/react"

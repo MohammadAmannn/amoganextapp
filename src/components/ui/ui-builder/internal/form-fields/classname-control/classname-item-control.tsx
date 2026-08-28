@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { CONFIG, LAYOUT_GROUPS, LAYOUT_ORDER, type StateType } from "@/components/ui/ui-builder/internal/form-fields/classname-control/config";
 import { ClassNameGroupControl } from "@/components/ui/ui-builder/internal/form-fields/classname-control/classname-group-control";

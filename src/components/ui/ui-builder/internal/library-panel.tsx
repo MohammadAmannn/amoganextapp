@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useMemo, useCallback } from "react";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";

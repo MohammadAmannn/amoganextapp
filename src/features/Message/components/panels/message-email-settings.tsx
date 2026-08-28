@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { X } from 'lucide-react'
 import { HeaderActions } from '../chat/header-actions'
 import { ProfileTab } from '@/features/email-settings/components/profile-tab'
+import { FilesTab } from '@/features/email-settings/components/files-tab'
 import { LinksTab } from '@/features/email-settings/components/accounts-tab'
 import { ThemesTab } from '@/features/email-settings/components/themes-tab'
 import { PhonePreview } from '@/features/email-settings/components/phone-preview'
@@ -43,14 +44,14 @@ export function MessageEmailSettings({
         {/* Left side: Avatar + Title + Subtitle */}
         <div className='flex items-center gap-2 sm:gap-3 min-w-0'>
           <Avatar className='h-9 w-9 shrink-0 rounded-full'>
-            <AvatarImage src='/avatars/01.png' alt='Email Settings' />
+            <AvatarImage src='/avatars/01.png' alt='App Settings' />
             <AvatarFallback className='rounded-full bg-primary/10 text-primary font-bold text-xs'>
-              ES
+              AS
             </AvatarFallback>
           </Avatar>
           <div className='min-w-0 truncate'>
             <h2 className='truncate text-sm font-bold tracking-tight text-foreground sm:text-base leading-snug'>
-              Email Settings
+              App Settings
             </h2>
           </div>
         </div>
@@ -64,7 +65,7 @@ export function MessageEmailSettings({
               onClick={handleBack}
               className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
               title='Close'
-              aria-label='Close email settings'
+              aria-label='Close app settings'
             >
               <X className='h-5 w-5' />
             </button>
@@ -84,6 +85,7 @@ export function MessageEmailSettings({
                 <TabsList className='h-auto gap-4 sm:gap-6 border-b border-border bg-transparent p-0 shadow-none justify-start flex w-max min-w-full rounded-none'>
                   {[
                     { id: 'profile', label: 'Profile' },
+                    { id: 'files', label: 'Files' },
                     { id: 'links', label: 'Links' },
                     { id: 'folder', label: 'Folder' },
                     { id: 'contact', label: 'Contact' },
@@ -109,6 +111,9 @@ export function MessageEmailSettings({
               <div className='flex-1 overflow-y-auto no-scrollbar pr-0 sm:pr-1 pb-6 space-y-4'>
                 <TabsContent value='profile' className='mt-0 focus-visible:outline-none'>
                   <ProfileTab />
+                </TabsContent>
+                <TabsContent value='files' className='mt-0 focus-visible:outline-none'>
+                  <FilesTab />
                 </TabsContent>
                 <TabsContent value='links' className='mt-0 focus-visible:outline-none'>
                   <LinksTab />

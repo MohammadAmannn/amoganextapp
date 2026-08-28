@@ -38,8 +38,8 @@ export const sidebarData: SidebarData = {
           icon: Mail,
         },
         {
-          title: 'Email Settings',
-          url: '/email-settings',
+          title: 'App Settings',
+          url: '/app-settings',
           icon: Settings,
         },
         {

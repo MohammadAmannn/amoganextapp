@@ -1,3 +1,5 @@
+'use client'
+
 import React, { Profiler, type ProfilerOnRenderCallback, useCallback } from "react";
 
 interface DevProfilerProps {
